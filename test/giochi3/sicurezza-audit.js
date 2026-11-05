@@ -86,4 +86,32 @@ const { GIOCHI, pulisciOpzioni } = require('../../giochi');
   assert.deepStrictEqual(errori, [], errori.join('\n'));
 }
 
-console.log('✓ Audit di sicurezza: valori di Object.prototype ripuliti, Serpenti, Backgammon, voce, archivio, mosse strane in tutti i giochi');
+// ---- fantasIA: limite di domande per indirizzo ----
+{
+  const { FantasIA } = require('../../fantasia');
+  let t = Date.parse('2026-11-05T10:00:00Z');
+  const f = new FantasIA({ chiave: 'k', fetch: async () => ({}), ora: () => t, attesaMs: 0, maxInsieme: 99, limiteIp: 3, limiteIpFidato: 5 });
+  for (let k = 0; k < 3; k++) assert.ok(f.prenota('1.1.1.1', 'ciao').ok);
+  assert.ok(f.prenota('1.1.1.1', 'ciao').errore, 'oltre il limite per indirizzo');
+  assert.ok(f.prenota('2.2.2.2', 'ciao').ok, 'gli altri indirizzi possono ancora');
+  for (let k = 0; k < 5; k++) assert.ok(f.prenota('3.3.3.3', 'ciao', { fidato: true }).ok, 'a scuola di più');
+  assert.ok(f.prenota('3.3.3.3', 'ciao', { fidato: true }).errore);
+  t += 24 * 3600000;
+  assert.ok(f.prenota('1.1.1.1', 'ciao').ok, 'il giorno dopo si riparte');
+}
+
+// ---- sfida del giorno: il primo tentativo conta anche per dispositivo ----
+{
+  const sfida = require('../../sfida');
+  const A = require('../../archivio');
+  const prima = new Map(A._dati);
+  const gioco = Object.keys(sfida.SFIDE)[0], data = '2026-11-05';
+  A.scrivi(`sfidaFatta:${data}:${gioco}:d:disp1`, 1);
+  assert.ok(sfida.giaFatta(data, gioco, 'browser-nuovo', 'disp1'), 'stesso dispositivo, browser pulito: già fatta');
+  assert.ok(!sfida.giaFatta(data, gioco, 'browser-nuovo', 'disp2'), 'altro dispositivo: no');
+  assert.ok(!sfida.giaFatta(data, gioco, 'browser-nuovo', null), 'senza impronta (IP fidati): solo il browser');
+  A._dati.clear();
+  for (const [k, x] of prima) A._dati.set(k, x);
+}
+
+console.log('✓ Audit di sicurezza: valori di Object.prototype ripuliti, Serpenti, Backgammon, voce, archivio, mosse strane in tutti i giochi, limite di fantasIA per indirizzo, sfida del giorno per dispositivo');
