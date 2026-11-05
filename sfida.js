@@ -76,15 +76,19 @@ const SFIDE = {
 
 const chiaveClassifica = (data, gioco) => `sfida:${data}:${gioco}`;
 const chiaveFatta = (data, gioco, id) => `sfidaFatta:${data}:${gioco}:${id}`;
-const giaFatta = (data, gioco, id) => !!archivio.leggi(chiaveFatta(data, gioco, id));
+// il primo tentativo si conta per browser e anche per dispositivo (indirizzo + caratteristiche del browser): così
+// cancellare i dati del browser o aprire una finestra in incognito non regala un altro tentativo. Il dispositivo non si
+// usa per gli indirizzi in IP_FIDATI (a scuola i computer uguali avrebbero la stessa impronta).
+const giaFatta = (data, gioco, id, disp = null) => !!archivio.leggi(chiaveFatta(data, gioco, id)) || !!(disp && archivio.leggi(chiaveFatta(data, gioco, `d:${disp}`)));
 
 // a fine partita: segna il risultato (solo il primo tentativo del giorno) e dice la posizione in classifica
 function registra(s, partita) {
   const sf = s.sfida;
   if (!sf || sf.registrata) return null;
   sf.registrata = true;
-  if (sf.prova || giaFatta(sf.data, s.gioco, sf.id)) return { prova: true };
+  if (sf.prova || giaFatta(sf.data, s.gioco, sf.id, sf.disp)) return { prova: true };
   archivio.scrivi(chiaveFatta(sf.data, s.gioco, sf.id), 1);
+  if (sf.disp) archivio.scrivi(chiaveFatta(sf.data, s.gioco, `d:${sf.disp}`), 1);
   const m = SFIDE[s.gioco].misura(partita);
   if (!m) return { prova: false, posizione: -1 };
   const pos = archivio.aggiungiInClassifica(chiaveClassifica(sf.data, s.gioco), { nome: sf.nome, valore: m.valore, testo: m.testo }, { quanti: 20, unoPerNome: false });

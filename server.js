@@ -233,15 +233,29 @@ function vistaLeggera(s, sid, v) {
 // solo gli altri spettatori (così non suggerisce). Se si libera un posto può sedersi.
 const MAX_SPETTATORI = 30;
 function seguibile(s, posto) { return Number.isInteger(posto) && posto >= 0 && posto < s.posti.length && !!s.posti[posto]; }
+// CONTRO CHI SBIRCIA: durante la partita chi guarda dallo stesso dispositivo (stesso indirizzo e stesso browser, anche in
+// incognito o da un altro browser uguale) di una persona seduta al tavolo può seguire solo lei, non i suoi avversari.
+// Restituisce i posti che lo spettatore può seguire, o null se può seguirli tutti.
+function postiPerSpettatore(s, sp) {
+  if (!s.partita || s.partita.finita || !sp.disp) return null;
+  const miei = s.posti.map((x, i) => (x && !x.bot && !x.locale && x.socketId && presenze.get(x.socketId) && presenze.get(x.socketId).dispTavolo === sp.disp ? i : -1)).filter((i) => i >= 0);
+  return miei.length ? miei : null;
+}
+function correggiSegue(s, sp) {
+  const ok = postiPerSpettatore(s, sp);
+  if (ok && !ok.includes(sp.segue)) sp.segue = ok[0];
+  if (!seguibile(s, sp.segue)) sp.segue = s.posti.findIndex((x) => x && !x.bot) >= 0 ? s.posti.findIndex((x) => x && !x.bot) : s.posti.findIndex(Boolean);
+  return ok;
+}
 function inviaSpettatori(s) {
   if (!s.spettatori || !s.spettatori.size) return;
   const liberi = postiLiberiPerSpettatori(s);
   for (const [sid, sp] of s.spettatori) {
-    if (!seguibile(s, sp.segue)) sp.segue = s.posti.findIndex((x) => x && !x.bot) >= 0 ? s.posti.findIndex((x) => x && !x.bot) : s.posti.findIndex(Boolean);
+    const soloPosti = correggiSegue(s, sp);
     const posto = Math.max(0, sp.segue);
     io.to(sid).emit('stato', {
       codice: s.codice, gioco: s.gioco, opzioni: s.opzioni, numPosti: s.posti.length,
-      mioPosto: posto, spettatore: true, segue: posto, mioNome: sp.nome, postiLiberi: liberi,
+      mioPosto: posto, spettatore: true, segue: posto, soloPosti, mioNome: sp.nome, postiLiberi: liberi,
       sonoHost: false,
       giocatori: s.posti.map((x, i) => (x ? { nome: x.nome, connesso: x.connesso, bot: x.bot || null, autoplay: !!x.autoplay, nascosto: !!x.nascosto, uscito: !!x.uscito, inSala: !!x.inSala, fiche: x.fiche, vittorie: s.vittorie[i], master: !!(s.master && s.master === x.id && !x.bot) } : null)),
       spettatori: [...s.spettatori.values()].map((x) => x.nome),
@@ -348,7 +362,7 @@ function gestisciTick(s) {
       }
     }
     s.posti.forEach((x, posto) => { if (x && !x.bot && x.socketId) io.to(x.socketId).volatile.emit('tick', g.vistaTick(posto)); });
-    if (s.spettatori) for (const [sid, sp] of s.spettatori) if (seguibile(s, sp.segue)) io.to(sid).volatile.emit('tick', g.vistaTick(sp.segue));
+    if (s.spettatori) for (const [sid, sp] of s.spettatori) if ((correggiSegue(s, sp), seguibile(s, sp.segue))) io.to(sid).volatile.emit('tick', g.vistaTick(sp.segue));
     if (cambiato || g.finita) aggiorna(s);
     else if (g._sussurri && g._sussurri.length) inviaSussurri(s);
   }, g.tickMs || 50);
@@ -780,6 +794,7 @@ io.on('connection', (socket) => {
     presenza.id = pulisciId(id) || null;
     presenza.nome = nome ? pulisciNome(nome) : presenza.nome;
     if (imp) presenza.disp = chiaveDispositivo(ipSocket, pulisciId(imp));
+    if (imp) presenza.dispTavolo = require('crypto').createHash('sha256').update(`tavolo|${ipSocket}|${pulisciId(imp)}`).digest('hex').slice(0, 32);
     const f = esiliato(presenza.id, ipSocket, presenza.disp);
     if (f) { socket.emit('esiliato', { fino: f }); socket.disconnect(true); return; }
     socket.emit('chatGlobaleStorico', chatGlobale.map((m) => vistaGlobale(m, presenza.id))); // ora si sa quali sono i miei
@@ -834,7 +849,7 @@ io.on('connection', (socket) => {
   });
   // fantasIA: controlla i limiti, mostra subito la domanda e poi la risposta (o un avviso solo per chi ha chiesto)
   const chiediFantasia = (domanda, mostraDomanda, mostraRisposta) => {
-    const p = fantasia.prenota(ipSocket, censura(domanda));
+    const p = fantasia.prenota(ipSocket, censura(domanda), { fidato: guardia.fidato(ipSocket) });
     if (p.errore) { socket.emit('avvisoPrivato', p.errore); return; }
     mostraDomanda();
     fantasia.rispondi(censura(domanda)).then((r) => {
@@ -957,7 +972,7 @@ io.on('connection', (socket) => {
     if (stanza && stanza !== s) esci();
     const prima = s.spettatori.get(socket.id);
     const primoUmano = s.posti.findIndex((x) => x && !x.bot);
-    s.spettatori.set(socket.id, { id, nome, segue: prima ? prima.segue : Math.max(0, primoUmano) });
+    s.spettatori.set(socket.id, { id, nome, segue: prima ? prima.segue : Math.max(0, primoUmano), disp: presenza.dispTavolo || null });
     stanza = s;
     mioId = id;
     presenza.stanza = s.codice; presenza.id = presenza.id || id; presenza.nome = nome; aggiornaAdmin();
@@ -968,7 +983,10 @@ io.on('connection', (socket) => {
   // lo spettatore sceglie quale giocatore seguire
   socket.on('segui', ({ posto } = {}) => {
     if (!sonoSpettatore() || !seguibile(stanza, Number(posto))) return;
-    stanza.spettatori.get(socket.id).segue = Number(posto);
+    const sp = stanza.spettatori.get(socket.id);
+    const ok = postiPerSpettatore(stanza, sp);
+    if (ok && !ok.includes(Number(posto))) { errore('Da questo dispositivo stai già giocando: puoi guardare solo la tua partita'); return inviaSpettatori(stanza); }
+    sp.segue = Number(posto);
     inviaSpettatori(stanza);
   });
   // lo spettatore prende un posto libero (in sala) o quello di chi è uscito (a partita iniziata)
@@ -1009,7 +1027,7 @@ io.on('connection', (socket) => {
 
   socket.on('classificaSfida', (id) => {
     id = pulisciId(id);
-    socket.emit('classificaSfida', { ...sfida.classifiche(), fatte: Object.keys(sfida.SFIDE).filter((g) => id && sfida.giaFatta(sfida.oggi(), g, id)) });
+    socket.emit('classificaSfida', { ...sfida.classifiche(), fatte: Object.keys(sfida.SFIDE).filter((g) => id && sfida.giaFatta(sfida.oggi(), g, id, presenza.disp)) });
   });
   socket.on('creaStanza', ({ nome, id, gioco, posti, opzioni, controComputer, sfidaGiorno } = {}) => {
     // sfida del giorno: un posto, opzioni fisse
@@ -1038,7 +1056,7 @@ io.on('connection', (socket) => {
       posti: new Array(posti).fill(null), vittorie: new Array(posti).fill(0),
       partita: null, host: id, primo: 0, chat: [], nChat: 0, ip: ipSocket,
     };
-    if (sfidaGiorno) s.sfida = { gioco, data: sfida.oggi(), id, nome: pulisciNome(nome), prova: sfida.giaFatta(sfida.oggi(), gioco, id) };
+    if (sfidaGiorno) s.sfida = { gioco, data: sfida.oggi(), id, disp: presenza.disp || null, nome: pulisciNome(nome), prova: sfida.giaFatta(sfida.oggi(), gioco, id, presenza.disp) };
     stanze.set(s.codice, s);
     siediti(s, id, pulisciNome(nome));
     if (controComputer) {

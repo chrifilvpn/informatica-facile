@@ -949,7 +949,8 @@
     $('#testo-chat').placeholder = sp && stato.partita && !stato.partita.finita ? 'Scrivi agli altri spettatori (i giocatori non leggono)' : 'Scrivi agli altri';
     const barra = $('#barra-spett'), sala = $('#spett-sala');
     if (!sp) { barra.hidden = true; sala.hidden = true; return; }
-    const opzioni = stato.giocatori.map((g, i) => (g ? `<option value="${i}" ${i === stato.segue ? 'selected' : ''}>${esc(g.nome)}${g.bot ? ' (PC)' : ''}</option>` : '')).join('');
+    // chi guarda dallo stesso dispositivo di un giocatore può seguire solo lui (stato.soloPosti)
+    const opzioni = stato.giocatori.map((g, i) => (g && (!stato.soloPosti || stato.soloPosti.includes(i)) ? `<option value="${i}" ${i === stato.segue ? 'selected' : ''}>${esc(g.nome)}${g.bot ? ' (PC)' : ''}</option>` : '')).join('');
     const liberi = (stato.postiLiberi || []).map((i) => `<button type="button" class="bottone mini-bt" data-prendi-posto="${i}">🪑 Gioca al posto di ${esc((stato.giocatori[i] || {}).nome || `posto ${i + 1}`)}</button>`).join('');
     const quanti = (stato.spettatori || []).length;
     barra.innerHTML = `<span>👀 Stai guardando con gli occhi di</span><select data-segui aria-label="Giocatore da seguire">${opzioni}</select><span class="piccolo">${quanti} ${quanti === 1 ? 'spettatore' : 'spettatori'}</span>${liberi}`;

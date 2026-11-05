@@ -5,6 +5,8 @@
 
 const NOME = 'fantasIA';
 const LIMITE_GIORNO = 100;
+// per indirizzo: una persona sola non può consumare le domande di tutto il sito (a scuola, con IP_FIDATI, di più)
+const LIMITE_IP = 20, LIMITE_IP_FIDATO = 60;
 const ATTESA_MS = 20000;
 const MAX_RISPOSTA = 400; // caratteri
 const MAX_DOMANDA = 300; // caratteri mandati a Gemini
@@ -67,12 +69,14 @@ const ISTRUZIONI_PAROLE = 'Sei un dizionario italiano. Ti do una parola scritta 
 const LIMITE_PAROLE = 600; // controlli di parole al giorno (separati dalle 100 domande della chat)
 
 class FantasIA {
-  constructor({ chiave, modello, fetch: f, ora, limiteGiorno = LIMITE_GIORNO, attesaMs = ATTESA_MS, maxInsieme = MAX_INSIEME, timeoutMs = TIMEOUT_MS, log = console } = {}) {
+  constructor({ chiave, modello, fetch: f, ora, limiteGiorno = LIMITE_GIORNO, limiteIp = LIMITE_IP, limiteIpFidato = LIMITE_IP_FIDATO, attesaMs = ATTESA_MS, maxInsieme = MAX_INSIEME, timeoutMs = TIMEOUT_MS, log = console } = {}) {
     this.chiave = chiave ? String(chiave).trim() : '';
     this.modelli = modello ? [String(modello).trim()] : MODELLI.slice();
     this.fetch = f || (typeof fetch === 'function' ? fetch : null);
     this.ora = ora || Date.now;
     this.limiteGiorno = limiteGiorno;
+    this.limiteIp = limiteIp; this.limiteIpFidato = limiteIpFidato;
+    this.perIp = new Map(); // indirizzo -> domande di oggi
     this.attesaMs = attesaMs;
     this.maxInsieme = maxInsieme;
     this.timeoutMs = timeoutMs;
@@ -89,11 +93,11 @@ class FantasIA {
 
   _giornoNuovo() {
     const g = giornoItaliano(this.ora());
-    if (g !== this.giorno) { this.giorno = g; this.usate = 0; this.usateParole = 0; }
+    if (g !== this.giorno) { this.giorno = g; this.usate = 0; this.usateParole = 0; this.perIp.clear(); }
   }
 
   // controlla i limiti; se va tutto bene "prenota" la domanda. Restituisce { ok: true } o { errore: 'testo per chi ha chiesto' }
-  prenota(indirizzo, domanda) {
+  prenota(indirizzo, domanda, { fidato = false } = {}) {
     if (!this.attiva) return { errore: `🤖 ${NOME} non è ancora accesa sul sito` };
     if (!domanda) return { errore: `🤖 Scrivi la domanda dopo il comando, per esempio: !fantasia chi ha inventato il computer?` };
     this._giornoNuovo();
@@ -104,10 +108,14 @@ class FantasIA {
       return { errore: `🤖 ${NOME} ha appena risposto da qui: riprova tra ${s} ${s === 1 ? 'secondo' : 'secondi'}` };
     }
     if (this.usate >= this.limiteGiorno) return { errore: `🤖 ${NOME} ha finito le ${this.limiteGiorno} risposte di oggi: torna domani!` };
+    const mie = this.perIp.get(indirizzo) || 0, tetto = fidato ? this.limiteIpFidato : this.limiteIp;
+    if (mie >= tetto) return { errore: `🤖 Da qui avete già fatto ${tetto} domande a ${NOME} oggi: lasciatene un po' agli altri, torna domani!` };
     if (this.inCorso >= this.maxInsieme) return { errore: `🤖 ${NOME} sta già rispondendo ad altri: riprova tra qualche secondo` };
     this.usate++;
     this.inCorso++;
     this.ultima.set(indirizzo, ora);
+    this.perIp.set(indirizzo, mie + 1);
+    if (this.perIp.size > 20000) this.perIp.delete(this.perIp.keys().next().value);
     if (this.ultima.size > 20000) { const k = this.ultima.keys().next().value; this.ultima.delete(k); }
     return { ok: true };
   }
@@ -194,4 +202,4 @@ class FantasIA {
   stato() { this._giornoNuovo(); return { attiva: this.attiva, usate: this.usate, limite: this.limiteGiorno, giorno: this.giorno }; }
 }
 
-module.exports = { FantasIA, domandaDa, sembraInventata, pulisciRisposta, giornoItaliano, NOME, LIMITE_GIORNO, ATTESA_MS, MAX_RISPOSTA, ISTRUZIONI };
+module.exports = { FantasIA, domandaDa, sembraInventata, pulisciRisposta, giornoItaliano, NOME, LIMITE_GIORNO, LIMITE_IP, ATTESA_MS, MAX_RISPOSTA, ISTRUZIONI };
