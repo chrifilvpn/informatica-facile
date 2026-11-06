@@ -54,7 +54,7 @@ if (!process.env.ADMIN_COMANDO) console.warn('[avviso] Il comando dell\'Ammiragl
 else if (process.env.ADMIN_COMANDO.trim().length < 20) console.warn('[avviso] ADMIN_COMANDO è corto: meglio almeno 20 caratteri casuali.');
 // fantasIA: la chiave sta solo su Render (GEMINI_API_KEY), mai nel codice; GEMINI_MODELLO facoltativo
 const fantasia = new FantasIA({ chiave: process.env.GEMINI_API_KEY, modello: process.env.GEMINI_MODELLO });
-console.log(fantasia.attiva ? '[fantasIA] accesa (100 domande al giorno per tutto il sito)' : '[fantasIA] spenta: su Render manca GEMINI_API_KEY');
+console.log(fantasia.attiva ? '[fantasIA] accesa (senza limite di domande)' : '[fantasIA] spenta: su Render manca GEMINI_API_KEY');
 // trucco segreto: la parola sta solo su Render (TRUCCO_PAROLA), mai nel codice; senza, il trucco è spento
 console.log(TRUCCO.attivo() ? '[trucco] acceso' : '[trucco] spento: su Render manca TRUCCO_PAROLA');
 if (process.env.GUARDIA !== 'attiva') console.log('[guardia] modalità prova: i ban vengono solo scritti nel log (GUARDIA=attiva per applicarli)');
@@ -491,7 +491,7 @@ const AIUTO_COMANDI = {
   '!ricarica': `ti ridà ${FICHE_INIZIALI} fiche, ma solo quando le hai finite (0 fiche). Serve nei giochi con le fiche`,
   '!prof': 'apre la pagina delle dispense a tutti i giocatori del tavolo (dalla chat globale: a tutto il sito)',
   '!restart': 'propone di ricominciare la partita da capo (se qualcosa è andato storto): decide la maggioranza del tavolo',
-  '!fantasia': 'seguito da una domanda (per esempio !fantasia chi ha inventato il computer?): risponde fantasIA, la mini IA del sito. Una domanda ogni 20 secondi, al massimo 100 al giorno per tutto il sito',
+  '!fantasia': 'seguito da una domanda (per esempio !fantasia chi ha inventato il computer?): risponde fantasIA, la mini IA del sito, senza limite di domande',
   '!revive': 'in Draghi e Segrete riporta in vita i personaggi morti, con tutti i punti ferita e le stesse cose che avevano',
   '!foto': 'accende (o spegne) la Fotocamera magica solo per te: ti vedi in una finestrella da spostare dove vuoi e i gatti reagiscono ai tuoi gesti (!foto prova mostra i numeri dei gesti)',
   '!comandi': 'mostra questo elenco',
@@ -875,7 +875,7 @@ io.on('connection', (socket) => {
     const cmd = grezzo.toLowerCase();
     const spento = comandiBloccati() && !SEMPRE_ATTIVI.includes(cmd.split(' ')[0]);
     if (spento && cmd.startsWith('!')) { socket.emit('avvisoPrivato', avvisoBlocco()); return; }
-    if (cmd === '!comandi') { socket.emit('avvisoPrivato', 'Nella chat globale: !prof manda tutto il sito sulle dispense; !fantasia seguito da una domanda fa rispondere fantasIA, la mini IA del sito (una domanda ogni 20 secondi, 100 al giorno per tutto il sito); il resto dei comandi (!ricarica, !restart) si usa al tavolo'); return; }
+    if (cmd === '!comandi') { socket.emit('avvisoPrivato', 'Nella chat globale: !prof manda tutto il sito sulle dispense; !fantasia seguito da una domanda fa rispondere fantasIA, la mini IA del sito (senza limite di domande); il resto dei comandi (!ricarica, !restart) si usa al tavolo'); return; }
     const domanda = domandaDa(grezzo);
     if (domanda !== null) {
       chiediFantasia(domanda,

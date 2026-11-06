@@ -1,13 +1,14 @@
 // fantasIA: la mini IA della chat. Si chiama scrivendo "!fantasia domanda" (nella chat del tavolo o in quella globale)
 // e risponde in chat con Gemini. La chiave NON è nel codice: si legge da GEMINI_API_KEY (variabile d'ambiente su Render).
-// Limiti: 100 domande al giorno per tutto il sito (il giorno è quello italiano), una domanda ogni 20 secondi per
-// indirizzo, poche richieste insieme, risposta solo testo e accorciata. Il server passa poi la risposta dalla censura.
+// Nessun limite di domande; solo poche richieste insieme a Gemini, risposta solo testo e accorciata. Il server passa poi la risposta dalla censura.
 
 const NOME = 'fantasIA';
-const LIMITE_GIORNO = 100;
+// NESSUN LIMITE di domande (scelta del 6/11/2026): si può rimettere passando limiteGiorno / limiteIp / attesaMs.
+// Restano solo i limiti tecnici: poche richieste insieme a Gemini, tempo massimo di risposta e il limite della chat.
+const LIMITE_GIORNO = Infinity;
 // per indirizzo: una persona sola non può consumare le domande di tutto il sito (a scuola, con IP_FIDATI, di più)
-const LIMITE_IP = 20, LIMITE_IP_FIDATO = 60;
-const ATTESA_MS = 20000;
+const LIMITE_IP = Infinity, LIMITE_IP_FIDATO = Infinity;
+const ATTESA_MS = 0;
 const MAX_RISPOSTA = 400; // caratteri
 const MAX_DOMANDA = 300; // caratteri mandati a Gemini
 const MAX_INSIEME = 3; // richieste a Gemini nello stesso momento
