@@ -2742,7 +2742,9 @@ fissa('DIFESE: GUARDIA E BAN AUTOMATICO');
   };
   let ora = Date.parse('2026-09-29T10:00:00Z');
   const log = { warn: (m) => righeLog.push(m) }, righeLog = [];
-  const f = new FantasIA({ chiave: 'CHIAVE-FINTA', fetch: finto, ora: () => ora, log });
+  // i limiti sono spenti di base (scelta del 6/11/2026): qui si accendono per provare che funzionano ancora
+  assert.strictEqual(new FantasIA({ chiave: 'K', fetch: finto }).limiteGiorno, Infinity, 'di base nessun limite');
+  const f = new FantasIA({ chiave: 'CHIAVE-FINTA', fetch: finto, ora: () => ora, log, limiteGiorno: 100, attesaMs: 20000 });
   assert.ok(f.attiva);
   assert.ok(!new FantasIA({ chiave: '', fetch: finto }).attiva && /non è ancora accesa/.test(new FantasIA({ fetch: finto }).prenota('1.1.1.1', 'x').errore), 'senza chiave resta spenta');
   assert.ok(/Scrivi la domanda/.test(f.prenota('1.1.1.1', '').errore), 'domanda vuota');
