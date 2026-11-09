@@ -290,10 +290,12 @@ window.Tavoli = (() => {
       if (p.eliminati[ctx.mio]) return '<span class="suggerimento">Sei stato eliminato: puoi guardare come finisce o uscire.</span>';
       if (ui.prep.length) {
         const tot = ui.prep.reduce((s, g) => s + (R.valuta(carteDi(ctx, g)) || { punti: 0 }).punti, 0);
-        b.push(`<div class="preparate">${ui.prep.map((g) => `<div class="comb">${carteDi(ctx, g).map((c) => F(c, 'mini')).join('')}</div>`).join('')}</div>`);
+        // ogni combinazione preparata si riprende da sola (✕), oppure si tocca una carta per riprendere solo quella
+        b.push(`<div class="preparate">${ui.prep.map((g, k) => `<div class="scala-prep"><div class="comb">${carteDi(ctx, g).map((c) => F(c, 'mini selezionabile', `data-az="togli-prep" data-k="${k}" role="button" tabindex="0" title="Riprendi questa carta in mano"`)).join('')}</div><button class="bottone mini-bt scala-prep-x" data-az="riprendi-prep" data-k="${k}" title="Riprendi in mano questa combinazione">✕</button></div>`).join('')}</div>`);
+        b.push('<span class="suggerimento">Tocca una carta preparata per riprenderla in mano, o ✕ per riprendere solo quella combinazione</span>');
         const ok = aperto || tot >= 40;
         b.push(`<button class="bottone piccolo-bt primario-bt" data-az="cala" ${mt && mt.fase === 'gioca' && ok ? '' : 'disabled'}>Cala${aperto ? '' : ` (${tot}/40)`}</button>`);
-        b.push('<button class="bottone piccolo-bt" data-az="annulla-prep">Riprendi in mano</button>');
+        b.push('<button class="bottone piccolo-bt" data-az="annulla-prep">Riprendi tutto</button>');
       }
       if (ui.sel.length >= 3) {
         const v = R.valuta(carteDi(ctx, ui.sel));
@@ -347,6 +349,21 @@ window.Tavoli = (() => {
         case 'ordina': ui.ordine = el.dataset.modo; return ctx.ridisegna();
         case 'prepara': ui.prep.push(ui.sel); ui.sel = []; return ctx.ridisegna();
         case 'annulla-prep': ui.prep = []; return ctx.ridisegna();
+        // la combinazione ripresa torna in mano già selezionata: basta aggiungere o togliere carte e ripreparla
+        case 'riprendi-prep': {
+          const k = Number(el.dataset.k);
+          ui.sel = [...(ui.prep[k] || [])];
+          ui.prep = ui.prep.filter((_, j) => j !== k);
+          return ctx.ridisegna();
+        }
+        case 'togli-prep': {
+          // si riprende una carta sola; se quel che resta non è più una combinazione, torna in mano selezionato
+          const k = Number(el.dataset.k);
+          const resto = (ui.prep[k] || []).filter((x) => x !== id);
+          if (resto.length >= 3 && R.valuta(carteDi(ctx, resto))) ui.prep[k] = resto;
+          else { ui.prep = ui.prep.filter((_, j) => j !== k); ui.sel = resto; }
+          return ctx.ridisegna();
+        }
         case 'cala': ctx.invia({ tipo: 'cala', combinazioni: ui.prep }); ui.prep = []; return ctx.ridisegna();
         case 'scarta': ctx.invia({ tipo: 'scarta', carta: ui.sel[0] }); ui.sel = []; return ctx.ridisegna();
         case 'restituisci': return ctx.invia({ tipo: 'restituisci' });
