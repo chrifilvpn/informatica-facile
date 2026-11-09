@@ -124,19 +124,21 @@ class Ludo {
     return { errore: 'Mossa non valida' };
   }
   // il trucco segreto (!win): il numero che permette la mossa migliore (mangiare, uscire col 6, entrare all'arrivo…)
-  dadoMigliore(p) {
+  // con `peggiore` (il trucco !lose) il dado che serve di meno
+  dadoMigliore(p, peggiore = false) {
     let best = dado(), bv = -Infinity;
     for (let d = 1; d <= 6; d++) {
       const mosse = this.mossePossibili(p, d);
       let v = mosse.length ? Math.max(...mosse.map((m) => valutaMossa(this, p, m) + (m.mangia ? 40 : 0) + (m.a >= ARRIVO && m.da < ARRIVO ? 25 : 0))) : -1e6;
       if (d === 6) v += 15; // col 6 si tira ancora
       v += Math.random() * 0.01;
+      if (peggiore) v = -v;
       if (v > bv) { bv = v; best = d; }
     }
     return best;
   }
   tira(p) {
-    const d = T.consuma(this, p) ? this.dadoMigliore(p) : dado();
+    const d = T.consuma(this, p) ? this.dadoMigliore(p) : T.sfortuna(this, p) ? this.dadoMigliore(p, true) : dado();
     this.dado = d; this.tiroDi = p; this.nTiro++; this.passi = 0;
     const senzaPercorso = !this.sulPercorso(p);
     if (senzaPercorso) this.tentativi++;

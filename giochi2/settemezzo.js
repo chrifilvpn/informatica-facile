@@ -85,6 +85,7 @@ class SetteMezzo extends Casino {
         this.serviti.delete(p);
         if (!T.inCima(this.mazzo, (c) => c.rango === 7)) T.inCima(this.mazzo, eMatta);
       }
+      else if (T.sfortuna(this, p)) T.inCima(this.mazzo, (c) => !eMatta(c) && conta([...m.carte, c]).sballato); // !lose: si sballa
       m.carte.push(this.pesca());
       const t = conta(m.carte);
       if (t.sballato) { m.stato = 'sballato'; this.annuncia(p, `sballa con ${fmt(t.mezzi)}`, `hai sballato: ${fmt(t.mezzi)}`); return this.prossimo(p); }
@@ -93,6 +94,22 @@ class SetteMezzo extends Casino {
     }
     if (a.tipo === 'stai') { m.stato = 'stai'; return this.prossimo(p); }
     return { errore: 'Mossa non valida' };
+  }
+
+  // il trucco segreto (!win !parola): la carta coperta diventa una figura e la prima carta chiesta sarà un 7
+  // (sette e mezzo servito); poi sei tu a chiedere carta. Durante le puntate si aspetta la distribuzione.
+  manoVincente(p) {
+    const m = this.mani[p];
+    if (this.fase !== 'turni' || !m || m.stato !== 'gioca' || m.carte.length !== 1) return null;
+    const i = this.mazzo.findIndex((c) => c.rango >= 8 && !eMatta(c));
+    if (i < 0) return null;
+    const [f] = this.mazzo.splice(i, 1);
+    this.mazzo.unshift(m.carte[0]);
+    m.carte = [f];
+    this.truccati = [...(this.truccati || []), p];
+    this.serviti = this.serviti || new Set();
+    this.serviti.add(p);
+    return '🃏 Mano cambiata: chiedi una carta';
   }
 
   // ---- distribuzione: una carta coperta a testa, e una al banco ----

@@ -1,6 +1,7 @@
 const { mazzoDoppio, mescola, casuale } = require('./carte');
 const { valuta, penalita, sostituisceJolly } = require('./scala-regole');
 const T = require('./trucco');
+const MV = require('./mano-vincente');
 
 const APERTURA = 40;
 
@@ -90,6 +91,70 @@ class Scala40 {
     T.inCima(this.mazzo, (c) => c.jolly);
   }
 
+  // il trucco segreto (!lose): in cima al mazzo una carta che non serve a niente (né combinazioni né carte vicine),
+  // meglio se pesa tanto (figure, assi); mai un jolly
+  pescataInutile(p) {
+    const mano = this.mani[p];
+    const base = migliore(candidati(mano), mano.length);
+    const inutili = this.mazzo.filter((c) => {
+      if (c.jolly) return false;
+      if (this.aperto[p] && this.combinazioni.some((m) => attaccabile(m, c))) return false;
+      if (mano.some((x) => !x.jolly && ((x.rango === c.rango && x.seme !== c.seme) || (x.seme === c.seme && Math.abs(x.rango - c.rango) <= 2)))) return false;
+      return true;
+    });
+    const lista = inutili.length ? inutili : this.mazzo.filter((c) => !c.jolly && migliore(candidati([...mano, c]), mano.length + 1).punti <= base.punti);
+    if (!lista.length) return;
+    const max = Math.max(...lista.map(penalita));
+    const pesanti = lista.filter((c) => penalita(c) >= max - 1);
+    const scelta = pesanti[Math.floor(Math.random() * pesanti.length)];
+    T.inCima(this.mazzo, (c) => c === scelta);
+  }
+
+  // il trucco segreto (!win !parola): la mano diventa scale e tris che valgono almeno 40 punti. Se tocca a te
+  // e hai già pescato, avanza una carta da scartare; altrimenti tutte le carte sono in gioco e scarti quella che
+  // peschi. Poi sei tu a calare e chiudere quando vuoi. Le carte vengono dal mazzo (la mano vecchia ci torna).
+  manoVincente(p) {
+    if (this.finita || this.inAttesa || this.eliminati[p] || !this.mani[p]) return null;
+    const mano = this.mani[p];
+    const inGioca = this.turno === p && this.fase === 'gioca';
+    const n = inGioca ? mano.length - 1 : mano.length;
+    const pool = [...this.mazzo, ...mano];
+    let nuova = null;
+    if (n === 0) nuova = [];
+    else if (n >= 3) {
+      const gruppi = MV.costruisci(pool, n, { valuta, minPunti: APERTURA, conJolly: 0.25 });
+      if (gruppi) nuova = gruppi.flat();
+    } else if (this.aperto[p]) {
+      // poche carte: quelle che si attaccano ai giochi in tavola (nel turno in cui apri, solo ai tuoi)
+      const tavola = this.combinazioni.filter((m) => !(inGioca && this.tt.apertoOra && m.posto !== p));
+      const buone = pool.filter((c) => !c.jolly && tavola.some((m) => attaccabile(m, c)));
+      const viste = new Set();
+      nuova = [];
+      for (const c of mescola(buone)) {
+        if (nuova.length >= n) break;
+        const k = `${c.rango}${c.seme}`;
+        if (viste.has(k)) continue;
+        viste.add(k); nuova.push(c);
+      }
+      if (nuova.length < n) nuova = null;
+    }
+    if (!nuova) return '🃏 Adesso non riesco a darti una mano vincente: riprova al prossimo turno';
+    if (inGioca) {
+      const usate = new Set(nuova.map((c) => c.id));
+      const scarto = pool.filter((c) => !c.jolly && !usate.has(c.id));
+      if (!scarto.length) return '🃏 Adesso non riesco a darti una mano vincente: riprova al prossimo turno';
+      nuova.push(scarto[Math.floor(Math.random() * scarto.length)]);
+      this.tt.presoDalPozzo = null;
+      this.tt.daUsare = [];
+    }
+    const usate = new Set(nuova.map((c) => c.id));
+    this.mani[p] = mescola(nuova);
+    this.mazzo = mescola(pool.filter((c) => !usate.has(c.id)));
+    return inGioca
+      ? '🃏 Mano cambiata: cala tutto e scarta l\'ultima carta per chiudere'
+      : '🃏 Mano cambiata: al tuo turno pesca, cala tutto e scarta per chiudere';
+  }
+
   puoRestituire() {
     const tt = this.tt;
     if (!tt.presoDalPozzo || this.fase !== 'gioca') return false;
@@ -133,6 +198,7 @@ class Scala40 {
         // se il mazzo è stato rigirato troppe volte senza che nessuno chiuda, la smazzata si annulla
         if (!this.mazzo.length || this.rimescolate > 3) return this.annulla();
         if (T.consuma(this, p)) this.truccaPescata(p);
+        else if (T.sfortuna(this, p)) this.pescataInutile(p);
         mano.push(this.mazzo.pop());
       }
       this.fase = 'gioca';

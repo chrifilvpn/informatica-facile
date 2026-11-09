@@ -5,6 +5,7 @@
 // provando tutte le carte che possono arrivare (fino a 1,5 milioni di mani per la scelta "cambia tutto").
 const { mescola } = require('../giochi/carte');
 const T = require('../giochi/trucco');
+const MV = require('../giochi/mano-vincente');
 
 const SEMI = ['c', 'q', 'f', 'p'];
 const CREDITI = [1, 5, 10, 25]; // fiche per credito
@@ -255,6 +256,19 @@ class VideoPoker {
       return this.chiudi();
     }
     return { errore: 'Mossa non valida' };
+  }
+
+  // il trucco segreto (!win !parola): le cinque carte servite diventano una mano forte (full, colore, scala, poker…);
+  // poi sei tu a scegliere cosa tenere. Prima di distribuire si aspetta la mano.
+  manoVincente() {
+    if (this.fase !== 'cambio') return null;
+    const pool = [...this.mazzo, ...this.carte];
+    const nuove = MV.manoPoker(pool);
+    if (!nuove) return null;
+    this.mazzo = mescola(pool.filter((c) => !nuove.includes(c)));
+    this.carte = nuove;
+    this.consiglio = null;
+    return '🃏 Mano cambiata: tieni le carte giuste e cambia';
   }
 
   // mette in cima al mazzo un poker (con una quinta carta a caso) oppure, una volta su cinque, una scala reale

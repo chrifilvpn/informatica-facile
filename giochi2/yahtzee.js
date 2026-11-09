@@ -70,10 +70,11 @@ class CinqueDadi {
   }
   // il trucco segreto (!win): cinque dadi uguali se servono ancora (casella libera o bonus da 100) e i dadi tenuti
   // lo permettono; altrimenti il tiro che vale di più secondo il computer
-  dadiMigliori(p) {
+  // con `peggiori` (il trucco !lose) i dadi che fanno meno punti
+  dadiMigliori(p, peggiori = false) {
     const s = this.schede[p];
     const tenuti = this.dadi.filter((_, i) => this.tenuti[i]);
-    if ((s.cinque5 === null || s.cinque5 === 50) && new Set(tenuti).size <= 1) {
+    if (!peggiori && (s.cinque5 === null || s.cinque5 === 50) && new Set(tenuti).size <= 1) {
       const v = tenuti.length ? tenuti[0] : 6 - Math.floor(Math.random() * 3);
       return this.dadi.map(() => v);
     }
@@ -83,7 +84,8 @@ class CinqueDadi {
       const d = this.dadi.slice();
       let x = k;
       for (const i of liberi) { d[i] = 1 + (x % 6); x = Math.floor(x / 6); }
-      const u = migliore(this, p, d).u + Math.random() * 0.01;
+      let u = migliore(this, p, d).u + Math.random() * 0.01;
+      if (peggiori) u = -u;
       if (u > bu) { bu = u; best = d; }
     }
     return best;
@@ -111,7 +113,7 @@ class CinqueDadi {
       if (!tieni.every((i) => Number.isInteger(i) && i >= 0 && i < 5)) return { errore: 'Dadi non validi' };
       if (tieni.length === 5 && new Set(tieni).size === 5) return { errore: 'Tieni tutti i dadi? Allora segna' };
       this.tenuti = [0, 1, 2, 3, 4].map((i) => tieni.includes(i));
-      this.dadi = T.consuma(this, p) ? this.dadiMigliori(p) : this.dadi.map((x, i) => (this.tenuti[i] ? x : dado()));
+      this.dadi = T.consuma(this, p) ? this.dadiMigliori(p) : T.sfortuna(this, p) ? this.dadiMigliori(p, true) : this.dadi.map((x, i) => (this.tenuti[i] ? x : dado()));
       this.tiri++; this.nTiro++;
       if (this.dadi.every((x) => x === this.dadi[0])) this.annuncia(p, 'fa CINQUE DADI UGUALI! 🎲🎲🎲🎲🎲', 'cinque dadi uguali! 🎲🎲🎲🎲🎲', true);
       return { ok: true };

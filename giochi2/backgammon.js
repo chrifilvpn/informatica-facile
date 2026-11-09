@@ -145,11 +145,13 @@ class Backgammon {
   }
   // il trucco segreto (!win): tra i 21 tiri possibili quello che, giocato al meglio, lascia la posizione migliore
   // secondo la rete del computer difficile
-  dadiMigliori(p) {
+  // con `peggiori` (il trucco !lose) i dadi che lasciano la posizione peggiore
+  dadiMigliori(p, peggiori = false) {
     let best = null, bv = -Infinity;
     for (const { a, b } of TIRI) {
       const fine = posizioniFinali(this.t[p], this.t[1 - p], [a, b]);
-      const v = (fine.length && fine[0].passi.length ? Math.max(...fine.map((x) => (x.mie[0] === 15 ? 2 : rete(x.mie, x.sue)))) : -1) + Math.random() * 1e-3;
+      let v = (fine.length && fine[0].passi.length ? Math.max(...fine.map((x) => (x.mie[0] === 15 ? 2 : rete(x.mie, x.sue)))) : -1) + Math.random() * 1e-3;
+      if (peggiori) v = -v;
       if (v > bv) { bv = v; best = Math.random() < 0.5 ? [a, b] : [b, a]; }
     }
     return best;
@@ -193,7 +195,7 @@ class Backgammon {
     }
     if (a.tipo === 'tira') {
       if (this.fase !== 'tira') return { errore: 'Hai già tirato' };
-      this.iniziaTurno(T.consuma(this, p) ? this.dadiMigliori(p) : [dado(), dado()]);
+      this.iniziaTurno(T.consuma(this, p) ? this.dadiMigliori(p) : T.sfortuna(this, p) ? this.dadiMigliori(p, true) : [dado(), dado()]);
       return { ok: true };
     }
     if (this.fase !== 'muovi') return { errore: 'Prima tira i dadi' };
