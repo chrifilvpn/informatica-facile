@@ -258,8 +258,7 @@ window.Tavoli = (() => {
       const gruppi = Object.keys(perGiocatore).map(Number).sort((a, b) => ctx.slot(a) - ctx.slot(b)).map((posto) => `
         <div class="giochi-di"><div class="giochi-nome">${esc(ctx.nome(posto))}</div>
           <div class="giochi-riga">${perGiocatore[posto].map((m) => {
-            const vietato = mt && mt.apertoOra && m.posto !== ctx.mio;
-            const cliccabile = puoAttaccare && !vietato;
+            const cliccabile = puoAttaccare; // ai giochi di tutti, anche nel turno in cui si apre
             return `<div class="comb ${cliccabile ? 'selezionabile' : ''}" ${cliccabile ? `data-az="comb" data-comb="${m.id}" role="button" tabindex="0"` : ''} title="${m.tipo === 'scala' ? 'Scala' : 'Tris'} da ${m.punti} punti">
               ${m.carte.map((c) => (c.jolly && cliccabile && ui.sel.length === 1
                 ? F(c, 'mini', `data-az="comb-jolly" data-comb="${m.id}" data-jolly="${c.id}" title="Scambia il jolly"`)
