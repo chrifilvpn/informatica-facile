@@ -1067,9 +1067,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('entraStanza', ({ codice, nome, id } = {}) => {
+  socket.on('entraStanza', ({ codice, nome, id, ritorno } = {}) => {
     const s = stanze.get(String(codice || '').toUpperCase().trim());
-    if (!s) { if (conta(codiciSbagliati, ipSocket, 60000) > 8) sospetto('codici'); return errore('Nessun tavolo con questo codice'); }
+    // chi si ricollega da solo (connessione caduta) a un tavolo che non c'è più: di solito il sito si è riavviato
+    // e i tavoli, che stanno solo in memoria, sono spariti. Lo si dice chiaro e si torna alla home.
+    if (!s && ritorno) return socket.emit('tavoloSparito');
+    if (!s) { if (conta(codiciSbagliati, ipSocket, 60000) > 8) sospetto('codici'); return errore('Nessun tavolo con questo codice: controlla il codice (se il sito si è appena riavviato, i tavoli aperti prima non ci sono più)'); }
     id = pulisciId(id);
     if (!id) return errore('Identificativo mancante');
     siediti(s, id, pulisciNome(nome));
