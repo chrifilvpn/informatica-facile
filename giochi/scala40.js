@@ -248,7 +248,6 @@ class Scala40 {
       if (!this.aperto[p]) return { errore: 'Prima devi aprire' };
       const m = this.combinazioni.find((x) => x.id === a.combinazione);
       if (!m) return { errore: 'Combinazione non trovata' };
-      if (tt.apertoOra && m.posto !== p) return { errore: 'Nel turno in cui apri puoi attaccare solo ai tuoi giochi: dal prossimo turno potrai attaccare anche a quelli degli altri' };
 
       if (a.tipo === 'jolly') {
         const [c] = this.togliDallaMano(p, [String(a.carta)]) || [];
@@ -511,7 +510,7 @@ function bot(g, p, livello) {
   const mano = g.mani[p];
   const daUsare = new Set(tt.daUsare);
   const aperto = g.aperto[p];
-  const puoAttaccare = (m, c) => !(tt.apertoOra && m.posto !== p) && !(c.jolly && m.id === tt.jollyDa) && attaccabile(m, c);
+  const puoAttaccare = (m, c) => !(c.jolly && m.id === tt.jollyDa) && attaccabile(m, c);
 
   // 1) carte da usare per forza (presa dagli scarti o jolly recuperato)
   if (aperto && mano.length > 1) {
@@ -564,7 +563,7 @@ module.exports = {
       'Combinazioni: la scala è di almeno 3 carte consecutive dello stesso seme (l\'asso può stare prima del 2 o dopo il re, non in mezzo); il tris o poker è di 3 o 4 carte dello stesso valore e di semi diversi. Si possono usare più jolly, anche uno accanto all\'altro (per esempio 8, jolly, jolly, J), ma in ogni combinazione i jolly non possono essere più delle carte vere.',
       'Per aprire la prima volta devi calare combinazioni per almeno 40 punti in un turno. Valori: dal 2 al 10 quanto indicano, figure 10, asso 11 (1 se è nella scala A-2-3), il jolly vale la carta che sostituisce.',
       'La carta presa dagli scarti va usata subito nello stesso turno. Se non l\'hai ancora aperto, devi aprire usando proprio quella carta. Se l\'hai presa per sbaglio puoi sempre rimetterla con «Rimetti lo scarto»: se non hai ancora calato nulla torni a pescare, altrimenti perdi la pescata e scarti un\'altra carta.',
-      'Dopo aver aperto puoi calare nuove combinazioni e attaccare carte ai giochi di tutti. Nel turno in cui apri puoi attaccare solo ai tuoi.',
+      'Dopo aver aperto puoi calare nuove combinazioni e attaccare carte ai giochi di tutti, anche nello stesso turno in cui apri.',
       'Se hai la carta che il jolly sostituisce in un gioco in tavola, puoi scambiarla col jolly (dopo aver aperto), ma il jolly va riusato subito.',
       'Chiude chi resta senza carte con l\'ultimo scarto. Gli altri prendono penalità pari alle carte in mano (jolly 25, asso 11, figure 10); chi non ha aperto prende 100.',
       'Chi arriva al limite di penalità è eliminato. Vince l\'ultimo rimasto.',

@@ -369,6 +369,9 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .suggerimento { font-size: .85rem; color: var(--tenue); }
 .ordina { display: inline-flex; gap: .25rem; align-items: center; font-size: .8rem; color: var(--tenue); margin-left: .4rem; }
 .preparate { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; width: 100%; }
+.scala-prep { display: flex; align-items: center; gap: .2rem; }
+.scala-prep .carta.selezionabile { cursor: pointer; }
+.scala-prep-x { min-width: 2.25rem; min-height: 2.25rem; }
 
 /* briscola */
 .area-mazzo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: calc(var(--carta-l) * 1.9); height: calc(var(--carta-l) * 1.7); }
