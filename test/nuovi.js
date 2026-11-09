@@ -2184,15 +2184,19 @@ fissa('DIFESE DEL SITO');
 // ======================= AMMIRAGLIATO =======================
 fissa('AMMIRAGLIATO');
 {
-  const { eComandoAdmin, impronta } = require('../admin');
+  const { eComandoAdmin, eTentativoAdmin, impronta } = require('../admin');
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'admin.js'), 'utf8');
-  assert.ok(/[0-9a-f]{64}/.test(src), 'nel codice c\'è solo l\'impronta del comando, non il comando');
-  for (const t of ['!admin', '!ammiraglio', '!amministratore', '67', '!restart', '', null, '!'.repeat(100)]) assert.ok(!eComandoAdmin(t), `non deve aprire il pannello: ${t}`);
-  process.env.ADMIN_COMANDO = '!prova-segreta-123';
-  assert.ok(eComandoAdmin('!prova-segreta-123') && !eComandoAdmin('!prova-segreta-124'), 'il comando si può cambiare con ADMIN_COMANDO');
-  delete process.env.ADMIN_COMANDO;
+  assert.ok(!/[0-9a-f]{64}/.test(src) && !/ADMIN_COMANDO/.test(src), 'nel codice non c\'è né il comando né la sua impronta');
+  const prima = process.env.TRUCCO_PAROLA;
+  delete process.env.TRUCCO_PAROLA;
+  assert.ok(!eComandoAdmin('!admin qualcosa') && !eComandoAdmin('!admin '), 'senza TRUCCO_PAROLA l\'Ammiragliato non si apre');
+  process.env.TRUCCO_PAROLA = '  Pàtata  Fritta ';
+  assert.ok(eComandoAdmin('!admin patata fritta') && eComandoAdmin('  !ADMIN   Patata Fritta '), '!admin + parola (maiuscole, accenti e spazi non contano)');
+  for (const t of ['!admin', '!admin patata', '!admin patata fritta x', '!adminpatata fritta', '!win patata fritta', 'patata fritta', '', null, '!admin ' + 'a'.repeat(300)]) assert.ok(!eComandoAdmin(t), `non deve aprire il pannello: ${t}`);
+  assert.ok(eTentativoAdmin('!admin sbagliata') && eTentativoAdmin('!Admin') && !eTentativoAdmin('!administrator') && !eTentativoAdmin('ciao'), 'i tentativi !admin non vanno in chat');
+  if (prima === undefined) delete process.env.TRUCCO_PAROLA; else process.env.TRUCCO_PAROLA = prima;
   assert.strictEqual(impronta('a').length, 64);
-  console.log('✓ Ammiragliato: comando segreto conservato solo come impronta, cambiabile da Render');
+  console.log('✓ Ammiragliato: si apre con !admin + la parola di TRUCCO_PAROLA, tentativi nascosti');
 }
 
 // ======================= GIOCHI D'AZIONE (motore comune) =======================

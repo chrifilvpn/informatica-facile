@@ -25,7 +25,7 @@ const NOMI_BOT = ['Ada', 'Alan', 'Grace', 'Linus', 'Tim', 'Margaret', 'Dennis', 
 const sicurezza = require('./sicurezza');
 const sfida = require('./sfida'); // la sfida del giorno (stessa partita per tutti, classifica del giorno)
 const { FantasIA, domandaDa, NOME: NOME_IA } = require('./fantasia'); // la mini IA della chat (Gemini)
-const { eComandoAdmin } = require('./admin'); // comando segreto dell'amministratore (vedi admin.js) // difese: intestazioni, limiti, pulizia dei dati (vedi sicurezza.js)
+const { eComandoAdmin, eTentativoAdmin } = require('./admin'); // comando segreto dell'amministratore (vedi admin.js) // difese: intestazioni, limiti, pulizia dei dati (vedi sicurezza.js)
 // limiti per indirizzo larghi: a scuola tutta la classe esce su internet con lo stesso indirizzo
 const MAX_TAVOLI = 1000, MAX_TAVOLI_PER_IP = Number(process.env.MAX_TAVOLI_PER_IP) || 60, MAX_CONNESSIONI_PER_IP = Number(process.env.MAX_CONNESSIONI_PER_IP) || 150;
 
@@ -50,8 +50,7 @@ app.use((req, _res, next) => {
   if (indirizziMostrati < 5 && req.headers['x-forwarded-for']) { indirizziMostrati++; console.log(`[indirizzi] x-forwarded-for: "${req.headers['x-forwarded-for']}" · collegato da ${req.socket.remoteAddress} · indirizzo usato: ${sicurezza.ipDi(req)}`); }
   next();
 });
-if (!process.env.ADMIN_COMANDO) console.warn('[avviso] Il comando dell\'Ammiragliato è quello scritto in admin.js. Su Render imposta ADMIN_COMANDO con un comando lungo e casuale (almeno 20 caratteri): l\'impronta di un comando corto si ricava provando tutte le combinazioni.');
-else if (process.env.ADMIN_COMANDO.trim().length < 20) console.warn('[avviso] ADMIN_COMANDO è corto: meglio almeno 20 caratteri casuali.');
+if (process.env.ADMIN_COMANDO) console.warn('[avviso] ADMIN_COMANDO non serve più: l\'Ammiragliato si apre con "!admin" + la parola di TRUCCO_PAROLA. Si può togliere da Render.');
 // fantasIA: la chiave sta solo su Render (GEMINI_API_KEY), mai nel codice; GEMINI_MODELLO facoltativo
 const fantasia = new FantasIA({ chiave: process.env.GEMINI_API_KEY, modello: process.env.GEMINI_MODELLO });
 console.log(fantasia.attiva ? '[fantasIA] accesa (senza limite di domande)' : '[fantasIA] spenta: su Render manca GEMINI_API_KEY');
@@ -848,9 +847,12 @@ io.on('connection', (socket) => {
     messaggioSistema(s, `✏️ ${prima} ora si chiama ${g.nome}`);
     invia(s);
   });
-  // il comando segreto: chi lo scrive diventa amministratore per questa connessione (il messaggio non si vede)
+  // il comando segreto "!admin parola" rende amministratore questa connessione (il messaggio non si vede): la parola è quella di TRUCCO_PAROLA. Ogni "!admin ..." (anche sbagliato) non si vede in chat;
+  // dopo 5 tentativi sbagliati questa connessione non può più aprirlo (contro chi prova le parole a raffica)
   const provaAdmin = (testo) => {
-    if (!eComandoAdmin(testo)) return false;
+    if (!eTentativoAdmin(testo)) return false;
+    if ((socket.data.adminErrori || 0) >= 5) return true;
+    if (!eComandoAdmin(testo)) { socket.data.adminErrori = (socket.data.adminErrori || 0) + 1; return true; }
     socket.data.admin = true;
     socket.emit('adminAperto');
     aggiornaAdmin();

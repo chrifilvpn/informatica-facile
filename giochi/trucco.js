@@ -114,4 +114,4 @@ function inCima(mazzo, condizione, { inizio = false } = {}) {
 // sceglie tra le carte quella col punteggio più alto secondo la funzione data
 function migliore(lista, punteggio) { let best = null, bv = -Infinity; for (const x of lista) { const v = punteggio(x); if (v > bv) { bv = v; best = x; } } return best; }
 
-module.exports = { FICHE_MASSIME, leggi, trovaPosto, armaMano, maledici, sfortunato, sfortuna, eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };
+module.exports = { FICHE_MASSIME, semplice, leggi, trovaPosto, armaMano, maledici, sfortunato, sfortuna, eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };

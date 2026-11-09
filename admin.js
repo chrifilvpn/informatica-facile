@@ -1,15 +1,21 @@
-// AMMINISTRAZIONE: chi scrive in chat (del tavolo o globale) il comando segreto diventa amministratore per quella
+// AMMINISTRAZIONE: chi scrive in chat (del tavolo o globale) "!admin parola" diventa amministratore per quella
 // connessione e vede la lista di chi è online, con la possibilità di esiliarlo dal sito.
-// Il comando non è scritto da nessuna parte: qui c'è solo la sua "impronta" SHA-256, così anche chi legge il codice
-// su GitHub non lo può ricavare. Su Render si può cambiare con la variabile d'ambiente ADMIN_COMANDO.
+// La parola è la stessa del trucco (!win, !lose) e NON è scritta da nessuna parte nel codice: si legge da TRUCCO_PAROLA
+// (variabile d'ambiente su Render). Senza la variabile l'Ammiragliato non si apre. Maiuscole, accenti e spazi non contano.
 const crypto = require('crypto');
-const IMPRONTA = '2ab74e91b07181d128022f8c549f2ca08220fc3e3ba4e403195d7dd40087f7c1';
+const { semplice } = require('./giochi/trucco');
 const impronta = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
+// "!admin" seguito da qualcosa (giusto o sbagliato): questi messaggi non vanno mai in chat
+const eTentativoAdmin = (testo) => /^!admin(\s|$)/.test(semplice(testo));
 function eComandoAdmin(testo) {
-  const t = String(testo || '').trim();
-  if (!t.startsWith('!') || t.length < 8 || t.length > 80) return false;
-  const giusta = process.env.ADMIN_COMANDO ? impronta(process.env.ADMIN_COMANDO.trim()) : IMPRONTA;
-  const a = Buffer.from(impronta(t), 'hex'), b = Buffer.from(giusta, 'hex');
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  const p = semplice(process.env.TRUCCO_PAROLA);
+  if (!p) return false;
+  const t = semplice(testo);
+  if (t.length > 200) return false;
+  const m = /^!admin\s+(.+)$/.exec(t);
+  if (!m) return false;
+  // confronto a tempo costante sulle impronte (non si scopre la parola misurando i tempi di risposta)
+  const a = Buffer.from(impronta(m[1]), 'hex'), b = Buffer.from(impronta(p), 'hex');
+  return crypto.timingSafeEqual(a, b);
 }
-module.exports = { eComandoAdmin, impronta };
+module.exports = { eComandoAdmin, eTentativoAdmin, impronta };
