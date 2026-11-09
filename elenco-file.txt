@@ -56,6 +56,7 @@ giochi/impostore.js
 giochi/index.js
 giochi/interruttori.js
 giochi/mangiatutto.js
+giochi/mano-vincente.js
 giochi/mappa.js
 giochi/massi.js
 giochi/mensola.js
@@ -606,6 +607,7 @@ test/trucco/azione2.js
 test/trucco/carte.js
 test/trucco/casino.js
 test/trucco/infra.js
+test/trucco/mano.js
 test/trucco/parole.js
 test/trucco/rompicapo.js
 test/trucco/strategia.js

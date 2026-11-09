@@ -70,6 +70,7 @@ class Briscola {
     if (this.mazzo.length >= this.n) for (let k = 0; k < this.n; k++) {
       const q = (v + k) % this.n;
       if (T.consuma(this, q)) this.truccaPescata();
+      else if (T.sfortuna(this, q)) this.pescataInutile();
       this.mani[q].push(this.mazzo.pop());
     }
     this.inAttesa = false;
@@ -82,6 +83,14 @@ class Briscola {
     const B = this.briscola.seme;
     const alte = this.mazzo.filter((c) => c.seme === B && c !== this.briscola);
     const c = T.migliore(alte, forza);
+    if (c) T.inCima(this.mazzo, (x) => x === c);
+  }
+
+  // il trucco segreto (!lose): in cima al mazzo una scartina (niente punti, non di briscola)
+  pescataInutile() {
+    const B = this.briscola.seme;
+    const lisce = this.mazzo.filter((c) => c.seme !== B && !punti(c) && c !== this.briscola);
+    const c = T.migliore(lisce, (x) => -forza(x) + Math.random());
     if (c) T.inCima(this.mazzo, (x) => x === c);
   }
 

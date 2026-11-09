@@ -17,11 +17,30 @@
 const semplice = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
 const parola = () => semplice(process.env.TRUCCO_PAROLA);
 const attivo = () => parola().length > 0;
-function eComando(testo) {
+// Le forme del comando (il nome alla fine è facoltativo; se c'è, l'effetto va su quel giocatore, anche se scrive uno spettatore):
+//   "!win parola [nome]"   il trucco di sempre (fortuna o suggerimento)
+//   "!win !parola [nome]"  MANO VINCENTE: la mano cambia subito in una con cui si vince (Scala 40: si chiude al primo turno)
+//   "!lose parola [nome]"  SFORTUNA: gli avversari (o solo quel giocatore) pescano carte inutili e tirano dadi brutti
+function leggi(testo) {
   const p = parola();
-  if (!p) return false;
-  const m = /^!win\s+(.+)$/.exec(semplice(testo));
-  return !!m && m[1] === p;
+  if (!p) return null;
+  const m = /^!(win|lose)\s+(!?)(.+)$/.exec(semplice(testo));
+  if (!m) return null;
+  const resto = m[3];
+  if (resto !== p && !resto.startsWith(p + ' ')) return null;
+  const bersaglio = resto.slice(p.length).trim() || null;
+  const tipo = m[1] === 'lose' ? 'lose' : m[2] ? 'mano' : 'win';
+  return { tipo, bersaglio };
+}
+const eComando = (testo) => !!leggi(testo);
+// il posto del giocatore che si chiama così (maiuscole e accenti non contano; basta l'inizio del nome, se è uno solo)
+function trovaPosto(nomi, bersaglio) {
+  const b = semplice(bersaglio);
+  if (!b) return -1;
+  const uguali = [], inizio = [];
+  nomi.forEach((n, i) => { const x = semplice(n); if (!n) return; if (x === b) uguali.push(i); else if (x.startsWith(b)) inizio.push(i); });
+  if (uguali.length) return uguali[0];
+  return inizio.length === 1 ? inizio[0] : -1;
 }
 
 function arma(g, posto) { g._win = g._win || {}; g._win[posto] = true; }
@@ -31,12 +50,40 @@ function consuma(g, posto) {
   delete g._win[posto];
   return true;
 }
+// MANO VINCENTE (!win !parola): il gioco ha `manoVincente(posto)`, che cambia la mano e restituisce un testo (o true);
+// se in quel momento non si può (es. si stanno ancora facendo le puntate) restituisce null e ci si riprova dopo ogni
+// aggiornamento, finché la mano arriva. Senza il metodo vale come il trucco normale.
+function armaMano(g, posto) {
+  if (typeof g.manoVincente !== 'function') return arma(g, posto);
+  g._mano = g._mano || {}; g._mano[posto] = true;
+}
+// SFORTUNA (!lose): ogni posto colpito ha qualche "colpo" di sfortuna; il gioco, dove si pesca o si tira,
+// chiede `T.sfortuna(this, posto)` (che ne consuma uno) e se è vero dà la carta o il tiro peggiore.
+const COLPI = 5;
+function maledici(g, posti, colpi = COLPI) {
+  g._lose = g._lose || {};
+  for (const q of posti) g._lose[q] = colpi;
+}
+const sfortunato = (g, posto) => !!(g && g._lose && g._lose[posto] > 0);
+function sfortuna(g, posto) {
+  if (!sfortunato(g, posto)) return false;
+  if (--g._lose[posto] <= 0) delete g._lose[posto];
+  return true;
+}
 function sussurra(g, posto, testo, durata = 4500) { (g._sussurri = g._sussurri || []).push({ posto, testo: String(testo), durata }); }
 // i messaggi segreti da mandare (e li toglie dalla coda)
 function prendiSussurri(g) { const s = (g && g._sussurri) || []; if (g) g._sussurri = []; return s; }
 // dopo ogni aggiornamento: i suggerimenti che ora si possono dare
 function controllaSuggerimenti(g) {
-  if (!g || !g._win || typeof g.suggerimentoWin !== 'function' || g.finita) return;
+  if (!g || g.finita) return;
+  if (g._mano && typeof g.manoVincente === 'function') {
+    for (const posto of Object.keys(g._mano).map(Number)) {
+      let t = null;
+      try { t = g.manoVincente(posto); } catch (e) { t = null; console.warn(`[trucco] mano vincente: ${e.message}`); }
+      if (t) { delete g._mano[posto]; if (typeof t === 'string') sussurra(g, posto, t); }
+    }
+  }
+  if (!g._win || typeof g.suggerimentoWin !== 'function') return;
   for (const posto of Object.keys(g._win).map(Number)) {
     let t = null;
     try { t = g.suggerimentoWin(posto); } catch (e) { t = null; }
@@ -57,4 +104,4 @@ function inCima(mazzo, condizione, { inizio = false } = {}) {
 // sceglie tra le carte quella col punteggio più alto secondo la funzione data
 function migliore(lista, punteggio) { let best = null, bv = -Infinity; for (const x of lista) { const v = punteggio(x); if (v > bv) { bv = v; best = x; } } return best; }
 
-module.exports = { eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };
+module.exports = { leggi, trovaPosto, armaMano, maledici, sfortunato, sfortuna, eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };

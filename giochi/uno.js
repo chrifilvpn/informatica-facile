@@ -83,6 +83,30 @@ class Uno {
     mescola(this.mazzo);
   }
 
+  // il trucco segreto (!win !parola): la mano diventa quattro o cinque carte con lo stesso numero, di tutti e
+  // quattro i colori: una si può sempre giocare e insieme si calano tutte (o un jolly per cambiare colore e un
+  // gruppo di numeri). Poi sei tu a calarle al tuo turno.
+  manoVincente(p) {
+    const mano = this.mani[p];
+    if (this.finita || !mano || this.inAttesa) return null;
+    const pool = [...this.mazzo, ...mano];
+    const valori = mescola(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
+    for (const v of valori) {
+      const perColore = COLORI.map((c) => pool.filter((x) => x.valore === v && x.colore === c));
+      if (perColore.some((l) => !l.length)) continue;
+      let nuova = perColore.map((l) => l[0]);
+      const r = Math.random();
+      if (r < 0.35) { const extra = perColore.find((l) => l.length > 1); if (extra) nuova.push(extra[1]); }
+      else if (r < 0.6) { const j = pool.find((x) => x.valore === 'jolly'); if (j) nuova = [...nuova.slice(0, 2 + Math.floor(Math.random() * 2)), j]; }
+      const usate = new Set(nuova.map((x) => x.id));
+      this.mani[p] = mescola(nuova);
+      this.mazzo = mescola(pool.filter((x) => !usate.has(x.id)));
+      if (this.turno === p) this.pescata = null;
+      return '🃏 Mano cambiata: al tuo turno cala insieme le carte uguali';
+    }
+    return null;
+  }
+
   giocabile(c) {
     if (this.accumulo) return this.tipoAccumulo === '+2' ? c.valore === '+2' || c.valore === '+4' : c.valore === '+4';
     if (nera(c)) return true;
@@ -159,6 +183,8 @@ class Uno {
       return this.passoPesca();
     }
     if (this.puoGiocare(p) && !this.soloPiu(p)) return { errore: 'Hai una carta giocabile: giocala' };
+    // il trucco segreto (!lose): prima della carta buona ne arrivano due che non si possono giocare
+    if (T.sfortuna(this, p)) for (let k = 0; k < 2; k++) T.inCima(this.mazzo, (c) => !nera(c) && !this.giocabile(c));
     this.pescando = { posto: p, resta: 'giocabile', prese: 0 };
     return this.passoPesca();
   }

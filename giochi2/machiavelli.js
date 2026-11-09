@@ -5,6 +5,7 @@
 // Vince chi resta senza carte. Le carte hanno id "7c" e "7cb" (secondo mazzo).
 const { mescola } = require('../giochi/carte');
 const T = require('../giochi/trucco');
+const MV = require('../giochi/mano-vincente');
 const { ora } = require('../giochi/orologio'); // orologio vero (nel sito) o finto (nei test)
 
 const SEMI = ['c', 'q', 'f', 'p'];
@@ -261,6 +262,7 @@ class Machiavelli {
     if (a.tipo === 'pesca') {
       if (!this.mazzo.length) return { errore: 'Il mazzo è finito: puoi solo calare o passare' };
       if (T.consuma(this, p)) this.truccaPescata(p);
+      else if (T.sfortuna(this, p)) this.truccaPescata(p, true);
       this.mani[p].push(this.mazzo.pop());
       this.ultima = { posto: p, tipo: 'pesca', nuove: [], n: ++this.nMossa };
       return this.passaTurno(p);
@@ -320,7 +322,31 @@ class Machiavelli {
     return `💡 Cala ${m.usate} ${m.usate === 1 ? 'carta' : 'carte'}${tutte}: ${nuovi.map((g) => g.map(sigla).join(' ')).join(' · ')}`;
   }
 
-  truccaPescata(p) {
+  // il trucco segreto (!win !parola): tutte le carte della mano diventano scale e tris (con poche carte, carte che
+  // si attaccano ai gruppi in tavola): al tuo turno cali tutto e vinci. Le carte vengono dal mazzo.
+  manoVincente(p) {
+    const mano = this.mani[p];
+    if (this.finita || !mano) return null;
+    const pool = [...this.mazzo, ...mano];
+    let nuova = null;
+    if (mano.length >= 3) {
+      const gruppi = MV.costruisci(pool, mano.length, { valuta, conJolly: 0 });
+      if (gruppi) nuova = gruppi.flat();
+    } else if (mano.length) {
+      const buone = mescola(pool.filter((c) => this.tavolo.some((g) => valuta([...g, c]))));
+      const r = new Set();
+      nuova = buone.filter((c) => { const k = `${c.rango}${c.seme}`; if (r.has(k)) return false; r.add(k); return true; }).slice(0, mano.length);
+      if (nuova.length < mano.length) nuova = null;
+    }
+    if (!nuova) return '🃏 Adesso non riesco a darti una mano vincente: riprova più tardi';
+    const usate = new Set(nuova.map((c) => c.id));
+    this.mani[p] = mescola(nuova);
+    this.mazzo = mescola(pool.filter((c) => !usate.has(c.id)));
+    return '🃏 Mano cambiata: al tuo turno cala tutte le carte';
+  }
+
+  // con `peggiore` (il trucco !lose) la carta pescata è quella che serve di meno
+  truccaPescata(p, peggiore = false) {
     const mano = this.mani[p], tav = this.tavolo;
     const punteggio = (c) => {
       let v = 0;
@@ -331,7 +357,7 @@ class Machiavelli {
       if (tav.some((g) => valuta([...g, c]))) v += 3; // si attacca subito a una combinazione in tavola
       return v + Math.random();
     };
-    const c = T.migliore(this.mazzo, punteggio);
+    const c = T.migliore(this.mazzo, peggiore ? (x) => -punteggio(x) : punteggio);
     if (c) T.inCima(this.mazzo, (x) => x === c);
   }
 

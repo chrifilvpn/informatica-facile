@@ -2,6 +2,7 @@
 // Giro di puntate, cambio (da 0 a 5 carte), secondo giro di puntate, confronto.
 const { Poker, migliore, nomeMano, equita, forzaMano, decidi, valuta5, v14 } = require('./poker-motore');
 const T = require('./trucco');
+const MV = require('./mano-vincente');
 const aCaso = (l) => l[Math.floor(Math.random() * l.length)];
 
 class Poker5 extends Poker {
@@ -43,6 +44,30 @@ class Poker5 extends Poker {
     return true;
   }
 
+  // il trucco segreto (!win !parola): le tue cinque carte diventano una mano forte (full, colore, scala, poker…)
+  // migliore di quelle degli altri; poi sei tu a puntare (e a decidere se cambiare). Tra una mano e l'altra si aspetta.
+  manoVincente(p) {
+    if (!['giro', 'cambio'].includes(this.fase) || this.inAttesa || !this.inMano[p] || !this.carte[p] || this.carte[p].length !== 5) return null;
+    const pool = [...this.mazzo, ...this.carte[p]];
+    const altri = this.carte.map((x, i) => (i !== p && this.inMano[i] && x.length === 5 ? valuta5(x).punti : -1));
+    for (let t = 0; t < 30; t++) {
+      const nuove = MV.manoPoker(pool);
+      if (!nuove || altri.some((v) => v >= valuta5(nuove).punti)) continue;
+      this.mazzo = pool.filter((c) => !nuove.includes(c));
+      for (let i = this.mazzo.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [this.mazzo[i], this.mazzo[j]] = [this.mazzo[j], this.mazzo[i]]; }
+      this.carte[p] = nuove;
+      return '🃏 Mano cambiata: ora punta tu';
+    }
+    return null;
+  }
+
+  // il trucco segreto (!lose): le carte nuove del cambio non si abbinano a niente (rango diverso, niente vicine)
+  cartaInutile(p) {
+    const mano = this.carte[p];
+    const ok = (c) => !mano.some((x) => x.rango === c.rango || Math.abs(x.rango - c.rango) <= 1) && mano.filter((x) => x.seme === c.seme).length < 2;
+    T.inCima(this.mazzo, ok);
+  }
+
   fineGiro() {
     if (this.giro === 2) return this.confronto();
     // cambio: a turno, partendo da sinistra del mazziere (anche chi è all-in cambia)
@@ -73,7 +98,8 @@ class Poker5 extends Poker {
       if (ids.length > 5) return { errore: 'Puoi cambiare al massimo 5 carte' };
       if (!ids.every((id) => this.carte[p].some((c) => c.id === id))) return { errore: 'Non hai queste carte' };
       this.carte[p] = this.carte[p].filter((c) => { if (ids.includes(c.id)) { this.scarti.push(c); return false; } return true; });
-      while (this.carte[p].length < 5) this.carte[p].push(this.pesca());
+      const sfiga = ids.length && T.sfortuna(this, p);
+      while (this.carte[p].length < 5) { if (sfiga && this.mazzo.length) this.cartaInutile(p); this.carte[p].push(this.pesca()); }
       this.cambiate[p] = ids.length;
       this.ultima[p] = ids.length ? `cambia ${ids.length}` : 'servito';
       this.annuncia(p, ids.length ? `cambia ${ids.length} ${ids.length === 1 ? 'carta' : 'carte'}` : 'è servito', ids.length ? `cambi ${ids.length} ${ids.length === 1 ? 'carta' : 'carte'}` : 'sei servito');

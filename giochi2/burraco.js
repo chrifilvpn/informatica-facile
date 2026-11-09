@@ -7,6 +7,7 @@
 const { mazzoDoppio, mescola, casuale } = require('../giochi/carte');
 const { SEMI, punti, eMatta, valuta, bonus } = require('./burraco-regole');
 const T = require('../giochi/trucco');
+const MV = require('../giochi/mano-vincente');
 
 const CARTE_MANO = 11;
 const OBIETTIVI = [2005, 1005, 1]; // 1 = una sola smazzata
@@ -42,6 +43,52 @@ class Burraco {
 
   // il trucco segreto (!win): si pesca un jolly, se nel tallone ce n'è ancora; se no la carta che rende di più alla
   // mano (quella che chiude una scala o una combinazione, o che si attacca a quelle in tavola)
+  // il trucco segreto (!win !parola): la mano diventa scale e tris, con dentro un burraco pulito (scala di 7) se la
+  // squadra non ne ha ancora uno. Al tuo turno cali tutto: senza pozzetto lo prendi al volo, con il pozzetto chiudi
+  // scartando l'ultima carta. Le carte vengono dal tallone (la mano vecchia ci torna).
+  manoVincente(p) {
+    if (this.finita || this.inAttesa || !this.mani[p]) return null;
+    const t = squadra(p), mano = this.mani[p];
+    const inGioca = this.turno === p && this.fase === 'gioca';
+    const n = inGioca ? mano.length - 1 : mano.length;
+    const pool = [...this.tallone, ...mano];
+    const puliti = pool.filter((c) => !eMatta(c));
+    const v = (c) => valuta(c);
+    let nuova = null;
+    for (let prova = 0; prova < 30 && !nuova; prova++) {
+      if (this.haBurraco(t)) {
+        const gr = n >= 3 ? MV.costruisci(puliti, n, { valuta: v, conJolly: 0 }) : null;
+        if (gr) nuova = gr.flat();
+      } else if (n >= 7) {
+        const L = n - 7 >= 3 ? 7 : n;
+        const scala = MV.prendiScala(puliti, L, false, true);
+        if (!scala || !valuta(scala)) continue;
+        const resto = n - L ? MV.costruisci(puliti.filter((c) => !scala.includes(c)), n - L, { valuta: v, conJolly: 0 }) : [];
+        if (resto) nuova = [...scala, ...resto.flat()];
+      } else break;
+    }
+    if (n === 0) nuova = [];
+    if (!nuova) return '🃏 Adesso non riesco a darti una mano vincente: riprova al prossimo turno';
+    if (inGioca) {
+      const scarto = puliti.filter((c) => !nuova.includes(c));
+      if (!scarto.length) return null;
+      nuova.push(casuale(scarto));
+      this.tt.scarti = 0;
+    }
+    const usate = new Set(nuova.map((c) => c.id));
+    this.mani[p] = mescola(nuova);
+    this.tallone = mescola(pool.filter((c) => !usate.has(c.id)));
+    return this.pozzettoPreso[t] ? '🃏 Mano cambiata: cala tutto e scarta l\'ultima carta per chiudere' : '🃏 Mano cambiata: cala tutto e prendi il pozzetto';
+  }
+
+  // il trucco segreto (!lose): la carta del tallone che rende di meno (mai jolly o pinelle)
+  pescataInutile(p) {
+    const mano = this.mani[p], comb = this.combinazioni[squadra(p)];
+    const cand = this.tallone.filter((c) => !eMatta(c));
+    const c = T.migliore(cand, (x) => -valoreMano(this, p, [...mano, x], comb) + Math.random());
+    if (c) T.inCima(this.tallone, (x) => x === c);
+  }
+
   truccaPescata(p) {
     if (T.inCima(this.tallone, (c) => c.jolly)) return;
     const mano = this.mani[p], comb = this.combinazioni[squadra(p)];
@@ -137,6 +184,7 @@ class Burraco {
       } else {
         if (!this.tallone.length) return { errore: 'Il tallone è finito' };
         if (T.consuma(this, p)) this.truccaPescata(p);
+        else if (T.sfortuna(this, p)) this.pescataInutile(p);
         this.mani[p].push(this.tallone.pop());
       }
       this.fase = 'gioca';

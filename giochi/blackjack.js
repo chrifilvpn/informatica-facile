@@ -59,6 +59,40 @@ class Blackjack extends Casino {
     this.codaTrucco[p] = seq.slice(2);
   }
 
+  // il trucco segreto (!win !parola): appena la mano è servita, le sue carte diventano quelle del trucco (21 che arriva
+  // chiedendo carta, o il blackjack); poi sei tu a chiedere carta e fermarti. Durante le puntate si aspetta la distribuzione.
+  manoVincente(p) {
+    if (this.fase !== 'turni') return null;
+    const ms = this.mani[p];
+    if (!ms || ms.length !== 1 || ms[0].stato !== 'gioca' || ms[0].carte.length !== 2) return null;
+    this.serviVentuno(p);
+    if (!this.truccati.includes(p)) this.truccati.push(p);
+    if (isBlackjack(ms[0])) { ms[0].stato = 'blackjack'; if (this.turno === p) this.prossimaMano(); }
+    return '🃏 Mano cambiata: chiedi carta finché non arrivi a 21';
+  }
+
+  // il trucco segreto (!lose): due carte "dure" (da 13 a 16, niente assi) e la prossima carta chiesta vale 10
+  serviSfortuna(p) {
+    const m = this.mani[p][0];
+    if (this.scarpa.length < 20) this.scarpa.unshift(...scarpa(1));
+    const v = valoreCarta;
+    const idx = [];
+    for (let t = 0; t < 200 && idx.length < 2; t++) {
+      const i = Math.floor(Math.random() * this.scarpa.length), j = Math.floor(Math.random() * this.scarpa.length);
+      const a = this.scarpa[i], b = this.scarpa[j];
+      if (i === j || a.rango === 1 || b.rango === 1 || v(a) === v(b)) continue;
+      const tot = v(a) + v(b);
+      if (tot >= 13 && tot <= 16) idx.push(i, j);
+    }
+    if (idx.length < 2) return;
+    const [a, b] = [this.scarpa[idx[0]], this.scarpa[idx[1]]];
+    this.scarpa = this.scarpa.filter((c) => c !== a && c !== b);
+    this.scarpa.unshift(...m.carte);
+    m.carte = [a, b];
+    const d = this.scarpa.findIndex((c) => v(c) === 10);
+    if (d >= 0) this.codaTrucco[p] = this.scarpa.splice(d, 1);
+  }
+
   // la carta per una mano: se c'è una coda del trucco si prende da lì
   pescaPer(p, m) {
     const coda = this.codaTrucco[p];
@@ -185,6 +219,7 @@ class Blackjack extends Casino {
     const truccati = inGioco.filter((i) => T.consuma(this, i));
     this.truccati = truccati;
     for (const i of truccati) { if (Math.random() < 0.1) this.serviBlackjack(this.mani[i][0]); else this.serviVentuno(i); }
+    for (const i of inGioco) if (!truccati.includes(i) && T.sfortuna(this, i)) this.serviSfortuna(i);
     if (truccati.length && conta(this.banco).tot === 21) { const j = this.scarpa.findIndex((c) => valoreCarta(c) <= 6); if (j >= 0) [this.banco[1], this.scarpa[j]] = [this.scarpa[j], this.banco[1]]; }
     for (const i of inGioco) if (isBlackjack(this.mani[i][0])) this.mani[i][0].stato = 'blackjack';
     // il banco controlla la carta coperta se mostra asso o 10

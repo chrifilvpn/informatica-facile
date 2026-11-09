@@ -71,7 +71,7 @@ class ShutBox {
       if (uno && !this.possoUnDado) return { errore: 'Un dado solo si tira quando le tessere alzate fanno 6 o meno' };
       // il trucco segreto (!win): da qui alla fine del turno i dadi danno sempre il tiro migliore
       if (T.consuma(this, p)) this.truccato = p;
-      this.dadi = this.truccato === p ? this.dadiMigliori(uno) : uno ? [dado()] : [dado(), dado()];
+      this.dadi = this.truccato === p ? this.dadiMigliori(uno) : T.sfortuna(this, p) ? this.dadiMigliori(uno, true) : uno ? [dado()] : [dado(), dado()];
       this.nTiri++;
       const s = this.dadi.reduce((x, y) => x + y, 0);
       if (!combinazioni(this.alzate, s, this.max).length) return this.fineTurno(`ha tirato ${s}: nessuna combinazione possibile`);
@@ -96,12 +96,14 @@ class ShutBox {
     return { errore: 'Mossa non valida' };
   }
   // i dadi che permettono di abbassare tessere lasciando la situazione migliore (meno punti attesi)
-  dadiMigliori(uno) {
+  // con `peggiori` (il trucco !lose) i dadi che lasciano più numeri alzati
+  dadiMigliori(uno, peggiori = false) {
     let best = null, bv = Infinity;
     const tiri = uno ? [1, 2, 3, 4, 5, 6].map((a) => [a]) : [].concat(...[1, 2, 3, 4, 5, 6].map((a) => [1, 2, 3, 4, 5, 6].map((b) => [a, b])));
     for (const d of tiri) {
       const cs = combinazioni(this.alzate, d.reduce((x, y) => x + y, 0), this.max);
-      const v = (cs.length ? Math.min(...cs.map((c) => atteso(this.max, this.alzate & ~c))) : 1000 + sommaDi(this.alzate)) + Math.random() * 0.01;
+      let v = (cs.length ? Math.min(...cs.map((c) => atteso(this.max, this.alzate & ~c))) : 1000 + sommaDi(this.alzate)) + Math.random() * 0.01;
+      if (peggiori) v = -v;
       if (v < bv) { bv = v; best = d; }
     }
     return best;

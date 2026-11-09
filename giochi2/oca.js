@@ -57,14 +57,16 @@ class Oca {
     if (this.inAttesa) return { errore: 'Un attimo: la pedina sta camminando…' };
     if (p !== this.turno) return { errore: 'Non è il tuo turno' };
     if (!a || a.tipo !== 'tira') return { errore: 'Mossa non valida' };
-    return this.tira(p, T.consuma(this, p) ? this.dadiMigliori(p) : [dado(), dado()]);
+    return this.tira(p, T.consuma(this, p) ? this.dadiMigliori(p) : T.sfortuna(this, p) ? this.dadiMigliori(p, true) : [dado(), dado()]);
   }
   // il trucco segreto (!win): i dadi che portano più avanti (o dritti al 63), evitando pozzo, prigione e locanda
-  dadiMigliori(chi) {
+  // con `peggiori` (il trucco !lose) i dadi che portano nella casella peggiore
+  dadiMigliori(chi, peggiori = false) {
     const p = this.pedina(chi);
     let best = null, bv = -Infinity;
     for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) {
-      const v = valoreCasella(arrivo(this.pos[p], [a, b], this.tiri[p] === 0)) + Math.random() * 0.5;
+      let v = valoreCasella(arrivo(this.pos[p], [a, b], this.tiri[p] === 0)) + Math.random() * 0.5;
+      if (peggiori) v = -v;
       if (v > bv) { bv = v; best = [a, b]; }
     }
     return best;

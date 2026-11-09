@@ -317,7 +317,7 @@ function aggiorna(s) {
   gestisciTick(s);
 }
 
-// IL TRUCCO SEGRETO (!win + parola segreta): i suggerimenti e i messaggi segreti del gioco vanno solo a chi li ha chiesti
+// IL TRUCCO SEGRETO (!win / !win ! / !lose + parola segreta): i suggerimenti e i messaggi segreti del gioco vanno solo a chi li ha chiesti
 function inviaSussurri(s) {
   const g = s.partita;
   if (!g) return;
@@ -327,12 +327,33 @@ function inviaSussurri(s) {
     if (x && !x.bot && x.socketId) io.to(x.socketId).emit('segreto', { testo: m.testo, durata: m.durata });
   }
 }
-function attivaTrucco(s, posto) {
+// c = { tipo: 'win' | 'mano' | 'lose', bersaglio: nome o null }; posto = chi scrive (-1 se è uno spettatore).
+// Con il nome l'effetto va su quel giocatore; senza, su chi scrive (o, con !lose, su tutti gli altri).
+// Restituisce un avviso da mostrare solo a chi ha scritto (o null).
+function attivaTrucco(s, posto, c = { tipo: 'win', bersaglio: null }) {
   const g = s.partita;
-  if (!g || g.finita) return;
-  TRUCCO.arma(g, posto);
-  try { if (typeof g.trucco === 'function') g.trucco(posto); } catch (e) { console.warn(`[${s.gioco}] errore nel trucco: ${e.message}`); }
+  if (!g || g.finita) return null;
+  let bersaglio = posto;
+  if (c.bersaglio) {
+    bersaglio = TRUCCO.trovaPosto(s.posti.map((x) => (x ? x.nome : null)), c.bersaglio);
+    if (bersaglio < 0) return `🤫 Nessun giocatore al tavolo si chiama «${c.bersaglio}»`;
+  }
+  try {
+    if (c.tipo === 'lose') {
+      const colpiti = c.bersaglio ? [bersaglio] : s.posti.map((x, i) => (x && i !== posto ? i : -1)).filter((i) => i >= 0);
+      TRUCCO.maledici(g, colpiti);
+      if (typeof g.sfiga === 'function') g.sfiga(colpiti);
+    } else {
+      if (bersaglio < 0) return '🤫 Da spettatore scrivi anche il nome del giocatore, dopo la parola';
+      if (c.tipo === 'mano') TRUCCO.armaMano(g, bersaglio);
+      else {
+        TRUCCO.arma(g, bersaglio);
+        if (typeof g.trucco === 'function') g.trucco(bersaglio);
+      }
+    }
+  } catch (e) { console.warn(`[${s.gioco}] errore nel trucco: ${e.message}`); }
   aggiorna(s);
+  return null;
 }
 
 // ---- giochi in tempo reale: la partita espone tick(ora), tickMs e vistaTick(posto) ----
@@ -1320,7 +1341,15 @@ io.on('connection', (socket) => {
 
   socket.on('chat', (testo) => {
     // il trucco segreto: nessun messaggio, nessun avviso, per nessuno
-    if (TRUCCO.eComando(testo)) { const i = mioPosto(); if (stanza && i >= 0) attivaTrucco(stanza, i); return; }
+    const trucco = TRUCCO.leggi(testo);
+    if (trucco) {
+      const i = mioPosto();
+      if (stanza && (i >= 0 || sonoSpettatore())) {
+        const avviso = attivaTrucco(stanza, i, trucco);
+        if (avviso) socket.emit('segreto', { testo: avviso, durata: 4000 });
+      }
+      return;
+    }
     if (provaAdmin(testo)) return;
     if (!COMANDI[String(testo || '').trim().toLowerCase().split(/\s+/)[0]] && domandaDa(testo) === null) comandoFinto(testo);
     const s = stanza;

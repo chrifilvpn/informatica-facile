@@ -253,7 +253,7 @@ class Affari {
         return { ok: true };
       }
       if (a.tipo !== 'tira') return { errore: 'Tira i dadi' };
-      return this.tira(p, T.consuma(this, p) ? this.dadiMigliori(p) : undefined);
+      return this.tira(p, T.consuma(this, p) ? this.dadiMigliori(p) : T.sfortuna(this, p) ? this.dadiMigliori(p, true) : undefined);
     }
     if (this.fase === 'fine') {
       if (a.tipo !== 'fine') return { errore: 'Chiudi il turno' };
@@ -294,7 +294,8 @@ class Affari {
   }
   // il trucco segreto (!win): i dadi che portano p sulla casella migliore (una proprietà libera che gli conviene,
   // niente affitti, tasse o prigione; in prigione un doppio per uscire)
-  dadiMigliori(p) {
+  // con `peggiori` (il trucco !lose) i dadi che portano nella casella peggiore
+  dadiMigliori(p, peggiori = false) {
     let best = null, bv = -Infinity;
     for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) {
       const doppio = a === b, s = a + b, c = (this.pos[p] + s) % 40, x = CASELLE[c];
@@ -312,6 +313,7 @@ class Affari {
         else if (x.tipo === 'vaiprigione') v -= 400;
         else if (x.tipo === 'parcheggio' && this.parcheggio) v += this.piatto;
       }
+      if (peggiori) v = -v;
       if (v > bv) { bv = v; best = [a, b]; }
     }
     return best;
