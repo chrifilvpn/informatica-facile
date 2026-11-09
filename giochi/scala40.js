@@ -125,9 +125,8 @@ class Scala40 {
       const gruppi = MV.costruisci(pool, n, { valuta, minPunti: APERTURA, conJolly: 0.25 });
       if (gruppi) nuova = gruppi.flat();
     } else if (this.aperto[p]) {
-      // poche carte: quelle che si attaccano ai giochi in tavola (nel turno in cui apri, solo ai tuoi)
-      const tavola = this.combinazioni.filter((m) => !(inGioca && this.tt.apertoOra && m.posto !== p));
-      const buone = pool.filter((c) => !c.jolly && tavola.some((m) => attaccabile(m, c)));
+      // poche carte: quelle che si attaccano ai giochi in tavola
+      const buone = pool.filter((c) => !c.jolly && this.combinazioni.some((m) => attaccabile(m, c)));
       const viste = new Set();
       nuova = [];
       for (const c of mescola(buone)) {
