@@ -44,14 +44,16 @@ class Blackjack extends Casino {
   }
 
   // il trucco, versione "che non si nota": due carte normali, e le carte che arrivano chiedendo carta portano a 21 piano piano
-  // (7+7+7, 5+3+9+4, 2+A+8+10…). Le carte successive aspettano in this.codaTrucco[posto], che il browser non vede.
+  // (5+3+9+4, 2+A+8+10, 6+4+3+2+6…). Le carte successive aspettano in this.codaTrucco[posto], che il browser non vede.
   // Se non trova una sequenza adatta (scarpa quasi finita) serve il blackjack.
   serviVentuno(p) {
     const m = this.mani[p][0];
     if (this.scarpa.length < 20) this.scarpa.unshift(...scarpa(1));
     this.scarpa.unshift(...m.carte);
-    const seq = sequenzaVentuno(this.scarpa);
+    this.ultimeTrucco = this.ultimeTrucco || [];
+    const seq = sequenzaVentuno(this.scarpa, this.ultimeTrucco);
     if (!seq) { m.carte = []; this.serviBlackjack(m); return; }
+    this.ultimeTrucco = [seq.map(valoreCarta).sort((x, y) => x - y).join(','), ...this.ultimeTrucco].slice(0, 12);
     for (const c of seq) this.scarpa.splice(this.scarpa.indexOf(c), 1);
     m.carte = seq.slice(0, 2);
     this.codaTrucco[p] = seq.slice(2);
@@ -179,10 +181,10 @@ class Blackjack extends Casino {
       for (const i of inGioco) this.mani[i][0].carte.push(this.pesca());
       this.banco.push(this.pesca());
     }
-    // il trucco segreto (!win): a volte blackjack servito, a volte 21 che arriva chiedendo carta; il banco non fa 21
+    // il trucco segreto (!win): di rado blackjack servito, quasi sempre 21 che arriva chiedendo carta; il banco non fa 21
     const truccati = inGioco.filter((i) => T.consuma(this, i));
     this.truccati = truccati;
-    for (const i of truccati) { if (Math.random() < 0.35) this.serviBlackjack(this.mani[i][0]); else this.serviVentuno(i); }
+    for (const i of truccati) { if (Math.random() < 0.1) this.serviBlackjack(this.mani[i][0]); else this.serviVentuno(i); }
     if (truccati.length && conta(this.banco).tot === 21) { const j = this.scarpa.findIndex((c) => valoreCarta(c) <= 6); if (j >= 0) [this.banco[1], this.scarpa[j]] = [this.scarpa[j], this.banco[1]]; }
     for (const i of inGioco) if (isBlackjack(this.mani[i][0])) this.mani[i][0].stato = 'blackjack';
     // il banco controlla la carta coperta se mostra asso o 10
@@ -307,24 +309,33 @@ class Blackjack extends Casino {
   }
 }
 
-// Il trucco: da 3 a 5 carte prese dalla scarpa che arrivano a 21 solo all'ultima (prima mai 21 né sballato).
-// Le prime due stanno tra 4 e 14, così chiedere carta viene naturale. Ogni tanto tre carte uguali (7+7+7).
-function sequenzaVentuno(carte) {
+// Il trucco: da 3 a 6 carte prese dalla scarpa che arrivano a 21 solo all'ultima (prima mai 21 né sballato).
+// Le prime due stanno tra 4 e 15, così chiedere carta viene naturale. I valori si scelgono tutti con la stessa
+// probabilità (asso, 2…9, 10/figura), così le figure non escono più delle altre, e le combinazioni usate di recente
+// (`evita`, chiavi come "2,5,6,8") non si ripetono: ogni mano truccata è diversa dalle ultime.
+function sequenzaVentuno(carte, evita = []) {
+  const chiave = (seq) => seq.map(valoreCarta).sort((x, y) => x - y).join(',');
   const ok = (seq) => {
     for (let k = 2; k < seq.length; k++) if (conta(seq.slice(0, k)).tot >= 21) return false;
     const due = conta(seq.slice(0, 2)).tot;
-    return due >= 4 && due <= 14 && conta(seq).tot === 21;
+    return due >= 4 && due <= 15 && conta(seq).tot === 21;
   };
-  if (Math.random() < 0.2) {
-    const sette = carte.filter((c) => c.rango === 7);
-    if (sette.length >= 3) return sette.sort(() => Math.random() - 0.5).slice(0, 3);
-  }
-  for (let prova = 0; prova < 3000; prova++) {
-    const n = [3, 3, 3, 4, 4, 5][Math.floor(Math.random() * 6)];
-    const scelte = new Set();
-    while (scelte.size < n && scelte.size < carte.length) scelte.add(Math.floor(Math.random() * carte.length));
-    const seq = [...scelte].map((i) => carte[i]);
-    if (ok(seq)) return seq;
+  for (let prova = 0; prova < 4000; prova++) {
+    const n = [3, 3, 4, 4, 4, 5, 5, 6][Math.floor(Math.random() * 8)];
+    const usate = new Set();
+    const seq = [];
+    for (let k = 0; k < n; k++) {
+      const v = 1 + Math.floor(Math.random() * 10); // 1 = asso, 10 = dieci o figura
+      const adatte = [];
+      carte.forEach((c, i) => { if (!usate.has(i) && (v === 1 ? c.rango === 1 : v === 10 ? valoreCarta(c) === 10 : c.rango === v)) adatte.push(i); });
+      if (!adatte.length) break;
+      const i = adatte[Math.floor(Math.random() * adatte.length)];
+      usate.add(i);
+      seq.push(carte[i]);
+    }
+    if (seq.length !== n || !ok(seq)) continue;
+    if (prova < 3000 && evita.includes(chiave(seq))) continue;
+    return seq;
   }
   return null;
 }

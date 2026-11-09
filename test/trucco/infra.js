@@ -35,7 +35,8 @@ const { GIOCHI } = require('../../giochi');
 {
   const B = GIOCHI.blackjack;
   const { conta } = B._test;
-  let dirette = 0, piano = 0, sette = 0;
+  let dirette = 0, piano = 0;
+  const combinazioni = {};
   for (let k = 0; k < 300; k++) {
     const g = B.crea({ n: 2, primo: 0, opzioni: {}, bot: [null, 'medio'] });
     const tutte = g.scarpa.length;
@@ -56,8 +57,9 @@ const { GIOCHI } = require('../../giochi');
         g.azione(0, { tipo: 'carta' });
       }
       assert.strictEqual(conta(m.carte).tot, 21, '21 chiedendo carta');
-      assert.ok(m.carte.length >= 3 && m.carte.length <= 5);
-      if (m.carte.length === 3 && m.carte.every((c) => c.rango === 7)) sette++;
+      assert.ok(m.carte.length >= 3 && m.carte.length <= 6);
+      const k = m.carte.map((c) => Math.min(10, c.rango)).sort((x, y) => x - y).join(',');
+      combinazioni[k] = (combinazioni[k] || 0) + 1;
       piano++;
     }
     while (g.fase !== 'puntate') { if (g.turno === 1) g.azione(1, B.bot(g, 1, 'medio')); else g.avanza(); }
@@ -65,7 +67,10 @@ const { GIOCHI } = require('../../giochi');
     const ids = new Set([...g.scarpa, ...g.banco, ...g.mani.flat().flatMap((x) => x.carte)].map((c) => c.id));
     assert.ok(ids.size > 0 && tutte > 0);
   }
-  assert.ok(dirette > 40 && piano > 120 && sette > 5, `un po' e un po': ${dirette} dirette, ${piano} piano piano, ${sette} 7+7+7`);
+  const diverse = Object.keys(combinazioni).length, piuUsata = Math.max(...Object.values(combinazioni));
+  assert.ok(dirette > 5 && dirette < 70 && piano > 220, `quasi sempre piano piano: ${dirette} dirette, ${piano} piano piano`);
+  assert.ok(diverse > 80 && piuUsata < 15, `mani varie: ${diverse} combinazioni diverse, la più usata ${piuUsata} volte`);
+  assert.ok(Object.keys(combinazioni).some((k) => k.split(',').length >= 5), 'anche mani da 5-6 carte');
   // fermarsi prima: le carte del trucco tornano nella scarpa e il gioco va avanti normale
   for (let k = 0; k < 50; k++) {
     const g = B.crea({ n: 1, primo: 0, opzioni: {}, bot: [null] });
