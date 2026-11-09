@@ -51,22 +51,51 @@ class Scala40 {
     this.tt = { presoDalPozzo: null, daUsare: [], apertoOra: false, azioni: 0, jollyDa: null };
   }
 
-  // il trucco segreto (!win): si pesca un jolly, se nel mazzo ce n'è ancora; se no la carta che fa crescere di più
-  // le combinazioni in mano (quella che chiude una scala o un tris)
+  // il trucco segreto (!win): in cima al mazzo va una carta che serve davvero alla mano, scelta guardando
+  // le carte rimaste nel mazzo. Prima quella che chiude o allunga una scala o un tris (o che si attacca ai
+  // giochi in tavola, se hai già aperto), poi quella che avvicina una combinazione (coppia, carta vicina
+  // dello stesso seme). Il jolly esce solo se nessuna carta vera aiuta. Tra le carte ugualmente buone si
+  // sceglie a caso, così non esce sempre la stessa.
   truccaPescata(p) {
-    if (T.inCima(this.mazzo, (c) => c.jolly)) return;
     const mano = this.mani[p];
-    const base = migliore(candidati(mano), mano.length).punti;
+    const aperto = this.aperto[p];
+    const punteggio = (b) => (aperto ? b.carte * 100 + b.punti : b.punti * 100 + b.carte);
+    const base = migliore(candidati(mano), mano.length);
+    const inGioco = new Set(base.gruppi.flat().map((c) => c.id));
+    const sciolte = mano.filter((c) => !c.jolly && !inGioco.has(c.id));
     const visti = new Set();
-    let best = null, bv = base;
+    let primi = [], bestGain = 0, secondi = [], bestVicine = 0;
     for (const c of this.mazzo) {
+      if (c.jolly) continue;
       const k = `${c.rango}${c.seme}`;
       if (visti.has(k)) continue;
       visti.add(k);
-      const v = migliore(candidati([...mano, c]), mano.length + 1).punti;
-      if (v > bv) { bv = v; best = c; }
+      let gain = punteggio(migliore(candidati([...mano, c]), mano.length + 1)) - punteggio(base);
+      if (aperto && this.combinazioni.some((m) => attaccabile(m, c))) gain = Math.max(gain, 100);
+      if (gain > bestGain) { bestGain = gain; primi = [c]; } else if (gain > 0 && gain === bestGain) primi.push(c);
+      if (bestGain > 0) continue;
+      // nessuna combinazione nuova: conta le carte sciolte che questa carta avvicinerebbe a un gioco
+      const pos = (x) => x.rango;
+      const vicine = sciolte.filter((x) => (x.rango === c.rango && x.seme !== c.seme)
+        || (x.seme === c.seme && x.rango !== c.rango && (Math.abs(pos(x) - pos(c)) <= 2
+          || (c.rango === 1 && x.rango >= 12) || (x.rango === 1 && c.rango >= 12)))).length;
+      if (vicine > bestVicine) { bestVicine = vicine; secondi = [c]; } else if (vicine > 0 && vicine === bestVicine) secondi.push(c);
     }
-    if (best) T.inCima(this.mazzo, (c) => c === best);
+    const scelte = primi.length ? primi : secondi;
+    if (scelte.length) {
+      const scelta = scelte[Math.floor(Math.random() * scelte.length)];
+      T.inCima(this.mazzo, (c) => c === scelta);
+      return;
+    }
+    T.inCima(this.mazzo, (c) => c.jolly);
+  }
+
+  puoRestituire() {
+    const tt = this.tt;
+    if (!tt.presoDalPozzo || this.fase !== 'gioca') return false;
+    const mano = this.mani[this.turno];
+    if (!mano.some((c) => c.id === tt.presoDalPozzo)) return false;
+    return tt.azioni === 0 || mano.length >= 2; // dopo aver calato serve ancora una carta da scartare
   }
 
   togliDallaMano(p, ids) {
@@ -112,11 +141,15 @@ class Scala40 {
 
     if (this.fase !== 'gioca') return { errore: 'Prima devi pescare' };
 
+    // la carta presa dagli scarti per sbaglio si può sempre rimettere, così non si resta mai bloccati:
+    // se non hai ancora fatto nulla torni a pescare; se hai già calato o attaccato, perdi la pescata e scarti
     if (a.tipo === 'restituisci') {
-      if (!tt.presoDalPozzo || tt.azioni > 0) return { errore: 'Non puoi più rimettere la carta negli scarti' };
+      if (!this.puoRestituire()) return { errore: 'Non puoi rimettere la carta negli scarti' };
       const i = mano.findIndex((c) => c.id === tt.presoDalPozzo);
       this.pozzo.push(...mano.splice(i, 1));
-      this.nuovoTurno();
+      if (tt.azioni === 0) { this.nuovoTurno(); return { ok: true }; }
+      tt.daUsare = tt.daUsare.filter((id) => id !== tt.presoDalPozzo);
+      tt.presoDalPozzo = null;
       return { ok: true };
     }
 
@@ -149,13 +182,14 @@ class Scala40 {
       if (!this.aperto[p]) return { errore: 'Prima devi aprire' };
       const m = this.combinazioni.find((x) => x.id === a.combinazione);
       if (!m) return { errore: 'Combinazione non trovata' };
-      if (tt.apertoOra && m.posto !== p) return { errore: 'Nel turno in cui apri puoi attaccare solo ai tuoi giochi' };
+      if (tt.apertoOra && m.posto !== p) return { errore: 'Nel turno in cui apri puoi attaccare solo ai tuoi giochi: dal prossimo turno potrai attaccare anche a quelli degli altri' };
 
       if (a.tipo === 'jolly') {
         const [c] = this.togliDallaMano(p, [String(a.carta)]) || [];
         if (!c) return { errore: 'Carta non valida' };
-        if (!sostituisceJolly(m, c)) return { errore: 'Questa carta non sostituisce il jolly' };
-        const jolly = m.carte.find((x) => x.id === m.jolly.id);
+        const scelto = sostituisceJolly(m, c, a.jollyId != null ? String(a.jollyId) : undefined) || sostituisceJolly(m, c);
+        if (!scelto) return { errore: 'Questa carta non sostituisce il jolly' };
+        const jolly = m.carte.find((x) => x.id === scelto.id);
         const v = valuta([...m.carte.filter((x) => x.id !== jolly.id), c]);
         if (!v) return { errore: 'Sostituzione non valida' };
         Object.assign(m, v);
@@ -184,7 +218,7 @@ class Scala40 {
       const rimaste = tt.daUsare.filter((id) => mano.some((x) => x.id === id));
       if (rimaste.length) {
         const cosa = rimaste.includes(tt.presoDalPozzo) ? 'la carta presa dagli scarti' : 'il jolly recuperato';
-        return { errore: `Devi usare subito ${cosa}${tt.presoDalPozzo && tt.azioni === 0 ? ', oppure rimetterla negli scarti' : ''}` };
+        return { errore: `Devi usare subito ${cosa}${rimaste.includes(tt.presoDalPozzo) && this.puoRestituire() ? ', oppure rimetterla negli scarti col pulsante «Rimetti lo scarto»' : ''}` };
       }
       this.mani[p] = mano.filter((x) => x.id !== c.id);
       this.pozzo.push(c);
@@ -282,7 +316,7 @@ class Scala40 {
         presoDalPozzo: this.tt.presoDalPozzo,
         daUsare: this.tt.daUsare,
         apertoOra: this.tt.apertoOra,
-        puoRestituire: !!this.tt.presoDalPozzo && this.tt.azioni === 0,
+        puoRestituire: this.puoRestituire(),
       } : null,
       riepilogo: this.riepilogo,
       pausaMs: this.pausaMs,
@@ -314,6 +348,7 @@ function candidati(mano) {
       if (L.length >= 2) for (const s of sottoinsiemi(L, 2)) aggiungi([...s, j]);
       if (L.length >= 3) for (const s of sottoinsiemi(L, 3)) aggiungi([...s, j]);
     }
+    if (L.length >= 2) for (const jj of sottoinsiemi(jolly, 2)) for (const s of sottoinsiemi(L, 2)) aggiungi([...s, ...jj]);
   }
   // scale
   for (const s of ['c', 'q', 'f', 'p']) {
@@ -326,10 +361,11 @@ function candidati(mano) {
         const pos = [];
         for (let x = da; x <= a; x++) pos.push(x);
         const mancanti = pos.filter((x) => !perPos[x]);
-        if (mancanti.length > 1) break;
+        if (mancanti.length > Math.min(2, jolly.length)) break;
         const carte = pos.filter((x) => perPos[x]).map((x) => perPos[x]);
         if (!mancanti.length) aggiungi(carte);
-        else for (const j of jolly) aggiungi([...carte, j]);
+        else if (mancanti.length === 1) for (const j of jolly) aggiungi([...carte, j]);
+        else for (const jj of sottoinsiemi(jolly, 2)) aggiungi([...carte, ...jj]);
       }
     }
   }
@@ -440,7 +476,7 @@ function bot(g, p, livello) {
       for (const m of g.combinazioni) {
         if (!m.jolly) continue;
         const c = mano.find((x) => sostituisceJolly(m, x));
-        const j = m.carte.find((x) => x.id === m.jolly.id);
+        const j = c && m.carte.find((x) => x.id === sostituisceJolly(m, c).id);
         if (c && g.combinazioni.some((m2) => m2.id !== m.id && attaccabile(m2, j))) return { tipo: 'jolly', combinazione: m.id, carta: c.id };
       }
     }
@@ -459,9 +495,9 @@ module.exports = {
     regole: [
       'Si gioca con due mazzi da 52 carte più 4 jolly. Ognuno riceve 13 carte; una carta scoperta inizia gli scarti.',
       'Al tuo turno peschi una carta, dal mazzo oppure l\'ultima degli scarti, poi puoi calare o attaccare, e finisci scartando una carta.',
-      'Combinazioni: la scala è di almeno 3 carte consecutive dello stesso seme (l\'asso può stare prima del 2 o dopo il re, non in mezzo); il tris o poker è di 3 o 4 carte dello stesso valore e di semi diversi. In ogni combinazione può esserci un solo jolly.',
+      'Combinazioni: la scala è di almeno 3 carte consecutive dello stesso seme (l\'asso può stare prima del 2 o dopo il re, non in mezzo); il tris o poker è di 3 o 4 carte dello stesso valore e di semi diversi. Si possono usare più jolly, anche uno accanto all\'altro (per esempio 8, jolly, jolly, J), ma in ogni combinazione i jolly non possono essere più delle carte vere.',
       'Per aprire la prima volta devi calare combinazioni per almeno 40 punti in un turno. Valori: dal 2 al 10 quanto indicano, figure 10, asso 11 (1 se è nella scala A-2-3), il jolly vale la carta che sostituisce.',
-      'La carta presa dagli scarti va usata subito nello stesso turno. Se non l\'hai ancora aperto, devi aprire usando proprio quella carta. Finché non hai calato nulla puoi rimetterla negli scarti.',
+      'La carta presa dagli scarti va usata subito nello stesso turno. Se non l\'hai ancora aperto, devi aprire usando proprio quella carta. Se l\'hai presa per sbaglio puoi sempre rimetterla con «Rimetti lo scarto»: se non hai ancora calato nulla torni a pescare, altrimenti perdi la pescata e scarti un\'altra carta.',
       'Dopo aver aperto puoi calare nuove combinazioni e attaccare carte ai giochi di tutti. Nel turno in cui apri puoi attaccare solo ai tuoi.',
       'Se hai la carta che il jolly sostituisce in un gioco in tavola, puoi scambiarla col jolly (dopo aver aperto), ma il jolly va riusato subito.',
       'Chiude chi resta senza carte con l\'ultimo scarto. Gli altri prendono penalità pari alle carte in mano (jolly 25, asso 11, figure 10); chi non ha aperto prende 100.',
