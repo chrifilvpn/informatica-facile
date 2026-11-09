@@ -99,23 +99,31 @@ for (let giro = 0; giro < 20; giro++) {
     senzaDoppioni([...g.mazzo, ...g.mani.flat(), ...g.tavolo], 40, 'assopiglia');
   }
 
-  // ---- SCALA 40 e BURRACO: si pesca un jolly ----
+  // ---- SCALA 40: si pesca una carta che serve alla mano (non per forza un jolly) ----
   {
+    const { candidati, migliore } = GIOCHI.scala40._test;
+    const C = (id) => (id[0] === 'X' ? { id, jolly: true, rango: 0, seme: null } : { id, rango: Number(id.slice(0, -1)), seme: id.slice(-1) });
+    // mano con 8c 9c e tre carte sciolte: deve uscire 7c o 10c (chiude la scala), non il jolly
+    for (let volta = 0; volta < 5; volta++) {
+      const h = crea('scala40', 2), q = h.turno;
+      const tutte = [...h.mazzo, ...h.mani.flat(), ...h.pozzo];
+      const mano = ['8c', '9c', '2q', '5f', '12p'].map((id) => tutte.find((c) => c.id === id) || C(id));
+      const ids = new Set(mano.map((c) => c.id));
+      h.mazzo = tutte.filter((c) => !ids.has(c.id) && !h.pozzo.includes(c));
+      h.mani[q] = mano;
+      h.mani[1 - q] = h.mazzo.splice(0, 13);
+      T.arma(h, q);
+      h.azione(q, { tipo: 'pesca', da: 'mazzo' });
+      const presa = h.mani[q][h.mani[q].length - 1];
+      assert.ok(!presa.jolly && presa.seme === 'c' && [7, 10].includes(presa.rango), `scala 40: !win dà una carta utile, non ${presa.id}`);
+    }
     const g = crea('scala40', 2);
     const p = g.turno;
-    const cera = g.mazzo.some((c) => c.jolly);
+    const prima = migliore(candidati(g.mani[p]), g.mani[p].length).punti;
     T.arma(g, p);
     g.azione(p, { tipo: 'pesca', da: 'mazzo' });
-    if (cera) assert.ok(g.mani[p][g.mani[p].length - 1].jolly, 'scala 40: pesca un jolly');
     senzaDoppioni([...g.mazzo, ...g.mani.flat(), ...g.pozzo], 108, 'scala 40');
-    // senza jolly nel mazzo: la carta che fa crescere le combinazioni
-    const h = crea('scala40', 2), q = h.turno;
-    h.mazzo = h.mazzo.filter((c) => !c.jolly);
-    const { candidati, migliore } = GIOCHI.scala40._test;
-    const prima = migliore(candidati(h.mani[q]), h.mani[q].length).punti;
-    T.arma(h, q);
-    h.azione(q, { tipo: 'pesca', da: 'mazzo' });
-    assert.ok(migliore(candidati(h.mani[q]), h.mani[q].length).punti >= prima);
+    assert.ok(migliore(candidati(g.mani[p]), g.mani[p].length).punti >= prima, 'scala 40: !win non peggiora la mano');
   }
   {
     const g = crea('burraco', 2);

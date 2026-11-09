@@ -562,11 +562,18 @@
     socket.emit('presenza', { id: mioId, imp: impronta, nome: mem.get('nome') || '' });
     const t = mem.get('tavolo');
     const n = mem.get('nome');
-    if (t && n) socket.emit('entraStanza', { nome: n, id: mioId, codice: t });
+    if (t && n) socket.emit('entraStanza', { nome: n, id: mioId, codice: t, ritorno: true });
     if (Boss.attivo) socket.emit('boss', true);
     if (stato) $('#avviso').hidden = true;
   });
   socket.on('disconnect', () => avviso('Connessione persa, mi ricollego…', 60000));
+  // ricollegandosi, il tavolo non c'era più (il sito si è riavviato): niente partita "fantasma" ferma sullo schermo
+  socket.on('tavoloSparito', () => {
+    const cera = !!stato;
+    mem.del('tavolo');
+    if (cera) tornaHome();
+    avviso(cera ? 'Il tavolo non c\'è più: il sito si è riavviato e la partita è andata persa. Aprite un tavolo nuovo.' : 'Il tavolo di prima non c\'è più', 10000);
+  });
   // il sito gratuito su Render si addormenta: se l'elenco dei giochi tarda, si spiega che si sta svegliando
   const tSveglia = setTimeout(() => { if (!giochi.length) $('#sveglia').hidden = false; }, 2500);
   socket.on('giochi', (g) => {

@@ -11,6 +11,9 @@
   // penalità di una carta rimasta in mano
   const penalita = (c) => (c.jolly ? 25 : c.rango === 1 ? 11 : c.rango >= 11 ? 10 : c.rango);
 
+  // i jolly di una combinazione: "jollies" li elenca tutti, "jolly" è il primo (o null)
+  const conJolly = (jollies) => ({ jolly: jollies[0] || null, jollies });
+
   function valutaTris(nat, jolly) {
     const r = nat[0].rango;
     if (!nat.every((c) => c.rango === r)) return null;
@@ -24,7 +27,7 @@
       tipo: 'tris',
       carte: [...ordinate, ...jolly],
       punti: v * tot,
-      jolly: jolly.length ? { id: jolly[0].id, rango: r, semi: SEMI.filter((s) => !semi.has(s)) } : null,
+      ...conJolly(jolly.map((j) => ({ id: j.id, rango: r, semi: SEMI.filter((s) => !semi.has(s)) }))),
     };
   }
 
@@ -34,51 +37,52 @@
     for (const assoAlto of [false, true]) {
       const pos = nat.map((c) => (c.rango === 1 && assoAlto ? 14 : c.rango));
       if (new Set(pos).size !== pos.length) continue;
-      const min = Math.min(...pos);
-      const max = Math.max(...pos);
-      const buchi = max - min + 1 - nat.length;
+      let da = Math.min(...pos);
+      let a = Math.max(...pos);
+      const buchi = a - da + 1 - nat.length;
       if (buchi > jolly.length) continue;
-      let posJolly = null;
-      if (buchi === 1) {
-        for (let x = min; x <= max; x++) if (!pos.includes(x)) posJolly = x;
-      } else if (jolly.length === 1) {
-        if (max < 14 && !(min === 1 && max === 13)) posJolly = max + 1;
-        else if (min > 1) posJolly = min - 1;
-        else continue;
-      }
-      const da = posJolly != null ? Math.min(min, posJolly) : min;
-      const a = posJolly != null ? Math.max(max, posJolly) : max;
+      // i jolly avanzati dopo aver riempito i buchi vanno in cima alla scala, poi in fondo
+      let avanzati = jolly.length - buchi;
+      while (avanzati > 0 && a < 14 && !(da === 1 && a === 13)) { a++; avanzati--; }
+      while (avanzati > 0 && da > 1) { da--; avanzati--; }
+      if (avanzati > 0) continue;
       if (da === 1 && a === 14) continue; // l'asso non può stare sia sotto che sopra
       const carte = [];
+      const jollies = [];
       let punti = 0;
+      let k = 0;
       for (let x = da; x <= a; x++) {
-        carte.push(x === posJolly ? jolly[0] : nat[pos.indexOf(x)]);
+        const i = pos.indexOf(x);
+        if (i >= 0) carte.push(nat[i]);
+        else {
+          carte.push(jolly[k]);
+          jollies.push({ id: jolly[k].id, rango: x === 14 ? 1 : x, semi: [s] });
+          k++;
+        }
         punti += valorePos(x);
       }
-      return {
-        tipo: 'scala',
-        seme: s,
-        carte,
-        punti,
-        jolly: posJolly != null ? { id: jolly[0].id, rango: posJolly === 14 ? 1 : posJolly, semi: [s] } : null,
-      };
+      return { tipo: 'scala', seme: s, carte, punti, ...conJolly(jollies) };
     }
     return null;
   }
 
-  // Controlla se un gruppo di carte è una combinazione valida: tris/poker o scala (massimo un jolly)
+  // Controlla se un gruppo di carte è una combinazione valida: tris/poker o scala.
+  // Si possono usare più jolly (anche uno accanto all'altro, come 8-jolly-jolly-J), purché non siano
+  // più delle carte vere.
   function valuta(carte) {
     if (!carte || carte.length < 3) return null;
     const jolly = carte.filter((c) => c.jolly);
     const nat = carte.filter((c) => !c.jolly);
-    if (jolly.length > 1 || nat.length < 2) return null;
+    if (nat.length < 2 || jolly.length > nat.length) return null;
     return valutaTris(nat, jolly) || valutaScala(nat, jolly);
   }
 
-  // La carta naturale può sostituire il jolly di questa combinazione?
-  function sostituisceJolly(comb, carta) {
-    if (!comb.jolly || carta.jolly) return false;
-    return carta.rango === comb.jolly.rango && comb.jolly.semi.includes(carta.seme);
+  // La carta naturale può sostituire un jolly di questa combinazione? Restituisce quel jolly (o null).
+  // Con jollyId si sceglie quale jolly scambiare.
+  function sostituisceJolly(comb, carta, jollyId) {
+    if (!comb || !carta || carta.jolly) return null;
+    const lista = comb.jollies || (comb.jolly ? [comb.jolly] : []);
+    return lista.find((j) => (jollyId == null || j.id === jollyId) && carta.rango === j.rango && j.semi.includes(carta.seme)) || null;
   }
 
   return { SEMI, valuta, penalita, sostituisceJolly, valorePos };

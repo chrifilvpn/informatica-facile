@@ -262,7 +262,7 @@ window.Tavoli = (() => {
             const cliccabile = puoAttaccare && !vietato;
             return `<div class="comb ${cliccabile ? 'selezionabile' : ''}" ${cliccabile ? `data-az="comb" data-comb="${m.id}" role="button" tabindex="0"` : ''} title="${m.tipo === 'scala' ? 'Scala' : 'Tris'} da ${m.punti} punti">
               ${m.carte.map((c) => (c.jolly && cliccabile && ui.sel.length === 1
-                ? F(c, 'mini', `data-az="comb-jolly" data-comb="${m.id}" title="Scambia il jolly"`)
+                ? F(c, 'mini', `data-az="comb-jolly" data-comb="${m.id}" data-jolly="${c.id}" title="Scambia il jolly"`)
                 : F(c, 'mini'))).join('')}</div>`;
           }).join('')}</div></div>`).join('');
       return `<div class="scala-banco">
@@ -351,7 +351,7 @@ window.Tavoli = (() => {
         case 'cala': ctx.invia({ tipo: 'cala', combinazioni: ui.prep }); ui.prep = []; return ctx.ridisegna();
         case 'scarta': ctx.invia({ tipo: 'scarta', carta: ui.sel[0] }); ui.sel = []; return ctx.ridisegna();
         case 'restituisci': return ctx.invia({ tipo: 'restituisci' });
-        case 'comb-jolly': ctx.invia({ tipo: 'jolly', combinazione: el.dataset.comb, carta: ui.sel[0] }); ui.sel = []; return ctx.ridisegna();
+        case 'comb-jolly': ctx.invia({ tipo: 'jolly', combinazione: el.dataset.comb, carta: ui.sel[0], jollyId: el.dataset.jolly }); ui.sel = []; return ctx.ridisegna();
         case 'comb': ctx.invia({ tipo: 'attacca', combinazione: el.dataset.comb, carte: ui.sel }); ui.sel = []; return ctx.ridisegna();
       }
       return undefined;
