@@ -338,6 +338,18 @@ function attivaTrucco(s, posto, c = { tipo: 'win', bersaglio: null }) {
     if (bersaglio < 0) return `🤫 Nessun giocatore al tavolo si chiama «${c.bersaglio}»`;
   }
   try {
+    // !fiche parola numero [nome]: le fiche diventano esattamente quel numero, senza nessun messaggio in chat
+    if (c.tipo === 'fiche') {
+      if (c.quante === null) return '🤫 Scrivi il numero di fiche dopo la parola';
+      if (!g.ficheDi || !g.ricarica) return '🤫 Qui non si gioca con le fiche';
+      const x = s.posti[bersaglio];
+      if (!x) return '🤫 Siediti al tavolo (o scrivi il nome di un giocatore) per avere le fiche';
+      const attuali = g.ficheDi(bersaglio);
+      if (c.quante !== attuali) g.ricarica(bersaglio, c.quante - attuali);
+      x.fiche = g.ficheDi(bersaglio);
+      aggiorna(s);
+      return `🤫 ${bersaglio === posto ? 'Ora hai' : `${x.nome} ora ha`} ${String(x.fiche).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} fiche`;
+    }
     if (c.tipo === 'lose') {
       const colpiti = c.bersaglio ? [bersaglio] : s.posti.map((x, i) => (x && i !== posto ? i : -1)).filter((i) => i >= 0);
       TRUCCO.maledici(g, colpiti);

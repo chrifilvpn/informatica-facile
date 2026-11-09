@@ -21,14 +21,24 @@ const attivo = () => parola().length > 0;
 //   "!win parola [nome]"   il trucco di sempre (fortuna o suggerimento)
 //   "!win !parola [nome]"  MANO VINCENTE: la mano cambia subito in una con cui si vince (Scala 40: si chiude al primo turno)
 //   "!lose parola [nome]"  SFORTUNA: gli avversari (o solo quel giocatore) pescano carte inutili e tirano dadi brutti
+//   "!fiche parola numero [nome]"  FICHE: nei giochi con le fiche porta le fiche (tue o di quel giocatore) a quel numero
+const FICHE_MASSIME = 1000000000;
 function leggi(testo) {
   const p = parola();
   if (!p) return null;
-  const m = /^!(win|lose)\s+(!?)(.+)$/.exec(semplice(testo));
+  const m = /^!(win|lose|fiche)\s+(!?)(.+)$/.exec(semplice(testo));
   if (!m) return null;
   const resto = m[3];
   if (resto !== p && !resto.startsWith(p + ' ')) return null;
   const bersaglio = resto.slice(p.length).trim() || null;
+  if (m[1] === 'fiche') {
+    if (m[2]) return null;
+    // il numero subito dopo la parola (i punti delle migliaia vanno bene: 10.000), poi il nome facoltativo
+    const f = /^([\d.'_]+)(?:\s+(.+))?$/.exec(bersaglio || '');
+    const cifre = f ? f[1].replace(/[.'_]/g, '') : '';
+    const quante = /^\d+$/.test(cifre) ? Math.min(FICHE_MASSIME, Number(cifre)) : null;
+    return { tipo: 'fiche', quante, bersaglio: f ? f[2] || null : null };
+  }
   const tipo = m[1] === 'lose' ? 'lose' : m[2] ? 'mano' : 'win';
   return { tipo, bersaglio };
 }
@@ -104,4 +114,4 @@ function inCima(mazzo, condizione, { inizio = false } = {}) {
 // sceglie tra le carte quella col punteggio più alto secondo la funzione data
 function migliore(lista, punteggio) { let best = null, bv = -Infinity; for (const x of lista) { const v = punteggio(x); if (v > bv) { bv = v; best = x; } } return best; }
 
-module.exports = { semplice, leggi, trovaPosto, armaMano, maledici, sfortunato, sfortuna, eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };
+module.exports = { FICHE_MASSIME, semplice, leggi, trovaPosto, armaMano, maledici, sfortunato, sfortuna, eComando, attivo, arma, armato, consuma, sussurra, prendiSussurri, controllaSuggerimenti, inCima, migliore };

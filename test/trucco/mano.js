@@ -48,6 +48,13 @@ function copertura(carte, valuta) {
   assert.deepStrictEqual(T.leggi('!lose patata luca'), { tipo: 'lose', bersaglio: 'luca' });
   for (const t of ['!win', '!win !', '!win patate', '!win patatina', '!lose', '!lose banana', 'ciao !lose patata', '!win !!patata']) assert.strictEqual(T.leggi(t), null, t);
   assert.ok(T.eComando('!lose patata') && T.eComando('!win !patata Luca'), 'anche le forme nuove non si vedono in chat');
+  // !fiche parola numero [nome]
+  assert.deepStrictEqual(T.leggi('!fiche patata 5000'), { tipo: 'fiche', quante: 5000, bersaglio: null });
+  assert.deepStrictEqual(T.leggi('!FICHE Patata 10.000 Luca'), { tipo: 'fiche', quante: 10000, bersaglio: 'luca' });
+  assert.deepStrictEqual(T.leggi('!fiche patata 0'), { tipo: 'fiche', quante: 0, bersaglio: null });
+  assert.strictEqual(T.leggi('!fiche patata 99999999999999').quante, T.FICHE_MASSIME, 'tetto alle fiche');
+  assert.strictEqual(T.leggi('!fiche patata').quante, null, 'senza numero: avviso segreto, niente in chat');
+  for (const t of ['!fiche 5000', '!fiche banana 5000', '!fiche !patata 5000', '!fiche patatina 5000']) assert.strictEqual(T.leggi(t), null, t);
   delete process.env.TRUCCO_PAROLA;
   assert.strictEqual(T.leggi('!win !patata'), null, 'senza la variabile non scatta mai');
   if (prima === undefined) delete process.env.TRUCCO_PAROLA; else process.env.TRUCCO_PAROLA = prima;
