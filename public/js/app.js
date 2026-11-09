@@ -33,14 +33,13 @@
   let ultimoEvento = 0;
   let ultimaChat = 0;
   let chatLetta = Number(mem.get('chatLetta', 0));
-  let eraMioTurno = false;
   // audio del sito: spento finché non lo accendi tu (così a scuola non parte nessun rumore); la scelta resta salvata
   let suono = mem.get('audio', 'no') === 'si';
 
   // ---------- utilità ----------
   const meta = (id) => giochi.find((g) => g.id === id);
   // al tavolo il pulsante della chat globale sta nella barra in alto (in basso coprirebbe le carte)
-  function mostra(id) { for (const s of $$('.schermo')) s.hidden = s.id !== id; const b = $('#apri-globale'); if (b) b.hidden = id === 'schermo-gioco'; schermoAcceso(); }
+  function mostra(id) { for (const s of $$('.schermo')) s.hidden = s.id !== id; const b = $('#apri-globale'); if (b) b.hidden = id === 'schermo-gioco'; if (id !== 'schermo-gioco') avvisoTurno(false); schermoAcceso(); }
   // durante la partita lo schermo del telefono non si spegne da solo (Wake Lock); sulle dispense e fuori dal gioco sì
   let blocco = null;
   async function schermoAcceso() {
@@ -85,6 +84,44 @@
       o.stop(audio.currentTime + dur);
     } catch {}
   }
+  // ---------- avviso "tocca a te" ----------
+  // Se tocca a te mentre sei su un'altra scheda (o in un'altra finestra), il titolo della scheda lampeggia
+  // e suona un din-don leggero; tutto si ferma appena torni sulla pagina. Vale per tutti i giochi a turni.
+  // Con le dispense aperte il titolo vero non si vede (lo nasconde boss.js) e i suoni sono sospesi.
+  const TITOLO_BASE = 'Informatica Facile';
+  const TITOLO_TURNO = '● Tocca a te — Informatica Facile';
+  const TITOLO_LAMPO = '🔔 Tocca a te!';
+  let mioTurnoOra = false;
+  let tLampo = null;
+  const lontano = () => document.hidden || !document.hasFocus();
+  function dinDon() {
+    bip(880, 0.18);
+    setTimeout(() => bip(660, 0.28), 170);
+  }
+  function fermaLampo() {
+    if (!tLampo) return;
+    clearInterval(tLampo);
+    tLampo = null;
+    document.title = mioTurnoOra ? TITOLO_TURNO : TITOLO_BASE;
+  }
+  function avvisoTurno(mio) {
+    const nuovo = mio && !mioTurnoOra;
+    mioTurnoOra = mio;
+    if (!mio) { fermaLampo(); document.title = TITOLO_BASE; return; }
+    if (tLampo) return; // sta già lampeggiando: non si tocca il titolo
+    document.title = TITOLO_TURNO;
+    if (!nuovo) return;
+    if (!lontano()) { bip(); if (navigator.vibrate) navigator.vibrate(40); return; }
+    dinDon();
+    let acceso = false;
+    tLampo = setInterval(() => { acceso = !acceso; document.title = acceso ? TITOLO_LAMPO : TITOLO_TURNO; }, 1000);
+    document.title = TITOLO_LAMPO;
+  }
+  const tornato = () => { if (!document.hidden) fermaLampo(); };
+  document.addEventListener('visibilitychange', tornato);
+  window.addEventListener('focus', tornato);
+  window.addEventListener('pointerdown', tornato, true);
+  if (window.Boss) Boss.onCambio((attivo) => { if (!attivo) tornato(); });
   // due pulsanti (nella home e nella barra del gioco) per lo stesso interruttore
   function aggiornaSuono() {
     $('#suono').textContent = suono ? '🔊' : '🔇';
@@ -1092,9 +1129,7 @@
     const mioTurno = p.turno === stato.mioPosto && !p.inAttesa && !p.finita && !stato.spettatore;
     if (stato.spettatore) st.textContent = st.textContent.replace(/^Tocca a te/, `Tocca a ${nomeDi(stato.mioPosto)}`);
     st.classList.toggle('mio', mioTurno);
-    if (mioTurno && !eraMioTurno) { bip(); if (navigator.vibrate) navigator.vibrate(40); }
-    eraMioTurno = mioTurno;
-    document.title = mioTurno ? '● Tocca a te — Informatica Facile' : 'Informatica Facile';
+    avvisoTurno(mioTurno);
 
     const punt = T.punteggio ? T.punteggio(ctx) : '';
     $('#punteggio').hidden = !punt;
