@@ -1245,14 +1245,16 @@
     if (az) {
       const pt = az.punta;
       if (pt) ui.pk = Math.max(pt.min, Math.min(pt.max, ui.pk || pt.min));
-      const rapidi = pt ? [['Min', pt.min], ['½ piatto', p.piatto / 2 + (az.vedi || 0) + p.puntataGiro[io]], ['Piatto', p.piatto + (az.vedi || 0) * 2 + p.puntataGiro[io]], ['All-in', pt.max]]
+      // all-in solo se sono davvero tutte le mie fiche: nel pot limit il massimo può essere meno (il piatto)
+      const tutto = pt ? pt.max >= p.fiche[io] + (p.puntataGiro[io] || 0) : false;
+      const rapidi = pt ? [['Min', pt.min], ['½ piatto', p.piatto / 2 + (az.vedi || 0) + p.puntataGiro[io]], ['Piatto', p.piatto + (az.vedi || 0) * 2 + p.puntataGiro[io]], [tutto ? 'All-in' : 'Massimo', pt.max]]
         .map(([t, v]) => [t, Math.max(pt.min, Math.min(pt.max, Math.round(v / 5) * 5))]) : [];
       comandi = `<div class="cs-pannello pk-comandi">
         <div class="bj-comandi">
           ${az.lascia ? '<button type="button" class="bottone" data-az="lascia">Lascia</button>' : ''}
           ${az.passa ? '<button type="button" class="bottone primario-bt" data-az="passa">Passa</button>' : ''}
           ${az.vedi ? `<button type="button" class="bottone primario-bt" data-az="vedi">Vedi ${fmtFiche(az.vedi)}${az.vedi >= p.fiche[io] ? ' (all-in)' : ''}</button>` : ''}
-          ${pt ? `<button type="button" class="bottone primario-bt" data-az="punta">${pt.max === ui.pk ? 'All-in' : az.rilancio ? 'Rilancia a' : 'Punta'} ${fmtFiche(ui.pk)}</button>` : ''}
+          ${pt ? `<button type="button" class="bottone primario-bt" data-az="punta">${tutto && pt.max === ui.pk ? 'All-in' : az.rilancio ? 'Rilancia a' : 'Punta'} ${fmtFiche(ui.pk)}</button>` : ''}
         </div>
         ${pt && pt.max > pt.min ? `<div class="pk-slider"><input type="range" min="${pt.min}" max="${pt.max}" step="5" value="${ui.pk}" data-az-range="pk" aria-label="Quanto puntare">
           <div class="cs-gettoni">${rapidi.map(([t, v]) => `<button type="button" class="bottone mini-bt" data-az="pkRapido" data-v="${v}">${t}</button>`).join('')}</div></div>` : ''}
