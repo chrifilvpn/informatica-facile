@@ -103,7 +103,12 @@ class Draghi {
   pgVivi() { return this.pg.map((p, i) => (p && !p.morto ? i : -1)).filter((i) => i >= 0); }
   // i personaggi vivi dei giocatori veri: se non ce n'è più nessuno la campagna aspetta !revive (i compagni del
   // computer da soli non scrivono niente e il tavolo restava fermo per sempre)
-  umaniVivi() { return this.pgVivi().filter((i) => this.umano(i)); }
+  // Se nessun giocatore vero ha un personaggio (l'unica persona fa il master e i compagni sono tutti del computer)
+  // contano i compagni: altrimenti al primo controllo risultavano «tutti morti» con la compagnia in piedi.
+  umaniVivi() {
+    const haPgUmano = this.pg.some((p, i) => p && this.umano(i));
+    return this.pgVivi().filter((i) => !haPgUmano || this.umano(i));
+  }
   postoDi(nome) {
     const n = norm(nome);
     if (!n) return -1;

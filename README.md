@@ -20,6 +20,7 @@ Made by chry_pala. Altri giochi arriveranno uno alla volta.
 
 ## Novità di questa versione
 
+- **Rianalisi di parole, Draghi e piattaforma (10/11)**: **Draghi e Segrete**: se l'unica persona fa il master e i compagni sono tutti del computer, al primo racconto il gioco non dichiara più «tutti morti» (ora, quando nessuna persona ha un personaggio, contano i compagni). **Cruciverba** sul computer: lo schema si rimpicciolisce quel tanto che basta perché i pulsanti Controlla, Lettera, Orizzontale e Mi ritiro restino nello schermo senza scorrere. **Anagrammi** sul telefono: il campo dove si scrive resta sempre in vista in fondo, le carte scorrono sopra. **Indovina l'anno** sul telefono: l'etichetta «500 a.C.» della linea del tempo non esce più dallo schermo. Sala d'attesa: «Serata a giochi misti (1 scelto)».
 - **Sistemazioni dei giochi d'azione e strategia** (test in `test/giochi3/migliorie-azione.js`):
   - **Il computer difficile pensa a parte**: negli scacchi, scacchi cinesi, dama, dama internazionale, forza 4, forza 4 in 3D, Hex e Go la ricerca della mossa si fa in un thread a parte (`giochi/pensatore.js`, worker_threads, giochi con `meta.pensaLento`), così mentre il computer pensa gli altri tavoli del sito non si fermano. Se il thread non risponde il computer pensa come prima.
   - **Go**: al conteggio finale contro il computer la partita non resta più ferma (il computer accetta da solo).

@@ -573,6 +573,7 @@ test/giochi3/cruciverba.js
 test/giochi3/damaint.js
 test/giochi3/difesa.js
 test/giochi3/draghi-horror.js
+test/giochi3/draghi-master-solo.js
 test/giochi3/draghi-master.js
 test/giochi3/draghi-musica.js
 test/giochi3/draghi-stessopc.js
