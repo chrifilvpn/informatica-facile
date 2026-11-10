@@ -949,7 +949,7 @@
       <p class="piccolo">Partecipano chi è al tavolo e chi entra col codice (guarda finché non tocca a lui); i posti che mancano li prende il computer.</p>
       <button type="button" class="bottone mini-bt" data-torneo="4">Torneo a 4</button><button type="button" class="bottone mini-bt" data-torneo="8">Torneo a 8</button></div>` : '';
     const aperta = box.querySelector('details[open]') ? 'open' : '';
-    box.innerHTML = `${torneo}<details class="extra-riga" ${aperta}><summary><b>🎲 Serata a giochi misti</b> <small>(${serataScelti.size} scelti)</small></summary>
+    box.innerHTML = `${torneo}<details class="extra-riga" ${aperta}><summary><b>🎲 Serata a giochi misti</b> <small>(${serataScelti.size} ${serataScelti.size === 1 ? 'scelto' : 'scelti'})</small></summary>
       <p class="piccolo">Scegli da 2 a 8 giochi: si giocano uno dopo l'altro con questi giocatori. Ogni gioco vinto vale 3 punti.</p>
       <div class="serata-scelta">${adatti.map((g) => `<label><input type="checkbox" data-serata="${g.id}" ${serataScelti.has(g.id) ? 'checked' : ''}> ${esc(g.nome)}</label>`).join('')}</div>
       <button type="button" class="bottone mini-bt" data-serata-caso>🎲 4 a caso</button>
@@ -1459,7 +1459,16 @@
     if (stato.chat.length) ultimaChat = stato.chat[stato.chat.length - 1].id;
     if (primaVolta) return;
     for (const m of nuovi) {
-      if (m.sistema) { avviso(m.testo, 3200); continue; }
+      if (m.sistema) {
+        // con la chat aperta il messaggio si legge già lì; uno lungo (l'elenco di !comandi) nell'avviso copriva
+        // tutto lo schermo del telefono: se ne mostra l'inizio e si accende il pallino della chat
+        if ($('#chat').hidden) {
+          const lungo = m.testo.length > 140;
+          avviso(lungo ? `${m.testo.slice(0, 100).trim()}… (apri la chat per leggere tutto)` : m.testo, lungo ? 4200 : 3200);
+          if (lungo) $('#non-letti').hidden = false;
+        }
+        continue;
+      }
       if (m.ia) { bip(660, 0.08); continue; } // fantasIA non ha una nuvoletta: la risposta sta nella chat
       bolleAttive.set(m.posto, { testo: m.testo, fino: Date.now() + 5000 });
       if (m.posto !== stato.mioPosto) bip(520, 0.08);
