@@ -164,7 +164,17 @@ window.Arena = (() => {
       const ai_lati = comandi && getComputedStyle(comandi).position === 'fixed';
       // telefono in orizzontale: l'altezza è poca, si tiene solo un filo sotto il campo (anche nei giochi senza joystick)
       const sdraiato = touch() && window.innerWidth > window.innerHeight && window.innerHeight <= 520;
-      const spazioSotto = (comandi && !ai_lati ? comandi.offsetHeight + 16 : 0) + (touch() ? (ai_lati || sdraiato ? 14 : 52) : 70);
+      // sul computer le istruzioni sotto il campo possono andare su due righe (finivano sotto la targhetta col nome): si misura
+      const istr = box.parentElement && box.parentElement.querySelector('.ar-istr');
+      const spazioSotto = (comandi && !ai_lati ? comandi.offsetHeight + 16 : 0) + (touch() ? (ai_lati || sdraiato ? 14 : 52) : Math.max(70, 50 + (istr ? istr.offsetHeight : 0)));
+      // sul telefono, se le istruzioni finirebbero sotto la targhetta, restano su una riga sola (il resto è nelle Regole)
+      if (istr && touch() && performance.now() - (istr._visto || 0) > 1200) {
+        istr._visto = performance.now();
+        istr.classList.remove('ar-corta');
+        const io = document.querySelector('#mio-nome');
+        const limite = io && io.offsetParent ? io.getBoundingClientRect().top : window.innerHeight;
+        if (istr.offsetParent && istr.getBoundingClientRect().bottom > limite + 2) istr.classList.add('ar-corta');
+      }
       // cfg.pieno(): il gioco occupa tutto lo schermo (il riquadro è fisso sopra la pagina); cfg.misura(): la misura
       // della tela in "punti del gioco" se non è quella del server (Alien Isolation sul telefono segue lo schermo)
       const pieno = !!(cfg.pieno && cfg.pieno());
@@ -271,7 +281,7 @@ window.Arena = (() => {
       panno(ctx) {
         const p = ctx.partita;
         return `<div class="ar">
-          <p class="pa-round">Round ${p.stato.round} di ${p.nRound}${cfg.sottotitolo ? ` · ${cfg.sottotitolo(p, ctx)}` : ''}</p>
+          <p class="pa-round">Round ${p.stato.round} di ${p.nRound}${(cfg.sottotitolo && cfg.sottotitolo(p, ctx)) ? ` · ${cfg.sottotitolo(p, ctx)}` : ''}</p>
           <div class="ar-hud"></div>
           <div class="ar-box"><div class="ar-sopra"></div></div>
           ${comandiTouch()}

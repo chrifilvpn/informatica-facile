@@ -27,6 +27,8 @@ Made by chry_pala. Altri giochi arriveranno uno alla volta.
   - **Solitario Piramide**: su schermi bassi le carte si stringono e pulsanti e istruzioni restano in vista.
   - **Dubito** e **Cucù**: frasi corrette quando riguardano te («Tu mentivi», «Tu ti salvi», «Roulette Russa per te», «Ada dice DUBITO e ti scopre», «Alan scambia con te»).
   - **Cirulla**: la Piccola arriva al 6 (massimo 6 punti); il 7 di quadri è già il settebello e non la allunga.
+- **Revisione dei giochi d'azione e di Squid Game (novembre)**: le scritte sotto i nomi (righe del Tetris, lunghezza del serpente, punti) ora si aggiornano mentre si gioca e non solo a fine round; gli avvisi in alto non vanno più a capo in una colonnina stretta sul telefono; Air hockey sul telefono in verticale mostra tutto il tavolo con le due porte; The Mind, Ponte fragile, Biglie, Pompa il pallone e Human Benchmark sul telefono in orizzontale non si sovrappongono più (la pagina scorre); le istruzioni sotto il campo non finiscono più sotto la targhetta col nome; tolto il «·» in più nel titolo di Fuga dai fantasmi e Monete in salita. Regole corrette dove non dicevano la verità: Tiro al bersaglio (6 secondi per tirare, non 7), Pompa il pallone (scoppia tra 1 e 20, oppure tra 1 e 12 o tra 1 e 30), Pioggia di monete (i potenziamenti li cerca solo il computer difficile), più tre frasi fuori posto in Wanted!, Il gioco del calamaro e Occhi nel buio.
+
 - **Sistemazioni dei giochi d'azione e strategia** (test in `test/giochi3/migliorie-azione.js`):
   - **Il computer difficile pensa a parte**: negli scacchi, scacchi cinesi, dama, dama internazionale, forza 4, forza 4 in 3D, Hex e Go la ricerca della mossa si fa in un thread a parte (`giochi/pensatore.js`, worker_threads, giochi con `meta.pensaLento`), così mentre il computer pensa gli altri tavoli del sito non si fermano. Se il thread non risponde il computer pensa come prima.
   - **Go**: al conteggio finale contro il computer la partita non resta più ferma (il computer accetta da solo).
@@ -295,7 +297,7 @@ Carte francesi: cuori, quadri, fiori, picche.
 
 **Ghost Tris** (opzione del tris, 3×3 e 4×4): al massimo 3 segni a testa (4 nel 4×4); il segno in più fa sparire il più vecchio, che prima trema mezzo trasparente. Dopo 100 segni senza file è pareggio. Il computer difficile tiene conto dei segni che spariranno.
 
-**Pompa il pallone** (da 2 a 8, con computer): un pallone per round, uguale per tutti; a turno pompi (+1 nel piatto del round) o incassi ed esci dal round. Lo scoppio arriva a un numero di pompate segreto tra 1 e 20 (o 12, 30): chi lo fa scoppiare perde il piatto. 3, 5 o 8 round.
+**Pompa il pallone** (da 2 a 8, con computer): un pallone per round, uguale per tutti; a turno pompi (+1 nel piatto del round) o incassi ed esci dal round. Lo scoppio arriva a un numero di pompate segreto tra 1 e 20 (oppure tra 1 e 12, o tra 1 e 30): chi lo fa scoppiare perde il piatto. 3, 5 o 8 round.
 
 **Interruttori** (da 2 a 8, con computer): da 5 a 20 interruttori (si sceglie prima), uno è la bomba; a turno se ne accende uno, chi salta è eliminato e arriva un pannello nuovo. L'ultimo vince. Variante con un passo a pannello.
 
