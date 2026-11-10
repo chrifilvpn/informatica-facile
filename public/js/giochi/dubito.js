@@ -44,6 +44,9 @@
     aggiorna(); tConto = setInterval(aggiorna, 200);
   }
   const chi = (ctx, i) => (i === ctx.mio ? 'Tu' : ctx.nome(i));
+  // frasi con il verbo giusto: "Ada mentiva" ma "Tu mentivi"; dopo una preposizione "a te", non "a Tu"
+  const sogg = (ctx, i, terza, seconda) => (i === ctx.mio ? `<b>Tu</b> ${seconda}` : `<b>${esc(ctx.nome(i))}</b> ${terza}`);
+  const ate = (ctx, i) => (i === ctx.mio ? 'te' : esc(ctx.nome(i)));
 
   const tavolo = {
     libero: true,
@@ -68,17 +71,17 @@
         const r = p.roulette, s = p.svelate;
         const esito = p.fase === 'sparo' ? r.esito : null;
         centro = `<div class="lb-roulette ${esito || 'attesa'}" style="${ritardo(ui, `lb-rr-${p.round}-${esito || 'a'}`)}">
-          ${s ? `<p class="piccolo">${s.mentiva ? `${esc(chi(ctx, s.accusato))} mentiva` : `${esc(chi(ctx, s.accusato))} diceva la verità`}: Roulette Russa per <b>${esc(chi(ctx, r.chi))}</b></p>` : ''}
+          ${s ? `<p class="piccolo">${s.mentiva ? sogg(ctx, s.accusato, 'mentiva', 'mentivi') : sogg(ctx, s.accusato, 'diceva la verità', 'dicevi la verità')}: Roulette Russa per <b>${ate(ctx, r.chi)}</b></p>` : ''}
           <div class="lb-arma-grande">${pistola}${tamburo(esito ? r.colpo : r.colpiPrima, `grande ${esito ? 'fermo' : 'gira'}`)}</div>
-          ${esito === 'morto' ? `<p class="lb-bang">BANG!</p><p><b>${esc(chi(ctx, r.chi))}</b> è fuori dalla partita</p>`
-          : esito === 'salvo' ? `<p class="lb-click">click…</p><p><b>${esc(chi(ctx, r.chi))}</b> si salva (${r.colpo}/6 · la prossima volta 1 su ${6 - r.colpo})</p>`
+          ${esito === 'morto' ? `<p class="lb-bang">BANG!</p><p>${sogg(ctx, r.chi, 'è fuori dalla partita', 'sei fuori dalla partita')}</p>`
+          : esito === 'salvo' ? `<p class="lb-click">click…</p><p>${sogg(ctx, r.chi, 'si salva', 'ti salvi')} (${r.colpo}/6 · la prossima volta 1 su ${6 - r.colpo})</p>`
           : `<p class="lb-prob">Probabilità che parta il colpo: <b>1 su ${6 - r.colpiPrima}</b></p>`}
         </div>${esito === 'morto' ? `<div class="lb-lampo" style="${ritardo(ui, `lb-lampo-${p.round}`)}"></div>` : ''}`;
       } else if (p.fase === 'svela' && p.svelate) {
         const s = p.svelate;
-        centro = `<div class="lb-svela"><p><b>${esc(chi(ctx, s.dubitante))}</b> dice DUBITO a <b>${esc(chi(ctx, s.accusato))}</b>!</p>
+        centro = `<div class="lb-svela"><p>${sogg(ctx, s.dubitante, 'dice', 'dici')} DUBITO a <b>${ate(ctx, s.accusato)}</b>!</p>
           <div class="lb-girate">${s.carte.map((c, k) => `<div class="lb-gira" style="--k:${k};${ritardo(ui, `lb-sv-${p.round}-${s.dubitante}`)}">${retro()}${carta(c, c.t === s.carta || c.t === 'J' ? 'giusta' : 'bugia')}</div>`).join('')}</div>
-          <p class="lb-verdetto ${s.mentiva ? 'bugia' : 'vero'}" style="${ritardo(ui, `lb-sv-${p.round}-${s.dubitante}`)}">${s.mentiva ? '🤥 Era una bugia!' : '😇 Diceva la verità!'} La Roulette Russa tocca a <b>${esc(chi(ctx, s.tira))}</b></p></div>`;
+          <p class="lb-verdetto ${s.mentiva ? 'bugia' : 'vero'}" style="${ritardo(ui, `lb-sv-${p.round}-${s.dubitante}`)}">${s.mentiva ? '🤥 Era una bugia!' : s.accusato === ctx.mio ? '😇 Dicevi la verità!' : '😇 Diceva la verità!'} La Roulette Russa tocca a <b>${ate(ctx, s.tira)}</b></p></div>`;
       } else {
         const pila = Array.from({ length: Math.min(p.tavolo, 15) }, (_, k) => retro('pila', `--k:${k};--r:${((k * 47) % 31) - 15}deg;--x:${((k * 29) % 21) - 10}px`)).join('');
         const u = p.ultima;

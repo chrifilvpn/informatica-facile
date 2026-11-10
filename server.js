@@ -281,9 +281,10 @@ function aggiorna(s) {
     s.posti.forEach((x, i) => {
       if (!x) return;
       x.fiche = g.ficheDi(i);
-      if (x.bot && x.fiche <= 0) { x.fiche = FICHE_INIZIALI; g.ricarica(i, FICHE_INIZIALI); messaggioSistema(s, `💰 ${x.nome} (computer) si ricarica con ${FICHE_INIZIALI} fiche`); }
+      const inGioco = !!(g.ficheInGioco && g.ficheInGioco(i) > 0); // ha puntato tutto: la mano è ancora da giocare
+      if (x.bot && x.fiche <= 0 && !inGioco) { x.fiche = FICHE_INIZIALI; g.ricarica(i, FICHE_INIZIALI); messaggioSistema(s, `💰 ${x.nome} (computer) si ricarica con ${FICHE_INIZIALI} fiche`); }
       // a una persona rimasta senza fiche si consiglia (una volta) il comando !ricarica
-      const aSecco = x.fiche <= 0 && !(g.ficheInGioco && g.ficheInGioco(i) > 0);
+      const aSecco = x.fiche <= 0 && !inGioco;
       if (!x.bot && aSecco && !x.ricaricaDetta) { x.ricaricaDetta = true; messaggioSistema(s, `💡 ${x.nome}, hai finito le fiche: scrivi !ricarica in chat per averne altre ${FICHE_INIZIALI}`); }
       if (x.fiche > 0) x.ricaricaDetta = false;
     });

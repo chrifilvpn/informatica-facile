@@ -68,7 +68,7 @@ function conta(prese, scope) {
     const q = new Set(pr.filter((c) => c.seme === 'q').map((c) => c.rango));
     const migliori = SEMI.map((s) => Math.max(0, ...pr.filter((c) => c.seme === s).map((c) => PRIMIERA[c.rango])));
     let piccola = 0;
-    if (q.has(1) && q.has(2) && q.has(3)) { piccola = 3; for (let r = 4; r <= 7 && q.has(r); r++) piccola++; }
+    if (q.has(1) && q.has(2) && q.has(3)) { piccola = 3; for (let r = 4; r <= 6 && q.has(r); r++) piccola++; }
     return {
       carte: pr.length,
       quadri: q.size,
@@ -439,7 +439,7 @@ module.exports = {
       'Il 7 di cuori è la MATTA: vale quanto serve per fare un accuso (nella bàrsega vale 1, nel decino il valore delle altre due) o per fare 15 o 30 con le carte in tavola all\'inizio. Se serve per un accuso, giocata in tavola continua a valere il numero scelto finché qualcuno non la prende; altrimenti è un normale 7. Nella primiera conta sempre come 7.',
       'Punti a fine smazzata: 1 per chi ha più carte, 1 per chi ha più quadri, 1 per il settebello (7 di quadri), 1 per la primiera, più tutte le scope (anche quelle degli accusi e del quindici iniziale). A parità carte, quadri e primiera non si assegnano.',
       'Primiera: per ogni seme la carta migliore (7 = 21, 6 = 18, asso = 16, 5 = 15, 4 = 14, 3 = 13, 2 = 12, figure = 10); serve almeno una carta per seme.',
-      'La GRANDE (fante, donna e re di quadri) vale 5 punti. La PICCOLA (asso, 2 e 3 di quadri) vale 3 punti, più uno per ogni altra quadri in fila: con asso, 2, 3, 4 e 5 di quadri vale 5.',
+      'La GRANDE (fante, donna e re di quadri) vale 5 punti. La PICCOLA (asso, 2 e 3 di quadri) vale 3 punti, più uno per ogni altra quadri in fila fino al 6: con asso, 2, 3, 4 e 5 di quadri vale 5, con anche il 6 vale 6 (il 7 non conta: è già il settebello).',
       'Capotto: chi prende tutte e dieci le quadri in una smazzata vince subito la partita.',
       'Vince chi arriva per primo a 51 punti (oppure 31 o 101, da scegliere prima). Se in cima sono pari si gioca un\'altra smazzata. Il riepilogo di ogni smazzata resta finché qualcuno preme "Continua".',
       'Il computer facile prende un po\' a caso, il medio guarda quanto vale la presa e se lascia la tavola facile, il difficile calcola cosa può prendere l\'avversario con le carte che non ha ancora visto (compresi l\'asso piglia tutto e le prese da 15).',

@@ -41,8 +41,8 @@
     }
     const u = p.ultimo;
     if (p.inAttesa && u) {
-      if (u.tipo === 'scambia') return `<b>${esc(chi(ctx, u.da))}</b> ${u.da === ctx.mio ? 'scambi' : 'scambia'} con <b>${esc(chi(ctx, u.a))}</b>`;
-      if (u.tipo === 'bloccato') return `<b>${esc(chi(ctx, u.a))}</b> ha il re: cucù! Lo scambio salta`;
+      if (u.tipo === 'scambia') return `<b>${esc(chi(ctx, u.da))}</b> ${u.da === ctx.mio ? 'scambi' : 'scambia'} con <b>${u.a === ctx.mio ? 'te' : esc(ctx.nome(u.a))}</b>`;
+      if (u.tipo === 'bloccato') return `<b>${esc(chi(ctx, u.a))}</b> ${u.a === ctx.mio ? 'hai' : 'ha'} il re: cucù! Lo scambio salta`;
       if (u.tipo === 'cucu') return `<b>${esc(chi(ctx, u.da))}</b> ${u.da === ctx.mio ? 'hai' : 'ha'} il re: cucù! 👑`;
       if (u.tipo === 'mazzo') return `<b>${esc(chi(ctx, u.da))}</b> ${u.da === ctx.mio ? 'cambi' : 'cambia'} col mazzo`;
       if (u.tipo === 'tiene') return `<b>${esc(chi(ctx, u.da))}</b> ${u.da === ctx.mio ? 'tieni' : 'tiene'} la carta`;
