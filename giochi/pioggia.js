@@ -133,7 +133,7 @@ module.exports = {
       'Ogni tanto compare un potenziamento, che dura 6 secondi: ⚡ velocità (vai più veloce), 🧲 calamita (le monete vicine vengono verso di te), 🛡️ scudo (nessuno ti può travolgere).',
       'Un round dura 60 secondi: le monete che hai alla fine diventano i tuoi punti. Dopo 3 round (o 1, o 5) vince chi ha più punti.',
       'Il gioco è in tempo reale: si ferma per tutti quando qualcuno apre le dispense.',
-      'Il computer facile va un po\' a caso e scatta per sbaglio; il medio prende le monete più comode e i potenziamenti; il difficile evita le monete contese, travolge chi ne ha tante e si scansa quando qualcuno gli scatta contro.',
+      'Il computer facile va un po\' a caso e scatta per sbaglio; il medio prende le monete più comode e travolge chi ne ha parecchie; il difficile va a prendere anche i potenziamenti, evita le monete contese, travolge chi ne ha tante e si scansa quando qualcuno gli scatta contro.',
     ],
   },
   crea: (o) => new Pioggia(o),

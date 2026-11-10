@@ -41,7 +41,7 @@
     const box = tela.parentElement;
     // l'altezza libera sotto la barra (con un numero fisso sul telefono in orizzontale il campo restava piccolo)
     const sopra = Math.max(0, box.getBoundingClientRect().top + (window.scrollY || 0));
-    const scala = Math.min(box.clientWidth / p.W, (window.Arena.touch() ? Math.max(180, window.innerHeight - sopra - 20) : Math.max(200, window.innerHeight - 250)) / p.H);
+    const scala = Math.min(box.clientWidth / p.W, (window.Arena.touch() ? Math.max(180, window.innerHeight - sopra - 20) : Math.max(200, window.innerHeight - 262)) / p.H);
     const dpr = window.devicePixelRatio || 1;
     const w = Math.round(p.W * scala), h = Math.round(p.H * scala);
     if (tela.width !== Math.round(w * dpr)) { tela.width = Math.round(w * dpr); tela.height = Math.round(h * dpr); tela.style.width = `${w}px`; tela.style.height = `${h}px`; }

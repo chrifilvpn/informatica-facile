@@ -165,7 +165,19 @@
   socket.on('papi', (d) => { if (window.Esecuzione) Esecuzione.papi({ ...(d || {}), chiuso: () => { if (!(d && d.globale)) socket.emit('papiChiuso'); } }); });
   socket.on('esecuzione', (d) => { if (window.Esecuzione) Esecuzione.avvia({ ...d, sonoIo: d.sonoIo !== undefined ? d.sonoIo : !!(stato && d.posto === stato.mioPosto) }); });
   // giochi in tempo reale: lo stato leggero arriva a ogni tick
-  socket.on('tick', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.tick) T.tick(ctx, d); });
+  // le scritte sotto i nomi (righe fatte, lunghezza, punti…) seguono il gioco anche tra uno stato completo e l'altro
+  let ultimaInfoPosti = 0;
+  const aggiornaInfoPosti = (T) => {
+    const ora = Date.now();
+    if (!T.infoPosto || ora - ultimaInfoPosti < 400) return;
+    ultimaInfoPosti = ora;
+    document.querySelectorAll('.info-posto[data-info]').forEach((el) => {
+      let h = '';
+      try { h = T.infoPosto(ctx, Number(el.dataset.info)) || ''; } catch (e) { return; }
+      if (el.dataset.ultimo !== h) { el.dataset.ultimo = h; el.innerHTML = h; }
+    });
+  };
+  socket.on('tick', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.tick) { T.tick(ctx, d); aggiornaInfoPosti(T); } });
   socket.on('cursore', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.cursore) T.cursore(ctx, d); });
   const cfgStudio = Boss.config();
   $('#studio-grigia').checked = cfgStudio.grigia;
@@ -1142,7 +1154,7 @@
     if (T.libero && !T.senzaFila) { // senzaFila: il gioco mostra da sé gli avversari (es. poker)
       $('.posto-altro[data-slot="2"]').innerHTML = `<div class="fila-avversari">${Array.from({ length: p.n }, (_, posto) => posto)
         .filter((posto) => posto !== stato.mioPosto)
-        .map((posto) => `<div class="avversario">${targhetta(posto, p)}<div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div><div class="bolla-posto" data-bolla="${posto}"></div></div>`).join('')}</div>`;
+        .map((posto) => `<div class="avversario">${targhetta(posto, p)}<div class="info-posto" data-info="${posto}">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div><div class="bolla-posto" data-bolla="${posto}"></div></div>`).join('')}</div>`;
     }
     for (let posto = 0; posto < p.n && !T.libero; posto++) {
       const s = slot(posto);
@@ -1151,10 +1163,10 @@
       const n = p.carteInMano ? p.carteInMano[posto] : 0;
       el.innerHTML = `${targhetta(posto, p)}
         <div class="ventaglio ${n > 6 ? 'stretto' : ''}">${Carte.retro().repeat(Math.min(n, 14))}${n > 6 ? `<span class="conta">${n}</span>` : ''}</div>
-        <div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div>
+        <div class="info-posto" data-info="${posto}">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div>
         <div class="bolla-posto" data-bolla="${posto}"></div>`;
     }
-    $('#mio-nome').innerHTML = `${targhetta(stato.mioPosto, p)}<div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, stato.mioPosto) : ''}</div><div class="bolla-posto" data-bolla="${stato.mioPosto}"></div>`;
+    $('#mio-nome').innerHTML = `${targhetta(stato.mioPosto, p)}<div class="info-posto" data-info="${stato.mioPosto}">${T.infoPosto ? T.infoPosto(ctx, stato.mioPosto) : ''}</div><div class="bolla-posto" data-bolla="${stato.mioPosto}"></div>`;
 
     $('#panno').className = `panno panno-${p.gioco}`;
     // giochi in tempo reale: se il pannello non è cambiato non si ricostruisce (rifarlo a ogni aggiornamento staccava

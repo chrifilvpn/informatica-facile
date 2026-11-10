@@ -306,7 +306,7 @@ module.exports = {
       'Tutti vedono solo un piccolo cerchio intorno a sé (il Cercatore un po\' più grande); i muri fermano lo sguardo, i mobili no. Chi è dentro un nascondiglio non si vede, a meno che il Cercatore non gli arrivi proprio accanto.',
       'All\'inizio il Cercatore è bendato per 10 secondi: gli altri corrono a nascondersi. Il round dura 100 secondi.',
       'Ogni 7 secondi nel punto dove si trova il Cercatore compare una nuvola ROSSA, che vedono tutti i nascosti. Ogni 15 secondi nel punto dove si trova ogni nascosto compare una nuvola AZZURRA, che vede solo il Cercatore: conviene spostarsi subito dopo!',
-      'Caccia finale: negli ultimi 30 secondi le nuvole azzurre arrivano ogni 6 secondi e il Cercatore diventa un po\' più veloce (come nella fase finale di altri nascondini online).',
+      'Caccia finale: negli ultimi 30 secondi le nuvole azzurre arrivano ogni 6 secondi e il Cercatore diventa un po\' più veloce.',
       'Il Cercatore prende un nascosto toccandolo. Chi è preso da quel momento guarda la partita con la casa tutta illuminata e vede tutti.',
       'Punti: il Cercatore 3 per ogni preso, più 5 se li trova tutti. Chi resiste fino alla fine prende 5 punti (i nascosti vincono il round); chi è preso prende 1 punto ogni 20 secondi resistiti. Dopo 3 round (o 1, o 5) vince chi ha più punti.',
       'Il gioco è in tempo reale: si ferma per tutti quando qualcuno apre le dispense.',
