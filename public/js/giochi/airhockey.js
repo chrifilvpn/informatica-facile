@@ -33,7 +33,7 @@
     if (!box) return;
     // il tavolo prende l'altezza che resta sotto la barra (prima un numero fisso: sul telefono in orizzontale era minuscolo)
     const sopra = Math.max(0, box.getBoundingClientRect().top + (window.scrollY || 0));
-    const scala = Math.min(box.clientWidth / p.W, (matchMedia('(pointer: coarse)').matches ? Math.max(140, window.innerHeight - sopra - 20) : window.innerHeight - 215) / p.H);
+    const scala = Math.min(box.clientWidth / p.W, (matchMedia('(pointer: coarse)').matches ? Math.max(140, window.innerHeight - sopra - (window.innerWidth > window.innerHeight ? 20 : 84)) : window.innerHeight - 224) / p.H);
     const dpr = window.devicePixelRatio || 1;
     const w = Math.round(p.W * scala), h = Math.round(p.H * scala);
     if (tela.width !== w * dpr) { tela.width = w * dpr; tela.height = h * dpr; tela.style.width = `${w}px`; tela.style.height = `${h}px`; }

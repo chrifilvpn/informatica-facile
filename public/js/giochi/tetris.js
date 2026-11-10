@@ -56,7 +56,7 @@
     const pulsanti = document.querySelector('.tt-pulsanti');
     const pulsH = pulsanti && pulsanti.offsetHeight && getComputedStyle(pulsanti).position !== 'fixed' ? pulsanti.offsetHeight + 14 : 0;
     const sopra = Math.max(0, box.getBoundingClientRect().top + (window.scrollY || 0));
-    const l = Math.max(12, Math.min(34, Math.floor((window.innerHeight - sopra - pulsH - 16) / 20)));
+    const l = Math.max(12, Math.min(34, Math.floor((window.innerHeight - sopra - pulsH - (matchMedia('(pointer: coarse)').matches ? 16 : 30)) / 20)));
     tabellone(mia.tela, io, l, true);
     lMio = l;
     pezzetto(mia.hold, io.h, Math.round(l * 0.6), io.hu);
