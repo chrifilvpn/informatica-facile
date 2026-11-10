@@ -482,7 +482,8 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .annuncio {
   /* in alto, sotto la barra: così non copre mai il tavolo e la combinazione vincente */
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 6.2rem); transform: translate(-50%, -50%); z-index: 45; pointer-events: none;
-  max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 999px; background: rgba(8, 22, 17, .78); box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  /* width: max-content: senza, una scatola fissa con left: 50% si stringe a metà schermo e il testo va a capo in 4 righe */
+  width: max-content; max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 1.6rem; background: rgba(8, 22, 17, .78); text-wrap: balance; line-height: 1.15; box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
   font-family: var(--serif); font-size: clamp(1.4rem, 4.5vw, 2.3rem); color: var(--avorio); text-align: center;
   text-shadow: 0 2px 0 var(--panno-scuro);
 }

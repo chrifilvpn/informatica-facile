@@ -1,6 +1,6 @@
 /* ======================= BACKGAMMON ======================= */
 .bkg { width: 100%; max-width: 86rem; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1rem; align-items: center; padding: .3rem .5rem; }
-.bkg-svg { width: 100%; max-height: calc(100vh - 9rem); display: block; filter: drop-shadow(0 12px 22px rgba(0, 0, 0, .45)); user-select: none; }
+.bkg-svg { width: 100%; max-height: calc(100vh - 10.5rem); display: block; filter: drop-shadow(0 12px 22px rgba(0, 0, 0, .45)); user-select: none; }
 .bkg-cornice { fill: #5b3a1e; stroke: #3a2210; stroke-width: 4; }
 .bkg-campo { fill: #e9d8b4; }
 .bkg-barra { fill: #6e4726; }

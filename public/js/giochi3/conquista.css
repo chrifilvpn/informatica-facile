@@ -5,7 +5,7 @@
 .cq-legenda span.di-turno { border-color: var(--oro); }
 .cq-legenda span.fuori { opacity: .4; text-decoration: line-through; }
 .cq-legenda i { width: .8rem; height: .8rem; border-radius: 50%; }
-.cq-mappa { width: min(100%, calc((100vh - 17rem) * 1.78)); min-width: 18rem; height: auto; border-radius: 18px; box-shadow: 0 12px 26px rgba(0, 0, 0, .45); }
+.cq-mappa { width: min(100%, calc((100vh - 19.2rem) * 1.78)); min-width: 18rem; height: auto; border-radius: 18px; box-shadow: 0 12px 26px rgba(0, 0, 0, .45); }
 .cq-oceano { fill: #2b6a9a; }
 .cq-terra { stroke: rgba(70, 50, 30, .45); stroke-width: 2.5; }
 .cq-mare { stroke: rgba(255, 255, 255, .55); stroke-width: 2.5; stroke-dasharray: 7 6; }

@@ -154,6 +154,23 @@ class Nodo {
     this.figli = null; this.v = 0; this.n = 0; this.rv = new Map(); // RAVE: mossa -> [vinte, giocate]
   }
 }
+// quanto "ha senso" un incrocio a prima vista (da -0,6 a +0,6): le linee 3 e 4 e i punti vicini alle pietre valgono di
+// più, il bordo vuoto di meno. Serve sui goban grandi, dove le partite simulate sono poche rispetto agli incroci: senza,
+// tutte le mosse restavano a pari merito e il computer metteva le pietre in fila sulla prima riga (A19, B19, C19…).
+function sensato(t, q) {
+  const W = t.W, N = t.N;
+  const x = (q % W) - 1, y = ((q / W) | 0) - 1;
+  const d = Math.min(x, y, N - 1 - x, N - 1 - y);
+  let vicine = 0, attaccate = 0;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+    if ((!dx && !dy) || x + dx < 0 || y + dy < 0 || x + dx >= N || y + dy >= N) continue;
+    const v = t.c[q + dy * W + dx];
+    if (v === 1 || v === 2) { vicine++; if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) attaccate++; }
+  }
+  let s = d === 0 ? (attaccate ? -0.15 : -0.6) : d === 1 ? (vicine ? 0 : -0.35) : d <= 3 ? 0.3 : 0.1;
+  if (vicine) s += 0.3;
+  return s;
+}
 function mcts(tav, col, ms, komi, maxPlayout = Infinity) {
   const fino = ora() + ms;
   const radice = new Nodo(-1, 3 - col, null);
@@ -163,8 +180,8 @@ function mcts(tav, col, ms, komi, maxPlayout = Infinity) {
   const vuotiDi = (t) => { const v = []; for (let i = 0; i < t.c.length; i++) if (t.c[i] === 0) v.push(i); return v; };
   const espandi = (nodo, t, c) => {
     nodo.figli = [];
-    for (let i = 0; i < t.c.length; i++) if (t.c[i] === 0 && !t.occhio(i, c) && t.legale(i, c)) nodo.figli.push(new Nodo(i, c, nodo));
-    nodo.figli.push(new Nodo(-1, c, nodo)); // passo
+    for (let i = 0; i < t.c.length; i++) if (t.c[i] === 0 && !t.occhio(i, c) && t.legale(i, c)) { const f = new Nodo(i, c, nodo); f.pr = sensato(t, i); nodo.figli.push(f); }
+    const passo = new Nodo(-1, c, nodo); passo.pr = 0; nodo.figli.push(passo); // passo
   };
   while ((giri & 15 || ora(0.9) < fino) && giri < maxPlayout) {
     giri++;
@@ -180,7 +197,7 @@ function mcts(tav, col, ms, komi, maxPlayout = Infinity) {
         const rn = r ? r[1] : 0, rw = r ? r[0] / r[1] : 0.5;
         const beta = rn / (rn + f.n + rn * f.n / 300 + 1e-9);
         const q = f.n ? f.v / f.n : 0.5;
-        let val = (1 - beta) * q + beta * rw + (f.n ? 0.35 * Math.sqrt(lnN / f.n) : 1.2);
+        let val = (1 - beta) * q + beta * rw + (f.n ? 0.35 * Math.sqrt(lnN / f.n) : 1.2) + 0.4 * f.pr / (f.n + 1);
         if (f.mossa < 0) val -= 0.25; // il passo si prova per ultimo
         if (val > bv) { bv = val; best = f; }
       }
@@ -217,7 +234,9 @@ function mcts(tav, col, ms, komi, maxPlayout = Infinity) {
     }
   }
   if (!radice.figli) espandi(radice, tav, col);
-  const ordinati = [...radice.figli].sort((x, y) => y.n - x.n);
+  // la più visitata; a pari visite (succede sui goban grandi) quella che è andata meglio nelle simulazioni e ha più senso
+  const voto = (f) => { const r = radice.rv.get(f.mossa); return (r && r[1] ? r[0] / r[1] : 0.5) + 0.5 * (f.pr || 0) - (f.mossa < 0 ? 1 : 0); };
+  const ordinati = [...radice.figli].sort((x, y) => y.n - x.n || voto(y) - voto(x));
   const best = ordinati[0];
   return { mossa: best.mossa, vinte: best.n ? best.v / best.n : 0.5, giri, radice };
 }
@@ -421,11 +440,14 @@ function bot(g, p, livello) {
     return daPunto(legali[Math.floor(Math.random() * legali.length)]);
   }
   const veloce = process.env.TEST_VELOCE;
-  const ms = livello === 'medio' ? (veloce ? 15 : 60) : (veloce ? 35 : 280);
+  // sui goban grandi una partita simulata dura molto di più: il tempo cresce con gli incroci (si pensa in un thread a parte)
+  const grande = veloce ? 1 : (N * N) / 81;
+  const ms = (livello === 'medio' ? (veloce ? 15 : 60) : (veloce ? 35 : 280)) * grande;
   const r = mcts(t, col, ms, komiNero, livello === 'medio' ? (veloce ? 140 : 500) : Infinity);
   if (r.mossa < 0 || !legali.includes(r.mossa)) {
     // il passo conviene solo se la partita è decisa; altrimenti la mossa legale più visitata
-    if (r.mossa < 0 && (r.vinte > 0.5 || g.nMosse > N * N)) return { tipo: 'passa' };
+    // (mai a goban ancora mezzo vuoto, a meno che l'altro non abbia già passato)
+    if (r.mossa < 0 && (g.nMosse > N * N || (r.vinte > 0.5 && (g.passati === 1 || g.nMosse > N * N * 0.6)))) return { tipo: 'passa' };
     const figli = [...r.radice.figli].filter((f) => f.mossa >= 0 && legali.includes(f.mossa)).sort((a, b) => b.n - a.n);
     if (!figli.length) return { tipo: 'passa' };
     return daPunto(figli[0].mossa);
@@ -440,7 +462,7 @@ module.exports = {
     nome: 'Go',
     tipo: 'tabellone',
     giocatori: [2],
-    descrizione: 'L\'antico gioco di territorio: circonda le zone vuote, cattura le pietre avversarie. Goban 9×9 o 13×13, conteggio ad area con komi.',
+    descrizione: 'L\'antico gioco di territorio: circonda le zone vuote, cattura le pietre avversarie. Goban 9×9, 13×13 o 19×19, conteggio ad area con komi.',
     alias: ['go', 'weiqi', 'baduk', 'igo', 'pietre', 'goban', 'territorio'],
     opzioni: [
       { id: 'tavola', nome: 'Goban', valori: [9, 13, 19], etichette: ['9×9 (veloce)', '13×13', '19×19 (lunga)'], predefinito: 9 },

@@ -1,7 +1,7 @@
 /* BATTAGLIA NAVALE SOLITARIA: carta nautica azzurra, navi di metallo grigio con le punte tonde */
 .nv { width: min(46rem, 100%); margin: 0 auto; display: grid; justify-items: center; gap: .8rem; padding: .3rem 0 1rem; }
 .nv-griglia {
-  --lato: min(calc((min(34rem, 100vw - 1.6rem) - 12px - var(--l) * 2px) / (var(--l) + 1)), calc(52vh / (var(--l) + 1)));
+  --lato: min(calc((min(34rem, 100vw - 1.6rem) - 12px - var(--l) * 2px) / (var(--l) + 1)), calc((49vh - var(--l) * 2px) / (var(--l) + 1)));
   display: grid; grid-template-columns: repeat(calc(var(--l) + 1), var(--lato)); grid-auto-rows: var(--lato); gap: 2px; padding: 6px; border-radius: 14px;
   background: #1f4f78; box-shadow: 0 10px 26px rgba(0, 0, 0, .4); user-select: none; -webkit-user-select: none; touch-action: none;
 }

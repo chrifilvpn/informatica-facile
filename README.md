@@ -20,6 +20,11 @@ Made by chry_pala. Altri giochi arriveranno uno alla volta.
 
 ## Novità di questa versione
 
+- **Rianalisi di strategia e rompicapo (10 novembre)**:
+  - **Go sui goban grandi**: sul 19×19 (e a volte sul 13×13) il computer medio e difficile metteva le pietre in fila sul bordo (A19, B19, C19…) o passava dopo poche mosse, perché le partite simulate erano poche rispetto agli incroci e tutte le mosse restavano a pari merito. Ora ogni incrocio ha un «buon senso» di partenza (linee 3 e 4 e punti vicini alle pietre prima, bordo vuoto dopo), il tempo per pensare cresce con la grandezza del goban e non passa più a goban mezzo vuoto. La descrizione del gioco ora nomina anche il 19×19.
+  - **Annunci grandi sul telefono** («Ada conquista Medio Oriente!», «Bomba!»…): si stringevano a metà schermo andando a capo in 3-4 righe dentro un ovale che copriva la barra; ora usano tutta la larghezza e stanno su una o due righe.
+  - **Tavolieri tagliati in basso sul computer** (schermo 1440×860): Backgammon, Conquista del mondo, Affari in città, Picross a colori e Battaglia navale solitaria 10×10 uscivano di pochi pixel sotto la barra del nome; ora ci stanno.
+  - **Sblocca il blocco sul telefono**: la frase sotto il tabellone andava a capo e il «minimo possibile» restava nascosto; sul telefono ora c'è solo il conto delle mosse.
 - **Sistemazioni dei giochi d'azione e strategia** (test in `test/giochi3/migliorie-azione.js`):
   - **Il computer difficile pensa a parte**: negli scacchi, scacchi cinesi, dama, dama internazionale, forza 4, forza 4 in 3D, Hex e Go la ricerca della mossa si fa in un thread a parte (`giochi/pensatore.js`, worker_threads, giochi con `meta.pensaLento`), così mentre il computer pensa gli altri tavoli del sito non si fermano. Se il thread non risponde il computer pensa come prima.
   - **Go**: al conteggio finale contro il computer la partita non resta più ferma (il computer accetta da solo).
