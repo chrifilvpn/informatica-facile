@@ -1447,7 +1447,16 @@
     if (stato.chat.length) ultimaChat = stato.chat[stato.chat.length - 1].id;
     if (primaVolta) return;
     for (const m of nuovi) {
-      if (m.sistema) { avviso(m.testo, 3200); continue; }
+      if (m.sistema) {
+        // con la chat aperta il messaggio si legge già lì; uno lungo (l'elenco di !comandi) nell'avviso copriva
+        // tutto lo schermo del telefono: se ne mostra l'inizio e si accende il pallino della chat
+        if ($('#chat').hidden) {
+          const lungo = m.testo.length > 140;
+          avviso(lungo ? `${m.testo.slice(0, 100).trim()}… (apri la chat per leggere tutto)` : m.testo, lungo ? 4200 : 3200);
+          if (lungo) $('#non-letti').hidden = false;
+        }
+        continue;
+      }
       if (m.ia) { bip(660, 0.08); continue; } // fantasIA non ha una nuvoletta: la risposta sta nella chat
       bolleAttive.set(m.posto, { testo: m.testo, fino: Date.now() + 5000 });
       if (m.posto !== stato.mioPosto) bip(520, 0.08);
