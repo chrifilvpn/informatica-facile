@@ -143,7 +143,7 @@ module.exports = {
     alias: ['arco', 'frecce', 'bersaglio', 'tiro', 'ninja dojo', 'kirby', 'mira'],
     opzioni: [{ id: 'round', nome: 'Bersagli', valori: [8, 5, 12], etichette: ['8 bersagli', '5 bersagli', '12 bersagli'], predefinito: 8 }],
     regole: [
-      'A ogni round compare un bersaglio a una distanza diversa: vicino, medio o lontano. Tutti tirano insieme e ognuno ha una freccia sola per bersaglio (7 secondi per tirare).',
+      'A ogni round compare un bersaglio a una distanza diversa: vicino, medio o lontano. Tutti tirano insieme e ognuno ha una freccia sola per bersaglio (6 secondi per tirare).',
       'Si mira col mouse e si tira con un clic (o con spazio o Invio); sul telefono appoggia il dito sul campo, trascina per mirare (il mirino compare un po\' sopra il dito, così vedi dove punti) e stacca il dito per tirare.',
       'Il mirino sta fermo dove lo metti, ma la freccia non va dritta: cala un po\' (poco sul bersaglio vicino, tanto su quello lontano, quindi bisogna mirare più in alto) e dal secondo bersaglio c\'è il vento, che la sposta di lato. La bandierina in alto dice da che parte soffia e quanto (da 0 a 3 tacche); da lontano il vento conta di più. La freccia non arriva subito: sui bersagli che si muovono bisogna tirare un po\' avanti. Hai 6 secondi per tirare.',
       'Dal secondo bersaglio passano davanti delle assi di legno che si muovono avanti e indietro: se la freccia le incontra si pianta lì e non vale niente.',

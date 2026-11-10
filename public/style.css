@@ -482,7 +482,7 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .annuncio {
   /* in alto, sotto la barra: così non copre mai il tavolo e la combinazione vincente */
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 6.2rem); transform: translate(-50%, -50%); z-index: 45; pointer-events: none;
-  max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 999px; background: rgba(8, 22, 17, .78); box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  width: max-content; max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 999px; background: rgba(8, 22, 17, .78); box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
   font-family: var(--serif); font-size: clamp(1.4rem, 4.5vw, 2.3rem); color: var(--avorio); text-align: center;
   text-shadow: 0 2px 0 var(--panno-scuro);
 }
@@ -491,7 +491,7 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .avviso {
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 3.6rem); transform: translateX(-50%);
   background: var(--avorio); color: var(--inchiostro); padding: .7rem 1.1rem; border-radius: 10px; z-index: 50;
-  max-width: calc(100% - 2rem); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); text-align: center;
+  width: max-content; max-width: calc(100% - 2rem); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); text-align: center;
 }
 
 @media (max-width: 620px) {
