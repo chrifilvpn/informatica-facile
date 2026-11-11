@@ -1,5 +1,5 @@
 /* CRUCIVERBA: schema su carta color avorio, caselle nere piene, la parola scelta in giallo chiaro e la casella in oro */
-.cv { --lato: min(calc((100vh - 15rem) / var(--r)), calc(min(46rem, 100vw - 2rem) / var(--c)), 3.1rem); width: min(78rem, 100%); margin: 0 auto; display: grid; gap: .6rem; padding-bottom: 1rem; }
+.cv { --lato: min(max(1.6rem, calc((100vh - 24.6rem) / var(--r))), calc(min(46rem, 100vw - 2rem) / var(--c)), 3.1rem); width: min(78rem, 100%); margin: 0 auto; display: grid; gap: .6rem; padding-bottom: 1rem; }
 .cv-corpo { display: grid; grid-template-columns: auto minmax(16rem, 24rem); gap: 1.2rem; justify-content: center; align-items: start; }
 .cv-sinistra { display: grid; justify-items: center; gap: .6rem; }
 .cv-def { display: flex; align-items: center; gap: .4rem; width: calc(var(--lato) * var(--c) + 1.2rem); min-width: min(24rem, 92vw); max-width: 92vw; padding: .45rem .5rem; border-radius: 12px; background: #fff7df; color: #2a2414; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); }
