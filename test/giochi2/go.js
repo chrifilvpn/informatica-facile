@@ -109,3 +109,19 @@ console.log('✓ Go: catture, suicidio, ko e superko, passaggi, pietre morte pro
   assert.ok(dv > mv, 'il difficile batte il medio');
   assert.ok(m2 >= f2, 'il medio batte il facile (nei test pensa pochissimo: la vera differenza si vede con i tempi veri)');
 }
+
+// ---- goban grande: in apertura il computer non mette le pietre sul bordo (prima le metteva in fila: A19, B19, C19…) ----
+{
+  for (const livello of ['medio', 'difficile']) {
+    const g = M.crea({ n: 2, primo: 0, opzioni: { tavola: 19 } });
+    const nere = [[3, 3], [15, 15], [9, 9], [3, 15], [15, 3], [9, 3]];
+    for (const [x, y] of nere) {
+      assert.ok(g.azione(0, { tipo: 'metti', x, y }).ok);
+      const a = M.bot(g, 1, livello);
+      assert.strictEqual(a.tipo, 'metti', `19×19 ${livello}: in apertura non passa`);
+      assert.ok(Math.min(a.x, a.y, 18 - a.x, 18 - a.y) >= 1, `19×19 ${livello}: niente pietre sulla prima linea in apertura (${a.x},${a.y})`);
+      assert.ok(g.azione(1, a).ok);
+    }
+  }
+  console.log('✓ Go: sul 19×19 il computer apre lontano dal bordo');
+}

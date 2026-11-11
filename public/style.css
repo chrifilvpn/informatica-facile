@@ -482,7 +482,8 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .annuncio {
   /* in alto, sotto la barra: così non copre mai il tavolo e la combinazione vincente */
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 6.2rem); transform: translate(-50%, -50%); z-index: 45; pointer-events: none;
-  width: max-content; max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 999px; background: rgba(8, 22, 17, .78); box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  /* width: max-content: senza, una scatola fissa con left: 50% si stringe a metà schermo e il testo va a capo in 4 righe */
+  width: max-content; max-width: 92vw; padding: .35rem 1.3rem .5rem; border-radius: 1.6rem; background: rgba(8, 22, 17, .78); text-wrap: balance; line-height: 1.15; box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
   font-family: var(--serif); font-size: clamp(1.4rem, 4.5vw, 2.3rem); color: var(--avorio); text-align: center;
   text-shadow: 0 2px 0 var(--panno-scuro);
 }
@@ -491,7 +492,7 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .avviso {
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 3.6rem); transform: translateX(-50%);
   background: var(--avorio); color: var(--inchiostro); padding: .7rem 1.1rem; border-radius: 10px; z-index: 50;
-  width: max-content; max-width: calc(100% - 2rem); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); text-align: center;
+  max-width: calc(100% - 2rem); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); text-align: center;
 }
 
 @media (max-width: 620px) {
@@ -1322,7 +1323,7 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 .gioco-tessera { position: relative; }
 .g-stella { position: absolute; top: .25rem; right: .35rem; font-size: 1.15rem; line-height: 1; padding: .2rem; opacity: .45; cursor: pointer; z-index: 1; }
 .g-stella:hover, .g-stella.si { opacity: 1; color: #f2c14e; }
-.gioco-tessera .g-nome { display: block; padding-right: 1.4rem; }
+.gioco-tessera .g-nome { padding-right: 1.4rem; }
 .sveglia { margin: .6rem 0; padding: .7rem .9rem; border-radius: 10px; background: rgba(209, 154, 42, .15); border: 1px solid rgba(209, 154, 42, .45); animation: sveglia-pulsa 1.6s ease-in-out infinite; }
 @keyframes sveglia-pulsa { 50% { opacity: .65; } }
 .scheda-statistiche { max-width: 34rem; width: calc(100% - 2rem); max-height: 85vh; overflow: auto; }

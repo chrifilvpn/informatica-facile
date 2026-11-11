@@ -11,7 +11,7 @@
 .pc-col.attivo { transform: scale(1.15); border-color: #ffd166; box-shadow: 0 0 0 3px rgba(255, 209, 102, .4), 0 4px 10px rgba(0, 0, 0, .4); }
 .pc-tavola {
   /* le caselle e gli indizi crescono insieme: ogni gettone d'indizio è largo 0.84 caselle */
-  --lato: min(calc((min(46rem, 96vw) - 24px) / (var(--w) + .9 * var(--nr))), calc((56vh - 16px) / (var(--h) + .9 * var(--nc))), 2.6rem);
+  --lato: min(calc((min(46rem, 96vw) - 24px) / (var(--w) + .9 * var(--nr))), calc((53vh - 16px) / (var(--h) + .9 * var(--nc))), 2.6rem);
   --ind-r: calc(var(--lato) * .9 * var(--nr) + 6px); --ind-c: calc(var(--lato) * .9 * var(--nc) + 4px);
   display: grid; grid-template-columns: var(--ind-r) repeat(var(--w), var(--lato)); grid-template-rows: var(--ind-c) repeat(var(--h), var(--lato));
   padding: 8px; border-radius: 12px; background: #fbf8f0; box-shadow: 0 10px 26px rgba(0, 0, 0, .4); user-select: none; -webkit-user-select: none; touch-action: none;

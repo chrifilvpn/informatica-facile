@@ -73,7 +73,7 @@
       const p = ctx.partita;
       const altri = p.n > 1 ? `<div class="sbl-altri">${p.altri.map((x, i) => `<span class="${x.fatto !== null ? 'fatto' : ''}"><b>${esc(i === ctx.mio ? 'Tu' : ctx.nome(i))}</b> ${x.fatto !== null ? `✅ ${p.arrivi.indexOf(i) + 1}° · ${x.mosse} mosse` : `${x.mosse} mosse…`}</span>`).join('')}</div>` : '';
       const stelle = p.fatto !== null ? `<p class="sbl-stelle">${'⭐'.repeat(p.stelle)}${'☆'.repeat(3 - p.stelle)}</p>` : '';
-      const msg = p.fatto !== null ? `Libero in ${p.mosse} mosse (minimo ${p.minimo})${p.n > 1 && p.attesi !== 0 ? ': aspetta gli altri' : ''}` : `Trascina i blocchi e libera quello rosso · mosse: <b>${p.mosse}</b> · minimo possibile: ${p.minimo}`;
+      const msg = p.fatto !== null ? `Libero in ${p.mosse} mosse (minimo ${p.minimo})${p.n > 1 && p.attesi !== 0 ? ': aspetta gli altri' : ''}` : `<span class="sbl-guida">Trascina i blocchi e libera quello rosso · </span>mosse: <b>${p.mosse}</b> · minimo possibile: ${p.minimo}`;
       return `<div class="sbl"><p class="pa-round">Puzzle ${p.round} di ${p.nRound} · ${{ facile: 'facile', medio: 'medio', difficile: 'difficile' }[p.livello]}</p>
         <div class="sbl-posto"></div>${stelle}<p class="pa-msg">${msg}</p>${altri}</div>`;
     },
