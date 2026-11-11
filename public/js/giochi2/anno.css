@@ -144,6 +144,9 @@
   .yr-cifre b, .yr-cifre span { font-size: 2.2rem; }
   .yr-epoca em, .yr-aiuto { display: none; }
   .yr-tacca:nth-of-type(even) small { display: none; }
+  /* la prima etichetta («500 a.C.») parte dal bordo invece di uscire a sinistra dallo schermo */
+  .yr-linea:not(.yr-zoom) .yr-tacca:first-of-type small { left: 0; transform: none; }
+  .yr-linea:not(.yr-zoom) .yr-tacca:nth-of-type(3) small { display: none; }
   .yr-righe li { grid-template-columns: .7rem 1fr 4.5rem 3rem; gap: .45rem; }
   .yr-righe .yr-diff { display: none; }
   .yr-riepilogo li { grid-template-columns: 4.2rem 1fr 3rem; }

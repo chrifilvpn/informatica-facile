@@ -325,7 +325,7 @@ module.exports = {
     ],
     regole: [
       'Per terra è disegnato il calamaro: il CORPO (il quadrato a sinistra), la VITA (il passaggio stretto), il triangolo e la TESTA (il cerchio a destra), dove c\'è la CASA. Ti muovi con WASD o le frecce (sul telefono col joystick); spingi con spazio (o il pulsante 🤚).',
-      'Due squadre fisse, la rossa (posti dispari: 1°, 3°…) e la blu, che si scambiano i ruoli a ogni round: così tutti attaccano e difendono lo stesso numero di volte. Abbiamo scelto le squadre fisse a ruoli alterni perché in pochi si gioca comunque tutti e due i ruoli e in tanti si gioca insieme ai compagni.',
+      'Due squadre fisse, la rossa (posti dispari: 1°, 3°…) e la blu, che si scambiano i ruoli a ogni round: così tutti attaccano e difendono lo stesso numero di volte.',
       'Gli ATTACCANTI partono fuori dal disegno, a sinistra. Fuori dal disegno saltano a zoppo (vanno alla metà della velocità) e non possono mettere piede nel disegno, tranne che dalla VITA: si entra attraversando una delle sue due linee lunghe, sopra o sotto. Superata la vita si corre, e bisogna arrivare a toccare la CASA nella testa del calamaro.',
       'I DIFENSORI stanno sempre dentro il disegno e cercano di fermare gli attaccanti spingendoli fuori.',
       'La spinta sbalza via chi è vicino (dopo ogni spinta ci vuole quasi un secondo per ricaricarla). Chi è dentro il disegno e viene spinto fuori è ELIMINATO per il resto del round: vale sia per gli attaccanti sia per i difensori, che quindi devono stare attenti alle linee. Chi salta a zoppo, se viene spinto, cade a terra per un secondo.',

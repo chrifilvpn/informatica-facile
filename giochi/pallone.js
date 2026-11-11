@@ -168,7 +168,7 @@ module.exports = {
       'A ogni round c\'è un pallone nuovo, lo stesso per tutti. A turno ognuno sceglie: POMPA oppure INCASSA.',
       'Pompa: il pallone si gonfia e, se regge, guadagni 1 punto nel tuo piatto del round. Poi tocca al prossimo.',
       'Incassa: i punti del tuo piatto diventano tuoi per sempre ed esci dal round; gli altri continuano a pompare senza di te.',
-      'Il pallone scoppia a un numero di pompate segreto e casuale (contando le pompate di tutti), tra 1 e 20 (o 12 e 30, secondo il pallone scelto prima di iniziare). Tutti i numeri hanno la stessa probabilità, e il numero cambia a ogni pallone.',
+      'Il pallone scoppia a un numero di pompate segreto e casuale (contando le pompate di tutti), tra 1 e 20 (oppure tra 1 e 12, o tra 1 e 30, secondo il pallone scelto prima di iniziare). Tutti i numeri hanno la stessa probabilità, e il numero cambia a ogni pallone.',
       'Chi fa scoppiare il pallone perde tutto il piatto del round. Chi era ancora dentro in quel momento incassa da solo il suo piatto.',
       'Il round finisce quando il pallone scoppia o quando tutti hanno incassato. A fine round si scopre a quante pompate sarebbe scoppiato. Il round dopo apre il giocatore successivo.',
       'Dopo 5 round (o 3, o 8) vince chi ha incassato più punti. A parità è pareggio.',

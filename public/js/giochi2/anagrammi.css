@@ -102,5 +102,7 @@
   .agr-lettere i { border-radius: 5px; }
   .agr-scrivi input { font-size: 1.25rem; padding: .5rem .6rem; }
   .agr-tasti { display: none; }
+  /* il campo dove si scrive resta sempre in vista in fondo, le carte scorrono sopra */
+  .agr-sotto { position: sticky; bottom: 0; z-index: 3; margin: 0 -.3rem; padding: .45rem .3rem .35rem; background: linear-gradient(rgba(21, 58, 46, 0), rgba(21, 58, 46, .96) 22%); }
 }
 @media (prefers-reduced-motion: reduce) { .agr-lettere.giusta i, .agr-tempo.poco b { animation: none; } }

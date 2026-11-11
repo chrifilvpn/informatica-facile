@@ -165,7 +165,19 @@
   socket.on('papi', (d) => { if (window.Esecuzione) Esecuzione.papi({ ...(d || {}), chiuso: () => { if (!(d && d.globale)) socket.emit('papiChiuso'); } }); });
   socket.on('esecuzione', (d) => { if (window.Esecuzione) Esecuzione.avvia({ ...d, sonoIo: d.sonoIo !== undefined ? d.sonoIo : !!(stato && d.posto === stato.mioPosto) }); });
   // giochi in tempo reale: lo stato leggero arriva a ogni tick
-  socket.on('tick', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.tick) T.tick(ctx, d); });
+  // le scritte sotto i nomi (righe fatte, lunghezza, punti…) seguono il gioco anche tra uno stato completo e l'altro
+  let ultimaInfoPosti = 0;
+  const aggiornaInfoPosti = (T) => {
+    const ora = Date.now();
+    if (!T.infoPosto || ora - ultimaInfoPosti < 400) return;
+    ultimaInfoPosti = ora;
+    document.querySelectorAll('.info-posto[data-info]').forEach((el) => {
+      let h = '';
+      try { h = T.infoPosto(ctx, Number(el.dataset.info)) || ''; } catch (e) { return; }
+      if (el.dataset.ultimo !== h) { el.dataset.ultimo = h; el.innerHTML = h; }
+    });
+  };
+  socket.on('tick', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.tick) { T.tick(ctx, d); aggiornaInfoPosti(T); } });
   socket.on('cursore', (d) => { const T = stato && stato.partita && Tavoli[stato.partita.gioco]; if (T && T.cursore) T.cursore(ctx, d); });
   const cfgStudio = Boss.config();
   $('#studio-grigia').checked = cfgStudio.grigia;
@@ -937,7 +949,7 @@
       <p class="piccolo">Partecipano chi è al tavolo e chi entra col codice (guarda finché non tocca a lui); i posti che mancano li prende il computer.</p>
       <button type="button" class="bottone mini-bt" data-torneo="4">Torneo a 4</button><button type="button" class="bottone mini-bt" data-torneo="8">Torneo a 8</button></div>` : '';
     const aperta = box.querySelector('details[open]') ? 'open' : '';
-    box.innerHTML = `${torneo}<details class="extra-riga" ${aperta}><summary><b>🎲 Serata a giochi misti</b> <small>(${serataScelti.size} scelti)</small></summary>
+    box.innerHTML = `${torneo}<details class="extra-riga" ${aperta}><summary><b>🎲 Serata a giochi misti</b> <small>(${serataScelti.size} ${serataScelti.size === 1 ? 'scelto' : 'scelti'})</small></summary>
       <p class="piccolo">Scegli da 2 a 8 giochi: si giocano uno dopo l'altro con questi giocatori. Ogni gioco vinto vale 3 punti.</p>
       <div class="serata-scelta">${adatti.map((g) => `<label><input type="checkbox" data-serata="${g.id}" ${serataScelti.has(g.id) ? 'checked' : ''}> ${esc(g.nome)}</label>`).join('')}</div>
       <button type="button" class="bottone mini-bt" data-serata-caso>🎲 4 a caso</button>
@@ -1142,7 +1154,7 @@
     if (T.libero && !T.senzaFila) { // senzaFila: il gioco mostra da sé gli avversari (es. poker)
       $('.posto-altro[data-slot="2"]').innerHTML = `<div class="fila-avversari">${Array.from({ length: p.n }, (_, posto) => posto)
         .filter((posto) => posto !== stato.mioPosto)
-        .map((posto) => `<div class="avversario">${targhetta(posto, p)}<div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div><div class="bolla-posto" data-bolla="${posto}"></div></div>`).join('')}</div>`;
+        .map((posto) => `<div class="avversario">${targhetta(posto, p)}<div class="info-posto" data-info="${posto}">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div><div class="bolla-posto" data-bolla="${posto}"></div></div>`).join('')}</div>`;
     }
     for (let posto = 0; posto < p.n && !T.libero; posto++) {
       const s = slot(posto);
@@ -1151,10 +1163,10 @@
       const n = p.carteInMano ? p.carteInMano[posto] : 0;
       el.innerHTML = `${targhetta(posto, p)}
         <div class="ventaglio ${n > 6 ? 'stretto' : ''}">${Carte.retro().repeat(Math.min(n, 14))}${n > 6 ? `<span class="conta">${n}</span>` : ''}</div>
-        <div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div>
+        <div class="info-posto" data-info="${posto}">${T.infoPosto ? T.infoPosto(ctx, posto) : ''}</div>
         <div class="bolla-posto" data-bolla="${posto}"></div>`;
     }
-    $('#mio-nome').innerHTML = `${targhetta(stato.mioPosto, p)}<div class="info-posto">${T.infoPosto ? T.infoPosto(ctx, stato.mioPosto) : ''}</div><div class="bolla-posto" data-bolla="${stato.mioPosto}"></div>`;
+    $('#mio-nome').innerHTML = `${targhetta(stato.mioPosto, p)}<div class="info-posto" data-info="${stato.mioPosto}">${T.infoPosto ? T.infoPosto(ctx, stato.mioPosto) : ''}</div><div class="bolla-posto" data-bolla="${stato.mioPosto}"></div>`;
 
     $('#panno').className = `panno panno-${p.gioco}`;
     // giochi in tempo reale: se il pannello non è cambiato non si ricostruisce (rifarlo a ogni aggiornamento staccava
@@ -1447,7 +1459,16 @@
     if (stato.chat.length) ultimaChat = stato.chat[stato.chat.length - 1].id;
     if (primaVolta) return;
     for (const m of nuovi) {
-      if (m.sistema) { avviso(m.testo, 3200); continue; }
+      if (m.sistema) {
+        // con la chat aperta il messaggio si legge già lì; uno lungo (l'elenco di !comandi) nell'avviso copriva
+        // tutto lo schermo del telefono: se ne mostra l'inizio e si accende il pallino della chat
+        if ($('#chat').hidden) {
+          const lungo = m.testo.length > 140;
+          avviso(lungo ? `${m.testo.slice(0, 100).trim()}… (apri la chat per leggere tutto)` : m.testo, lungo ? 4200 : 3200);
+          if (lungo) $('#non-letti').hidden = false;
+        }
+        continue;
+      }
       if (m.ia) { bip(660, 0.08); continue; } // fantasIA non ha una nuvoletta: la risposta sta nella chat
       bolleAttive.set(m.posto, { testo: m.testo, fino: Date.now() + 5000 });
       if (m.posto !== stato.mioPosto) bip(520, 0.08);
