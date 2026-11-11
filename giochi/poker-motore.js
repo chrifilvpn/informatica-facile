@@ -229,7 +229,8 @@ class Poker extends Casino {
     this.fiche[v] += tot;
     this.esiti = this.fiche.map((_, i) => ({ vinto: i === v ? tot : 0, netto: (i === v ? tot : 0) - this.contrib[i] }));
     this.vincitori = [v];
-    this.annuncia(v, `vince ${tot} fiche: gli altri hanno lasciato`, `vinci ${tot} fiche: gli altri hanno lasciato`, true);
+    const altri = this.seduti.filter(Boolean).length > 2 ? 'gli altri hanno lasciato' : 'l\'altro ha lasciato';
+    this.annuncia(v, `vince ${tot} fiche: ${altri}`, `vinci ${tot} fiche: ${altri}`, true);
     return this.chiudiMano();
   }
   confronto() {

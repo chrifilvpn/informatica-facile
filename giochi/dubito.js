@@ -121,7 +121,7 @@ class Dubito {
       if (!this.finale) return { errore: 'Devi giocare o dubitare' };
       // ci si crede: chi ha finito le carte l'ha fatta franca, si ricomincia
       const u = this.ultima;
-      this.annuncia(p, `crede a @: round finito, nessuno spara`, 'ci credi: round finito', false, { bersaglio: u.posto, testoTe: 'ti hanno creduto: l\'hai fatta franca! 😏' });
+      this.annuncia(p, `crede a @: round finito, nessuno spara`, 'ci credi: round finito', false, { bersaglio: u.posto, testoTe: 'ti crede: l\'hai fatta franca! 😏' });
       this.storia.push({ round: this.round, tipo: 'accetto', chi: p, di: u.posto });
       return this.finisciRound(u.posto, PAUSA_FINALE);
     }
@@ -158,7 +158,7 @@ class Dubito {
     this.storia.push({ round: this.round, tipo: 'dubito', chi: p, di: u.posto, mentiva, quante: u.quante });
     this.annuncia(p, `dice DUBITO a @! ${mentiva ? 'Era una bugia: @ fa la Roulette Russa' : 'Diceva la verità: la Roulette Russa tocca a chi ha dubitato'}`,
       `hai detto DUBITO! ${mentiva ? 'Era una bugia: spara lui' : 'Diceva la verità: tocca a te sparare'}`, true,
-      { bersaglio: u.posto, testoTe: mentiva ? 'ti hanno scoperto: Roulette Russa! 🔫' : 'dicevi la verità: spara chi ha dubitato 😏' });
+      { bersaglio: u.posto, testoTe: mentiva ? 'dice DUBITO e ti scopre: Roulette Russa! 🔫' : 'dice DUBITO, ma dicevi la verità: la Roulette Russa tocca a chi ha dubitato 😏' });
     this.fase = 'svela';
     this.turno = null;
     this.inAttesa = true; this.pausaMs = PAUSA_SVELA;

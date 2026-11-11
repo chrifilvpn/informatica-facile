@@ -1,6 +1,6 @@
 /* ======================= POKER OMAHA (tavolo del Texas) ======================= */
 .om { width: 100%; display: contents; }
-.om-regola { margin: 0 0 .3rem; font-size: .74rem; color: var(--tenue); text-align: center; letter-spacing: .02em; }
+.om-regola { margin: 0; font-size: .74rem; color: var(--tenue); text-align: center; letter-spacing: .02em; }
 .om-regola b { color: var(--oro); font-weight: 700; }
 .om-usa { font-weight: 400; color: var(--tenue); font-size: .85em; }
 .panno-omaha .pk-carte-altri { display: flex; }
