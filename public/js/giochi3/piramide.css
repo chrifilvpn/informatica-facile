@@ -1,6 +1,7 @@
 /* SOLITARIO PIRAMIDE: carte vere che si accavallano a piramide; le coperte sono un po' più scure */
 .pi { width: min(52rem, 100%); margin: 0 auto; display: grid; justify-items: center; gap: .8rem; padding: .3rem 0 1rem; }
-.pi-tavolo { --cw: min(5.2rem, 11.5vw); display: grid; justify-items: center; gap: 1rem; }
+/* le carte si stringono anche con l'altezza: su uno schermo basso pulsanti e istruzioni devono restare in vista */
+.pi-tavolo { --cw: min(5.2rem, 11.5vw, 8.6vh); display: grid; justify-items: center; gap: 1rem; }
 .pi-piramide { display: grid; justify-items: center; }
 .pi-fila { display: flex; gap: calc(var(--cw) * .1); }
 .pi-fila + .pi-fila { margin-top: calc(var(--cw) * -0.82); }

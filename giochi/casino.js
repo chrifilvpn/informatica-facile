@@ -31,8 +31,9 @@ class Casino {
   // ---- fiche (le usa il server) ----
   ficheDi(p) { return this.fiche[p]; }
   ricarica(p, quante) { this.fiche[p] += quante; }
-  // fiche ancora in gioco nella mano in corso (puntate non ancora risolte): se ci sono, il giocatore non è davvero a secco
-  ficheInGioco(p) { return this.fase && this.fase !== 'puntate' && this.puntato && this.puntato[p] ? 1 : 0; }
+  // fiche ancora in gioco nella mano in corso (puntate non ancora risolte): se ci sono, il giocatore non è davvero a secco.
+  // Vale anche mentre gli altri stanno ancora puntando: chi ha già messo tutto sul tavolo non è rimasto senza fiche.
+  ficheInGioco(p) { return this.fase && this.puntato && this.puntato[p] ? 1 : 0; }
 
   // ---- fase delle puntate ----
   apriPuntate() {

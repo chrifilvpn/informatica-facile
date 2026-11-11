@@ -59,7 +59,7 @@ class Roulette extends Casino {
     const pulite = {};
     let tot = 0;
     for (const [k, v] of Object.entries(q)) {
-      if (!PUNTATE[k]) return { errore: 'Puntata non valida' };
+      if (!Object.prototype.hasOwnProperty.call(PUNTATE, k)) return { errore: 'Puntata non valida' }; // niente "toString" e simili
       const x = Number(v);
       if (!Number.isInteger(x) || x < 0) return { errore: 'Puntata non valida' };
       if (x) { pulite[k] = x; tot += x; }

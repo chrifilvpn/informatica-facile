@@ -424,6 +424,15 @@ fissa('giochi da casinò: tante mani tra computer, fiche mai negative');
   h.chiusuraPuntate = Date.now() - 1;
   assert.ok(h.controllaTempo() && h.passato[1], 'allo scadere chi non ha puntato salta');
   assert.strictEqual(h.fiche[0], 1000, 'carta uguale: puntata restituita');
+  // chi punta tutto mentre gli altri stanno ancora puntando non è "senza fiche": le sue fiche sono sul tavolo
+  const h2 = HL.crea({ n: 2, fiche: [1000, 1000] });
+  assert.strictEqual(h2.ficheInGioco(0), 0, 'prima di puntare niente in gioco');
+  h2.azione(0, { tipo: 'punta', scelta: 'alta', importo: 1000 });
+  assert.ok(h2.fase === 'puntate' && h2.fiche[0] === 0 && h2.ficheInGioco(0) > 0, 'puntato tutto: le fiche sono in gioco, niente consiglio di ricarica');
+  // roulette: una puntata con un nome che non esiste ("toString") è rifiutata
+  const rl = GIOCHI.roulette.crea({ n: 1, fiche: [1000] });
+  assert.ok(rl.azione(0, { tipo: 'punta', puntate: { toString: 5 } }).errore, 'puntata inventata rifiutata');
+  assert.ok(rl.azione(0, { tipo: 'punta', puntate: { rosso: 5 } }).ok, 'puntata vera accettata');
   console.log('✓ Casinò: pagamenti del blackjack (1:1, 3:2, soft 17), baccarat, higher or lower e tempo delle puntate');
 }
 

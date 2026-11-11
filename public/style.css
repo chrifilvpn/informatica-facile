@@ -962,7 +962,7 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 
 /* ======================= POKER ======================= */
 .pk { --wc: clamp(50px, 4.6vw, 64px); width: min(64rem, 100%); }
-.pk-ovale { position: relative; width: min(58rem, 94vw); height: clamp(17rem, 44vh, 25rem); margin: 2.6rem 0 1.4rem; border-radius: 50%;
+.pk-ovale { position: relative; width: min(58rem, 94vw); height: clamp(14.5rem, 37vh, 25rem); margin: 2.6rem 0 1.4rem; border-radius: 50%;
   background: radial-gradient(ellipse at 50% 40%, #2f7a5f, #1d5a45 70%); box-shadow: 0 0 0 12px #5a3a22, 0 0 0 15px #3e2716, 0 14px 30px rgba(0, 0, 0, .45), inset 0 0 40px rgba(0, 0, 0, .35); }
 .pk-centro { position: absolute; inset: 22% 16%; display: grid; place-content: center; justify-items: center; gap: .45rem; }
 .pk-tavola { min-height: calc(var(--wc) * 1.4); }
@@ -984,6 +984,15 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 .pk-azione { font-size: .74rem; padding: .05rem .45rem; border-radius: 6px; background: rgba(0, 0, 0, .45); color: var(--avorio); }
 .pk-nome-mano { font-size: .78rem; font-weight: 700; color: #ffd27a; text-align: center; }
 .pk-puntata .cs-gettone { width: 2rem; height: 2rem; font-size: .62rem; border-width: 3px; }
+/* chi sta in alto (di fronte) e il mio posto: puntata, vincita e nome della mano stanno di fianco alla targa, così non
+   finiscono sopra le carte del tavolo o sopra le mie carte */
+.pk-posto.alto .pk-puntata, .pk-posto.mio .pk-puntata { position: absolute; left: 100%; bottom: .15rem; margin-left: .45rem; }
+.pk-posto.alto .cs-netto, .pk-posto.mio .cs-netto { position: absolute; right: 100%; bottom: .3rem; margin-right: .55rem; white-space: nowrap; }
+.pk-posto.alto .pk-nome-mano { position: absolute; right: 100%; bottom: 1.7rem; margin-right: .55rem; width: max-content; max-width: 9rem; text-align: right; line-height: 1.15; }
+.pk-posto.alto .pk-azione { position: absolute; left: 100%; bottom: 2.35rem; margin-left: .45rem; white-space: nowrap; }
+.pk-posto.mio .pk-azione { position: absolute; right: 100%; top: .1rem; margin-right: .55rem; white-space: nowrap; }
+.pk-posto.mio .cs-netto { bottom: 0; }
+.pk-posto.mio .pk-nome-mano { display: none; } /* la mia mano è già scritta grande sotto le mie carte */
 .pk-mie { display: flex; gap: .5rem; justify-content: center; --wc: clamp(70px, 7vw, 96px); }
 .pk-carta-bt { border: 0; padding: 0; background: none; cursor: pointer; transition: transform .12s; }
 .pk-carta-bt:hover { transform: translateY(-6px); }
@@ -1290,7 +1299,10 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 @media (max-width: 620px) {
   .pk { --wc: 44px; }
   .pk-ovale { height: clamp(11.5rem, 30vh, 15rem); margin: 1.8rem 0 .7rem; }
-  .pk-centro { inset: 18% 12%; gap: .25rem; }
+  /* le carte del tavolo partono sotto la targa di chi sta di fronte; il piatto su una riga sola per starci */
+  .pk-centro { inset: 28% 6% 10%; gap: .2rem; align-content: start; }
+  .pk-piatto { display: flex; gap: .4rem; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+  .pk-posto.alto .pk-nome-mano { max-width: 7.5rem; font-size: .72rem; }
   .pk-fase { font-size: 1rem; }
   .pk-posto { min-width: 5.5rem; }
   .pk-mie { --wc: 58px; gap: .3rem; }

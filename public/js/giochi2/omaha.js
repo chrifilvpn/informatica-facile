@@ -8,7 +8,8 @@
     panno(ctx) {
       const p = ctx.partita;
       const regola = `<p class="om-regola">Omaha ${p.potLimit ? 'Pot Limit' : 'No Limit'}${p.ante ? ` · ante ${p.ante}` : ''} · <b>2 carte tue + 3 del tavolo</b></p>`;
-      let html = T.panno(ctx).replace('<div class="pk-centro">', `<div class="pk-centro">${regola}`);
+      // sotto le carte del tavolo (in alto ci finirebbero sopra la targa e la puntata di chi sta di fronte)
+      let html = T.panno(ctx).replace('<div class="pk-piatto">', `${regola}<div class="pk-piatto">`);
       if (p.miaMano && p.mieUsate) html = html.replace('<p class="pk-mia-mano">', '<p class="pk-mia-mano"><span class="om-usa">usi le 2 carte alzate:</span> ');
       return `<div class="om">${html}</div>`;
     },

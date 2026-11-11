@@ -1679,6 +1679,7 @@ fissa('CIRULLA');
   const r = conta([Cs('1q 2q 3q 4q 5q 7q 11q 12q 13q 1c 1f 1p'), Cs('6q 2c')], [0, 0]);
   assert.ok(r[0].grande === 5 && r[0].piccola === 5 && r[1].grande === 0, 'Grande 5, Piccola con 4 e 5 = 5');
   assert.strictEqual(conta([Cs('1q 2q 3q 5q 6q'), []], [0, 0])[0].piccola, 3, 'Piccola interrotta dal 4 mancante');
+  assert.strictEqual(conta([Cs('1q 2q 3q 4q 5q 6q 7q'), []], [0, 0])[0].piccola, 6, 'la Piccola arriva al 6: il 7 è il settebello e non la allunga');
   assert.ok(conta([Cs('1q 2q 3q 4q 5q 6q 7q 11q 12q 13q'), []], [0, 0])[0].capotto, 'capotto');
   // accuso automatico a inizio turno, mano scoperta per gli altri, matta con valore dichiarato
   const g = M.crea({ n: 2, primo: 0, opzioni: {} });
