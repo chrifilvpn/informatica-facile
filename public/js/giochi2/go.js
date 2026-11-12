@@ -68,7 +68,7 @@
     },
     stato(ctx) { const p = ctx.partita; if (p.fase === 'conteggio') return 'Conteggio'; return p.turno === ctx.mio && !p.finita ? 'Tocca a te' : null; },
     punteggio() { return ''; },
-    infoPosto(ctx, k) { const p = ctx.partita; return `${p.colori[k] === 1 ? '⚫' : '⚪'} ${p.catturate[k]} prese`; },
+    infoPosto(ctx, k) { const p = ctx.partita; return `${p.colori[k] === 1 ? '<span class="pedina-segno nero"></span>' : '<span class="pedina-segno bianco"></span>'} ${p.catturate[k]} prese`; },
     clic(ctx, el) {
       const az = el.dataset.az;
       if (az === 'metti') return ctx.invia({ tipo: 'metti', x: Number(el.dataset.x), y: Number(el.dataset.y) });

@@ -49,7 +49,7 @@
     },
     stato(ctx) { const p = ctx.partita; if (p.finita || p.turno == null) return null; return p.turno === ctx.mio ? 'Tocca a te' : `Tocca a ${ctx.nome(p.turno)}`; },
     punteggio() { return ''; },
-    infoPosto(ctx, posto) { const x = ctx.partita.pezzi[posto]; return `${posto === ctx.partita.bianco ? '⚪' : '⚫'} ${x.pedine} pedine${x.dame ? ` · ${x.dame} dame` : ''}`; },
+    infoPosto(ctx, posto) { const x = ctx.partita.pezzi[posto]; return `${posto === ctx.partita.bianco ? '<span class="pedina-segno bianco"></span>' : '<span class="pedina-segno nero"></span>'} ${x.pedine} pedine${x.dame ? ` · ${x.dame} dame` : ''}`; },
     clic(ctx, el) {
       const az = el.dataset.az, ui = ctx.ui, p = ctx.partita;
       if (az === 'annullaMossa') { ui.sel = null; ui.scelta = null; return ctx.invia({ tipo: 'annulla' }); }

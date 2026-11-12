@@ -350,6 +350,11 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .info-posto .scope { color: var(--oro); font-weight: 700; }
 .info-posto .aperto { color: #7fd1a8; }
 .info-posto .eliminato { color: #f0907f; }
+/* pallino del colore delle pedine accanto al nome (l'emoji ⚫ spariva sul fondo scuro) */
+.pedina-segno { display: inline-block; margin-right: .3em; width: .8em; height: .8em; border-radius: 50%; vertical-align: -.08em; box-shadow: 0 0 0 1.5px rgba(255,255,255,.75); }
+.pedina-segno.nero { background: radial-gradient(circle at 35% 30%, #555, #0b0b0b 70%); }
+.pedina-segno.bianco { background: radial-gradient(circle at 35% 30%, #fff, #d9d9d9 70%); box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+.pedina-segno.rosso { background: radial-gradient(circle at 35% 30%, #ff8a7a, #c62a1c 70%); box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
 .mio-nome { position: relative; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; justify-content: center; }
 .ventaglio { display: flex; align-items: center; }
 .ventaglio .carta { --w: clamp(22px, 5.5vw, 32px); margin-left: calc(var(--w) * -.6); }
@@ -722,6 +727,17 @@ button.sc-casa { cursor: pointer; }
 .sc-presi .sc-pezzo { width: 1.35rem; height: 1.35rem; margin-right: -.35rem; }
 .sc-giocatore small { color: var(--tenue); font-weight: 600; }
 @media (max-width: 900px) { .sc-area { --lato-sc: min(calc(100vh - 20rem), 92vw); } .sc-pannello { width: 100%; grid-template-columns: 1fr 1fr; } .sc-centro { grid-column: span 2; order: 3; } }
+/* telefono: pulsanti (patta, annulla, abbandona) affiancati e schede dei giocatori più basse, così niente finisce
+   sotto la barra col nome in fondo */
+@media (max-width: 620px) {
+  .sc-area { gap: .6rem; }
+  .sc-pannello { gap: .45rem; }
+  .sc-giocatore { padding: .35rem .6rem; gap: .2rem; }
+  .sc-centro { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .sc-centro > p { flex-basis: 100%; margin: 0; }
+  .sc-centro .bottone { width: auto; flex: 1 1 0; min-width: 0; padding: .45rem .4rem; font-size: .85rem; white-space: nowrap; }
+  .sc-proposta { grid-template-columns: 1fr 1fr; } .sc-proposta p { grid-column: span 2; }
+}
 
 /* ======================= IMPICCATO ======================= */
 .im { width: min(60rem, 100%); display: grid; gap: 1rem; justify-items: center; }
