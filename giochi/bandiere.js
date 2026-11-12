@@ -172,7 +172,7 @@ class Bandiere {
     const mia = this.risposte[p];
     return {
       gioco: this.id, n: this.n, domanda: this.k + 1, nDomande: this.nDomande, tempo: this.tempoMs, mazzo: this.mazzo,
-      cosa: this.banca.cosa, testo: band.domanda || this.banca.domanda, icona: band.icona || null, indizio: svela && band.indizio ? band.indizio : null,
+      cosa: this.banca.cosa, testo: band.domanda || this.banca.domanda, icona: band.icona || null, disegno: band.disegno || null, indizio: svela && band.indizio ? band.indizio : null,
       bandiera: band.svg ? { svg: band.svg, w: band.W || 300, h: band.H || 200, sagoma: !!band.sagoma } : null,
       opzioni: this.opzioni.map((i) => E[i].nome),
       resta: svela ? 0 : Math.max(0, this.fine - Date.now()),
@@ -182,7 +182,7 @@ class Bandiere {
       altri: this.risposte.map((x, i) => ({ risposto: x !== null, giusto: svela && x ? x.giusto : null, scelta: svela && x ? x.scelta : null, punti: this.punti[i], giuste: this.giuste[i], serie: this.serie[i] })),
       punti: this.punti, giuste: this.giuste, serie: this.serie[p], migliore: this.migliore[p],
       // a partita finita: le bandiere che hai sbagliato, con il nome giusto (e quello che avevi detto) per ripassarle
-      ripasso: this.finita ? this.sbagliate[p].map((x) => ({ svg: E[x.giusta].svg || null, w: E[x.giusta].W || 300, h: E[x.giusta].H || 200, sagoma: !!E[x.giusta].sagoma, domanda: E[x.giusta].domanda || null, icona: E[x.giusta].icona || null, nome: E[x.giusta].nome, detto: x.scelta === null ? null : E[x.scelta].nome })) : null,
+      ripasso: this.finita ? this.sbagliate[p].map((x) => ({ svg: E[x.giusta].svg || null, w: E[x.giusta].W || 300, h: E[x.giusta].H || 200, sagoma: !!E[x.giusta].sagoma, domanda: E[x.giusta].domanda || null, icona: E[x.giusta].icona || null, disegno: E[x.giusta].disegno || null, nome: E[x.giusta].nome, detto: x.scelta === null ? null : E[x.scelta].nome })) : null,
       turno: null, inAttesa: this.inAttesa, pausaMs: this.pausaMs, finita: this.finita, risultato: this.risultato, evento: this.evento,
     };
   }

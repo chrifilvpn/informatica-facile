@@ -494,6 +494,18 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
   background: var(--avorio); color: var(--inchiostro); padding: .7rem 1.1rem; border-radius: 10px; z-index: 50;
   max-width: calc(100% - 2rem); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); text-align: center;
 }
+/* durante la partita avvisi e annunci stanno SOPRA la barra in alto (Esci, Chat...), centrati su di essa:
+   così non coprono più nomi, punteggi e carte degli avversari che stanno subito sotto. Non bloccano i tocchi:
+   i pulsanti della barra restano usabili. La posizione esatta (il centro della barra) la mette app.js. */
+.avviso.in-barra, .annuncio.in-barra { pointer-events: none; }
+.avviso.in-barra {
+  transform: translate(-50%, -50%); padding: .3rem .95rem; border-radius: 999px; font-size: .95rem; line-height: 1.2;
+  background: rgba(8, 22, 17, .94); color: var(--avorio); border: 1px solid rgba(247, 240, 222, .35); text-wrap: balance;
+  max-width: min(40rem, calc(100% - 1rem)); width: max-content;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
+.avviso.in-barra[hidden] { display: none; }
+.annuncio.in-barra { font-size: clamp(1.1rem, 4vw, 1.65rem); padding: .25rem 1.2rem .35rem; background: rgba(8, 22, 17, .95); border: 1px solid rgba(209, 154, 42, .6); }
 
 @media (max-width: 620px) {
   .tavolo { grid-template-columns: 66px minmax(0, 1fr) 66px; padding: .4rem; gap: .3rem; }
@@ -1112,6 +1124,9 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 .altro-gioco p { margin: 0; }
 .altro-gioco select { background: #fff; color: #1c1a16; border-color: rgba(0, 0, 0, .25); }
 .altro-gioco .imp-riga { display: grid; gap: .2rem; font-size: .85rem; color: #5a5548; }
+/* la scheda di fine partita è chiara: le etichette delle opzioni (Passo, Tempo...) prima erano color tenue, quasi invisibili */
+.altro-gioco .imp-riga { margin-top: .3rem; text-align: left; }
+.altro-gioco .imp-riga > span, .altro-gioco figcaption { color: #4a463c; font-weight: 600; }
 
 /* UNO: il pulsante è sempre in basso a destra; spento finché non serve, e anche allora si accende appena */
 .uno-bt.fisso { position: fixed; right: max(1rem, env(safe-area-inset-right, 0px)); bottom: calc(2.2rem + env(safe-area-inset-bottom, 0px)); z-index: 30;
