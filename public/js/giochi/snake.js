@@ -4,6 +4,36 @@
   const COLORI = ['#ffd166', '#6aa8ff', '#ff7b6b', '#7fd1a8', '#c89bff', '#ffa94d', '#5fd0d0', '#f7a8d8'];
   const TASTI = { ArrowUp: 'su', ArrowDown: 'giu', ArrowLeft: 'sx', ArrowRight: 'dx', w: 'su', s: 'giu', a: 'sx', d: 'dx', W: 'su', S: 'giu', A: 'sx', D: 'dx' };
   let ctxS = null, tela = null, stato = null, partitaDi = null;
+  // movimento fluido: per ogni serpente il corpo di prima e quando è partito il passo; il disegno scorre tra i due
+  let anim = [];
+  function segnaMossa(d, ctx) {
+    const passo = (ctx && ctx.partita && ctx.partita.passoMs) || 120;
+    const ora = performance.now();
+    (d.s || []).forEach((s, i) => {
+      const a = anim[i];
+      const c = s.c || [];
+      if (!a || !a.ora || !a.ora.length || !c.length) { anim[i] = { da: null, ora: c, t0: ora, dur: passo, ultimo: ora }; return; }
+      const [hx, hy] = c[0], [px, py] = a.ora[0];
+      if (hx === px && hy === py) { a.ora = c; return; }
+      // un passo solo (la testa nuova sta accanto alla vecchia e il corpo è scorso di uno): si anima; se no si salta
+      const vicino = Math.abs(hx - px) + Math.abs(hy - py) === 1 && c.length > 1 && c[1][0] === px && c[1][1] === py;
+      const dur = Math.max(passo / 2 - 5, Math.min(passo + 20, ora - a.ultimo));
+      anim[i] = { da: vicino ? a.ora : null, ora: c, t0: ora, dur, ultimo: ora };
+    });
+  }
+  // dove disegnare il pezzo k del serpente i in questo momento (in caselle, anche a metà)
+  function corpoFluido(i, c) {
+    const a = anim[i];
+    if (!a || !a.da || a.ora !== c || (stato && (stato.pausa || stato.via > 0))) return c;
+    const t = Math.min(1, (performance.now() - a.t0) / a.dur);
+    if (t >= 1) return c;
+    return c.map(([x, y], k) => {
+      const [x0, y0] = a.da[Math.min(k, a.da.length - 1)];
+      // passando dal bordo (senza muri) non si scorre attraverso tutto il campo: si salta
+      if (Math.abs(x - x0) > 1 || Math.abs(y - y0) > 1) return [x, y];
+      return [x0 + (x - x0) * t, y0 + (y - y0) * t];
+    });
+  }
 
   function assicuraTela(ctx) {
     const p = ctx.partita;
@@ -53,12 +83,23 @@
       if (!s.v) return;
       const col = COLORI[i % 8];
       g.globalAlpha = s.fa ? 0.45 : 1;
-      s.c.forEach(([x, y], k) => {
+      const corpo = corpoFluido(i, s.c);
+      // un nastro sotto i cerchi: il serpente sembra un corpo unico anche mentre scorre
+      if (corpo.length > 1) {
+        g.strokeStyle = shade(col); g.lineWidth = lato * 0.62; g.lineCap = 'round'; g.lineJoin = 'round';
+        g.beginPath();
+        corpo.forEach(([x, y], k) => {
+          const salto = k > 0 && (Math.abs(x - corpo[k - 1][0]) > 1.5 || Math.abs(y - corpo[k - 1][1]) > 1.5);
+          if (k === 0 || salto) g.moveTo((x + 0.5) * lato, (y + 0.5) * lato); else g.lineTo((x + 0.5) * lato, (y + 0.5) * lato);
+        });
+        g.stroke();
+      }
+      corpo.forEach(([x, y], k) => {
         const r = k === 0 ? 0.48 : 0.42 - Math.min(0.12, k * 0.004);
         g.fillStyle = k === 0 ? col : k % 2 ? col : shade(col);
         g.beginPath(); g.arc((x + 0.5) * lato, (y + 0.5) * lato, lato * r, 0, Math.PI * 2); g.fill();
       });
-      const [hx, hy] = s.c[0];
+      const [hx, hy] = corpo[0];
       const off = { su: [0, -1], giu: [0, 1], sx: [-1, 0], dx: [1, 0] }[s.d];
       const perp = [off[1], off[0]];
       for (const k of [-1, 1]) {
@@ -86,9 +127,10 @@
     reset(ctx) {
       ctxS = ctx;
       // nuova partita (o rivincita): si riparte dallo stato completo
-      if (ctx.ui._snakeVisto !== true || ctx.partita.finita) { stato = ctx.partita.stato; ctx.ui._snakeVisto = true; }
+      if (ctx.ui._snakeVisto !== true || ctx.partita.finita) { stato = ctx.partita.stato; ctx.ui._snakeVisto = true; anim = []; if (stato) segnaMossa(stato, ctx); }
     },
     tick(ctx, d) {
+      segnaMossa(d, ctx);
       stato = d;
       // i punti in alto si aggiornano anche tra un messaggio e l'altro
       if (Date.now() - (ctx.ui._puntiDal || 0) > 400) { ctx.ui._puntiDal = Date.now(); const el = document.getElementById('punteggio'); if (el) el.innerHTML = snake.punteggio(ctx); }
