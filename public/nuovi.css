@@ -1161,6 +1161,8 @@ button.it-leva { cursor: pointer; }
 .df-fig.sbagliata { border-color: #e0473c; }
 .sa-barra { display: inline-block; width: 10rem; height: .6rem; border-radius: 999px; background: rgba(0, 0, 0, .3); overflow: hidden; vertical-align: middle; }
 .sa-barra i { display: block; height: 100%; background: linear-gradient(90deg, #d19a2a, #3ec46d); }
+.sa-chiude { color: #ffcf5a; font-weight: 700; animation: sa-batti 1s steps(2) infinite; }
+@keyframes sa-batti { 50% { opacity: .55; } }
 .ab-colore { padding: .1rem .8rem; border-radius: 999px; font-weight: 800; letter-spacing: .08em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); box-shadow: 0 0 12px rgba(255, 255, 255, .3); }
 .pf-gara { position: relative; width: 16rem; }
 .pf-gara b { position: absolute; top: 0; width: .6rem; height: .6rem; margin-left: -.3rem; border-radius: 50%; border: 1px solid #fff; }

@@ -32,3 +32,12 @@
 }
 @media (prefers-reduced-motion: reduce) { .bt-ora, .bt-casella.sbaglio { animation: none; } }
 .panno-battitura .ar-gira { display: none; } /* girare il telefono qui non serve: conta la tastiera */
+/* sul computer: tutto in alto (prima stava al centro con mezzo schermo vuoto sopra) e il testo più grande */
+@media (min-width: 761px) {
+  .tavolo.libero .panno.panno-battitura { align-items: start; align-content: start; }
+  .panno-battitura .pa-round { margin-top: .4rem; }
+  .bt { width: min(70rem, 100%); gap: .65rem; }
+  .bt-testo { font-size: 1.55rem; line-height: 1.7; padding: 1.1rem 1.4rem; }
+  .bt-casella { flex-basis: 24rem; font-size: 1.35rem; padding: .7rem 1rem; }
+  .bt-mio { font-size: 1.05rem; }
+}

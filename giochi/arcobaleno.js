@@ -312,6 +312,8 @@ class Arcobaleno extends Arena {
     const pugni = this.pugni; this.pugni = [];
     const geli = this.geli; this.geli = [];
     return {
+      // punti del round fin qui: chi è caduto ha già i suoi, chi è in piedi ne ha uno per ogni caduto
+      pr: this.n === 1 ? [Math.max(0, this.ciclo - 1)] : this.e.map((e, p) => { const k = this.ordine.indexOf(p); return k >= 0 ? k : e.fuori ? 0 : this.ordine.length; }),
       fo: this.nomeForma, c: this.caselle, col: this.colore, f2: this.fase2, tm: Math.max(0, Math.round(this.timer * 10) / 10), tt: this.timerTot, ci: this.ciclo, pu: pugni, ge: geli,
       po: this.poteri.map((q) => ({ id: q.id, t: q.tipo, x: q.x, y: q.y })),
       e: this.e.map((e) => ({ id: e.id, x: Math.round(e.x), y: Math.round(e.y), f: e.fuori ? Math.min(1, e.cade) : 0, st: e.stordito > 0 ? 1 : 0, ri: e.ricarica > 0 ? 1 : 0, g: e.gelo > 0 ? 1 : 0, v: e.veloce > 0 ? 1 : 0, sc: e.scudo > 0 ? 1 : 0, sp: e.superPugno ? 1 : 0, pi: e.piuma ? 1 : 0, salto: e.salto })),

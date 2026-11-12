@@ -39,8 +39,10 @@ window.Arena = (() => {
       if (joy.id !== null) return;
       const x = (tasti.has('d') || tasti.has('arrowright') ? 1 : 0) - (tasti.has('a') || tasti.has('arrowleft') ? 1 : 0);
       const y = (tasti.has('s') || tasti.has('arrowdown') ? 1 : 0) - (tasti.has('w') || tasti.has('arrowup') ? 1 : 0);
-      const l = Math.hypot(x, y) || 1;
-      inp.x = x / l; inp.y = y / l;
+      // cfg.tasti(x, y): un gioco può girare il senso dei tasti (Calcio balilla col campo in orizzontale)
+      const [xx, yy] = cfg.tasti ? cfg.tasti(x, y) : [x, y];
+      const l = Math.hypot(xx, yy) || 1;
+      inp.x = xx / l; inp.y = yy / l;
     }
     function invia(forza = false) {
       if (!attiva()) return;
@@ -72,6 +74,7 @@ window.Arena = (() => {
 
     function coordMondo(e) {
       const r = tela.getBoundingClientRect(), p = ctxA.partita;
+      if (cfg.coordMondo) return cfg.coordMondo(e, r, p); // il gioco disegna il campo girato
       return [((e.clientX - r.left) / r.width) * p.W, ((e.clientY - r.top) / r.height) * p.H];
     }
     // mouse: mira o bersaglio (il gatto segue il puntatore); click = azione
@@ -216,6 +219,7 @@ window.Arena = (() => {
       }
       else if (ultimo.fase === 'via') { scritta = String(Math.max(1, Math.ceil(ultimo.via / 1000))); sotto = `Round ${ultimo.round} di ${p.nRound}${cfg.ruolo ? ` · ${cfg.ruolo(p, ultimo, ctxA)}` : ''}`; }
       else if (ultimo.fase === 'pausaRound') { scritta = 'Fine round'; sotto = cfg.fineRound ? cfg.fineRound(p, ultimo, ctxA) : ''; }
+      if (scritta === 'Fine round' && classificaRound(g, p, LW, LH, sotto)) scritta = '';
       if (scritta) {
         g.fillStyle = 'rgba(10,20,30,.55)'; g.fillRect(0, 0, LW, LH);
         g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -224,6 +228,46 @@ window.Arena = (() => {
       }
     }
     requestAnimationFrame(disegna);
+    // fine round con più giocatori: una piccola classifica del round (chi ha fatto di più, quanto, e il totale) al
+    // posto della sola scritta «Punti totali». I punti del round sono la differenza tra gli ultimi due totali salvati.
+    function classificaRound(g, p, LW, LH, sotto) {
+      const st = p.storico || [];
+      if (p.n < 2 || !st.length || st.length !== ultimo.round) return false;
+      const ora = st[st.length - 1], prima = st[st.length - 2] || ora.map(() => 0);
+      const righe = ora.map((x, i) => ({ i, piu: Math.round(x - prima[i]), tot: Math.round(x) })).sort((a, b) => b.piu - a.piu || b.tot - a.tot).slice(0, 8);
+      const extra = sotto && !/^Punti totali/.test(sotto) ? sotto : '';
+      // scritte in proporzione al campo, ma sul telefono (campo rimpicciolito) almeno leggibili, se ci stanno
+      const scala = (tela.clientWidth || LW) / LW, unita = 64 + (extra ? 34 : 0) + righe.length * 34 + 24;
+      const k = Math.min(Math.max(0.55, Math.min(1.25, Math.min(LW, LH) / 560), 0.68 / scala), (LH - 12) / unita, (LW - 12) / 460);
+      const rH = 34 * k, titoloH = 64 * k;
+      const alto = titoloH + (extra ? 34 * k : 0) + righe.length * rH + 24 * k, largo = Math.min(LW - 10, 460 * k);
+      const x0 = (LW - largo) / 2, y0 = Math.max(6, (LH - alto) / 2);
+      g.save();
+      g.fillStyle = 'rgba(10,20,30,.55)'; g.fillRect(0, 0, LW, LH);
+      g.fillStyle = 'rgba(12,22,34,.88)'; g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 2;
+      g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, largo, alto, 16 * k); else g.rect(x0, y0, largo, alto); g.fill(); g.stroke();
+      g.textBaseline = 'middle'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      g.font = `400 ${Math.round(38 * k)}px "Young Serif", Georgia, serif`;
+      g.fillText(`Fine round ${ultimo.round}${p.nRound > 1 ? ` di ${p.nRound}` : ''}`, LW / 2, y0 + titoloH / 2 + 4 * k);
+      let y = y0 + titoloH;
+      if (extra) { g.font = `600 ${Math.round(20 * k)}px system-ui, sans-serif`; g.fillStyle = '#f2d27a'; g.fillText(extra, LW / 2, y + 12 * k); y += 34 * k; }
+      const migliore = righe[0] && righe[0].piu;
+      righe.forEach((r, n) => {
+        const yy = y + n * rH + rH / 2;
+        if (r.i === ctxA.mio) { g.fillStyle = 'rgba(255,255,255,.09)'; g.fillRect(x0 + 8 * k, yy - rH / 2 + 2, largo - 16 * k, rH - 4); }
+        g.font = `700 ${Math.round(20 * k)}px system-ui, sans-serif`;
+        g.textAlign = 'left'; g.fillStyle = 'rgba(255,255,255,.6)'; g.fillText(r.piu === migliore && migliore > 0 ? '🏆' : `${n + 1}.`, x0 + 18 * k, yy);
+        g.fillStyle = COLORI[r.i % COLORI.length];
+        const nome = r.i === ctxA.mio ? 'Tu' : ctxA.nome(r.i);
+        g.fillText(nome.length > 14 ? `${nome.slice(0, 13)}…` : nome, x0 + 58 * k, yy);
+        g.textAlign = 'right'; g.fillStyle = r.piu > 0 ? '#7fe0a0' : r.piu < 0 ? '#ff8a7a' : 'rgba(255,255,255,.6)';
+        g.fillText(`${r.piu > 0 ? '+' : ''}${r.piu}`, x0 + largo - 110 * k, yy);
+        g.font = `500 ${Math.round(16 * k)}px system-ui, sans-serif`; g.fillStyle = 'rgba(255,255,255,.7)';
+        g.fillText(`tot. ${r.tot}`, x0 + largo - 18 * k, yy);
+      });
+      g.restore();
+      return true;
+    }
     // i due aggiornamenti tra cui disegnare adesso (un attimo nel passato) e a che punto siamo tra i due
     function coppia() {
       if (scarto === null || scorta.length < 2 || window.__arenaVecchio) return [ultimo, prima, Math.min(1, (performance.now() - arrivo) / passoMs)];
@@ -277,6 +321,8 @@ window.Arena = (() => {
         const h = document.querySelector('.ar-hud');
         if (h && cfg.hud) { const html = cfg.hud(ctx, d); if (h._html !== html) { h._html = html; h.innerHTML = html; } }
         aggiornaSopra(ctx, d);
+        // i giochi che hanno un valore del round in corso (monete, punti provvisori) lo mostrano in alto mentre si gioca
+        if (cfg.delRound && Date.now() - (ctx.ui._puntiDal || 0) > 300) { ctx.ui._puntiDal = Date.now(); const el = document.getElementById('punteggio'); if (el) { const html = this.punteggio(ctx); if (el._html !== html) { el._html = html; el.innerHTML = html; } } }
       },
       panno(ctx) {
         const p = ctx.partita;
@@ -305,7 +351,10 @@ window.Arena = (() => {
       },
       punteggio(ctx) {
         const p = ctx.partita;
-        return p.punti.map((x, i) => `<span style="color:${COLORI[i % COLORI.length]}">${esc(i === ctx.mio ? 'Tu' : ctx.nome(i))} <b>${x}</b></span>`).join('') + `<span class="obiettivo">${esc(cfg.obiettivo || 'punti')}</span>`;
+        const s = ultimo || p.stato;
+        const inRound = cfg.delRound && s && s.s && !p.finita && s.fase === 'gioco';
+        const extra = (i) => { if (!inRound) return ''; const v = cfg.delRound(ctx, s, i); return v == null || v === '' ? '' : ` <small class="ar-round">${esc(String(v))}</small>`; };
+        return p.punti.map((x, i) => `<span style="color:${COLORI[i % COLORI.length]}">${esc(i === ctx.mio ? 'Tu' : ctx.nome(i))} <b>${x}</b>${extra(i)}</span>`).join('') + `<span class="obiettivo">${esc(cfg.obiettivo || 'punti')}</span>`;
       },
       infoPosto(ctx, posto) { return `${ctx.partita.punti[posto]} punti`; },
       // i giochi con uno strato HTML sopra il canvas (cfg.sopra) ricevono i clic sui loro pulsanti [data-az]

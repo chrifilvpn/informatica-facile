@@ -44,3 +44,18 @@
   .sw-mano { bottom: 48px; right: 3px; gap: 3px; }
   .sw-dir, .sw-colpo { padding: 5px 11px; font-size: 16px; }
 }
+/* telefono in verticale: il campo è più alto (se ne vede un pezzo più stretto, vedi VW() in stickwar.js), quindi c'è
+   spazio per pulsanti più grandi, comodi per il dito */
+@media (pointer: coarse) and (orientation: portrait) {
+  .sw-bt { padding: 7px 10px; font-size: 16px; border-radius: 10px; }
+  .sw-ordini { top: 5px; left: 5px; gap: 5px; }
+  .sw-armeria { top: 5px; left: 50px; max-width: 220px; }
+  .sw-pot { padding: 6px 8px; font-size: 13px; }
+  .sw-unita { bottom: 5px; gap: 5px; }
+  .sw-u { width: 54px; padding: 3px 1px 6px; font-size: 11px; border-width: 2px; border-radius: 10px; }
+  .sw-u b { font-size: 12px; }
+  .sw-u em { font-size: 11px; min-width: 16px; }
+  .sw-ic { font-size: 22px; }
+  .sw-mano { bottom: 76px; right: 5px; gap: 6px; }
+  .sw-dir, .sw-colpo { padding: 11px 17px; font-size: 22px; }
+}
