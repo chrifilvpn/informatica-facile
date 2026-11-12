@@ -318,6 +318,7 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 }
 .punteggio b { font-family: var(--serif); font-weight: 400; font-size: 1.05rem; color: var(--avorio); }
 .punteggio .obiettivo { color: var(--tenue); font-size: .8rem; }
+.punteggio .ar-round { font-size: .78em; font-weight: 600; opacity: .85; margin-left: .15em; }
 .punteggio .barrato { text-decoration: line-through; opacity: .6; }
 
 .tavolo {

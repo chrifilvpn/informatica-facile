@@ -9,6 +9,8 @@
     obiettivo: 'monete',
     istruzioni: () => 'WASD o frecce (sul telefono il joystick): prendi le monete. Spazio (o 💨): scatto per travolgere gli altri e fargli cadere le monete!',
     statoGioco: () => 'Raccogli!',
+    // in alto, accanto ai punti totali, le monete che ognuno ha in mano in questo round
+    delRound: (ctx, s, i) => { const e = s.s.e[i]; return e ? `+${e.m} 🪙` : ''; },
     hud: (ctx, s) => { const e = s.s.e[ctx.mio]; return `<span>⏱️ ${s.s.resta} s</span><span>🪙 ${e ? e.m : 0}</span>${e && e.p ? `<span>${ICONA[e.p]} attivo</span>` : ''}<span>${e && e.r ? '💨 in ricarica' : '💨 pronto'}</span>`; },
     fineRound: (p, s, ctx) => `Punti totali: ${p.punti[ctx.mio]}`,
     dopoTick(ctx, d, prima) {

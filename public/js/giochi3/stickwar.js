@@ -21,12 +21,16 @@
   const mioLato = () => (ex && ctxD ? ex.lati[ctxD.mio] || 0 : 0);
   const yDi = (z) => BASE + z * FONDO;
   const scalaDi = (tipo, z) => (SCALA[tipo] || 1) * (1.2 + z * 0.3);
-  const limCam = (x) => Math.max(0, Math.min(ex.L - ex.W, x));
+  // larghezza della parte di campo che si vede: sul telefono in verticale se ne vede meno ma tutto più grande
+  // (il campo intero è largo 960 e alto 540: in verticale diventava una striscia bassa)
+  const verticale = () => window.Arena.touch() && window.innerHeight > window.innerWidth;
+  const VW = () => (ex && verticale() ? Math.round(ex.W * 0.6) : ex ? ex.W : 960);
+  const limCam = (x) => Math.max(0, Math.min(ex.L - VW(), x));
   const accento = (tipo, lato) => (CAOS.has(tipo) || (ex && ex.caos && lato === 1) ? '#a855f7' : lato ? '#e0453a' : '#f2c230');
 
   // ---------- comandi: scorrere il campo, scegliere un soldato ----------
   function suTela(e) { const t = e.target; return t && t.classList && t.classList.contains('ar-tela') ? t : null; }
-  function mondo(e, tela) { const r = tela.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * ex.W, ((e.clientY - r.top) / r.height) * ex.H]; }
+  function mondo(e, tela) { const r = tela.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * VW(), ((e.clientY - r.top) / r.height) * ex.H]; }
   document.addEventListener('pointerdown', (e) => {
     if (!attivo() || !ex || (e.pointerType === 'mouse' && e.button !== 0)) return;
     const b = e.target.closest && e.target.closest('[data-sw-dir]');
@@ -34,12 +38,12 @@
     const tela = suTela(e); if (!tela) return;
     const [x, y] = mondo(e, tela);
     // la minimappa: si salta lì
-    if (y < 40 && x > mm.x && x < mm.x + mm.w) { camVoluta = limCam(((x - mm.x) / mm.w) * ex.L - ex.W / 2); return; }
+    if (y < 40 && x > mm.x && x < mm.x + mm.w) { camVoluta = limCam(((x - mm.x) / mm.w) * ex.L - VW() / 2); return; }
     trascina = { x0: e.clientX, cam0: cam, mosso: false, x, y, id: e.pointerId, tela };
   });
   document.addEventListener('pointermove', (e) => {
     if (!trascina || trascina.id !== e.pointerId) return;
-    const r = trascina.tela.getBoundingClientRect(), dx = ((e.clientX - trascina.x0) / r.width) * ex.W;
+    const r = trascina.tela.getBoundingClientRect(), dx = ((e.clientX - trascina.x0) / r.width) * VW();
     if (Math.abs(dx) > 6) trascina.mosso = true;
     if (trascina.mosso) { cam = camVoluta = limCam(trascina.cam0 - dx); }
   });
@@ -335,7 +339,7 @@
   // una statua: l'Order (pietra con l'oro), la nazione nemica (pietra rossa) o il Chaos (obelisco viola)
   function statua(g, lato, es, adesso) {
     const x = (lato ? ex.L - ex.STATUA : ex.STATUA) - cam, y = BASE + 40;
-    if (x < -160 || x > ex.W + 160) return;
+    if (x < -160 || x > VW() + 160) return;
     const caos = ex.caos && lato === 1, d = 1 - es.st / es.max, verso = lato ? -1 : 1;
     g.save();
     g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, y + 6, 70, 14, 0, 0, Math.PI * 2); g.fill();
@@ -365,7 +369,7 @@
   // in Notti dei non morti, a destra c'è la cripta da cui escono gli zombi
   function cripta(g, adesso) {
     const x = ex.L - 60 - cam, y = BASE + 40;
-    if (x < -120 || x > ex.W + 120) return;
+    if (x < -120 || x > VW() + 120) return;
     g.fillStyle = '#2b2f3a'; g.fillRect(x - 50, y - 110, 100, 110); g.beginPath(); g.moveTo(x - 60, y - 110); g.lineTo(x, y - 150); g.lineTo(x + 60, y - 110); g.fill();
     g.fillStyle = '#0b0d12'; g.beginPath(); g.moveTo(x - 22, y); g.lineTo(x - 22, y - 60); g.arc(x, y - 60, 22, Math.PI, 0); g.lineTo(x + 22, y); g.fill();
     g.fillStyle = `rgba(140,255,120,${0.25 + Math.sin(adesso * 2) * 0.15})`; g.fillRect(x - 20, y - 50, 40, 50);
@@ -374,13 +378,14 @@
   // ---------- la minimappa e le barre delle statue ----------
   const mm = { x: 330, y: 8, w: 300, h: 22 };
   function minimappa(g, s) {
+    mm.w = Math.min(300, VW() - 140); mm.x = Math.round((VW() - mm.w) / 2);
     g.fillStyle = 'rgba(10,15,25,.6)'; g.fillRect(mm.x - 3, mm.y - 3, mm.w + 6, mm.h + 22);
     g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(mm.x, mm.y, mm.w, mm.h);
     const k = mm.w / ex.L;
     for (const u of s.u) { g.fillStyle = u[2] === mioLato() ? '#7fd3ff' : '#ff7a6a'; g.fillRect(mm.x + u[3] * k - 1, mm.y + 5 + u[4] * 12, u[1] === 'gigante' || u[1] === 'medusa' ? 4 : 2, 3); }
     g.fillStyle = '#fff'; g.fillRect(mm.x + ex.STATUA * k - 2, mm.y + 2, 4, mm.h - 4);
     if (ex.modo !== 'nonmorti') g.fillRect(mm.x + (ex.L - ex.STATUA) * k - 2, mm.y + 2, 4, mm.h - 4);
-    g.strokeStyle = '#ffd23f'; g.lineWidth = 1.5; g.strokeRect(mm.x + cam * k, mm.y, ex.W * k, mm.h);
+    g.strokeStyle = '#ffd23f'; g.lineWidth = 1.5; g.strokeRect(mm.x + cam * k, mm.y, VW() * k, mm.h);
     // le statue
     s.es.forEach((e, lato) => {
       if (lato === 1 && ex.modo === 'nonmorti') return;
@@ -414,6 +419,7 @@
 
   const tavolo = window.Arena.tavolo({
     id: 'stickwar',
+    misura: (p) => [VW(), (p.extra || ex || { H: 540 }).H],
     mouse: null,
     clicAzione: false,
     comandi: 'nessuno',
@@ -439,7 +445,7 @@
       ctxD = ctx; ex = ctx.partita.extra || ex;
       if (!ex) return;
       const adesso = ora(), s = d.s, pos = new Map(s.u.map((u) => [u[0], u]));
-      const vedo = (x) => x > cam - 60 && x < cam + ex.W + 60;
+      const vedo = (x) => x > cam - 60 && x < cam + VW() + 60;
       for (const e of s.e || []) {
         if (e[0] === 'a') {
           colpiti.set(e[1], adesso);
@@ -475,12 +481,12 @@
       if (so) { const l = `${g.canvas.offsetLeft}px`, w = `${g.canvas.offsetWidth}px`, h = `${g.canvas.offsetHeight}px`; if (so.style.left !== l || so.style.width !== w || so.style.height !== h) Object.assign(so.style, { left: l, width: w, height: h, right: 'auto', bottom: 'auto' }); }
       const adesso = ora(), s = st.s, dt = Math.min(0.05, adesso - (ultimoT || adesso)); ultimoT = adesso;
       // la telecamera: segue il soldato comandato, altrimenti si muove con i tasti (parte dalla propria statua)
-      if (cam === null) cam = camVoluta = limCam(mioLato() ? ex.L - ex.W : 0);
+      if (cam === null) cam = camVoluta = limCam(mioLato() ? ex.L - VW() : 0);
       const pr = new Map(prima ? prima.s.u.map((q) => [q[0], q]) : []);
       const xDi = (q) => { const a = pr.get(q[0]); return a ? a[3] + (q[3] - a[3]) * u : q[3]; };
       const cm = s.cm[ctx.mio], mio = cm && s.u.find((q) => q[0] === cm);
       const dir = (tasti.has('d') || tasti.has('arrowright') ? 1 : 0) - (tasti.has('a') || tasti.has('arrowleft') ? 1 : 0);
-      if (mio) camVoluta = limCam(xDi(mio) - ex.W / 2 + mio[7] * 120);
+      if (mio) camVoluta = limCam(xDi(mio) - VW() / 2 + mio[7] * 120);
       else if (dir) camVoluta = limCam((camVoluta ?? cam) + dir * 900 * dt);
       if (!trascina || !trascina.mosso) cam += ((camVoluta ?? cam) - cam) * Math.min(1, dt * (mio ? 6 : 12));
       cam = limCam(cam);
@@ -490,21 +496,21 @@
       g.drawImage(scena.cielo, 0, 0);
       g.drawImage(scena.lontano, -cam * 0.25, 0);
       g.drawImage(scena.colline, -cam * 0.6, 0);
-      g.drawImage(scena.suolo, cam, 0, ex.W, ex.H - SUOLO + 10, 0, SUOLO, ex.W, ex.H - SUOLO + 10);
+      g.drawImage(scena.suolo, cam, 0, VW(), ex.H - SUOLO + 10, 0, SUOLO, VW(), ex.H - SUOLO + 10);
       for (const [lato, e] of s.es.entries()) if (!(lato === 1 && ex.modo === 'nonmorti')) statua(g, lato, e, adesso);
       if (ex.modo === 'nonmorti') cripta(g, adesso);
       // i caduti (cadono e svaniscono)
       morti = morti.filter((m) => adesso - m.t < 2.2);
       for (const m of morti) {
         const k = Math.min(1, (adesso - m.t) / 0.35), x = m.x - cam, y = yDi(m.z), sc = scalaDi(m.tipo, m.z);
-        if (x < -80 || x > ex.W + 80) continue;
+        if (x < -80 || x > VW() + 80) continue;
         g.save(); g.globalAlpha = Math.max(0, 1 - Math.max(0, adesso - m.t - 1.2)); g.translate(x, y); g.rotate(-m.verso * k * Math.PI / 2 * 0.95); g.translate(-x, -y);
         stickman(g, [m.id, m.tipo, m.lato, m.x, m.z, 100, 'f', m.verso, -1, 0, 0], x, y, adesso - 5);
         g.restore();
       }
       // le unità, dalle più lontane alle più vicine
       const lista = s.u.slice().sort((a, b) => a[4] - b[4]);
-      for (const q of lista) { const x = xDi(q) - cam; if (x < -90 || x > ex.W + 90) continue; stickman(g, q, x, yDi(q[4]), adesso); }
+      for (const q of lista) { const x = xDi(q) - cam; if (x < -90 || x > VW() + 90) continue; stickman(g, q, x, yDi(q[4]), adesso); }
       // i colpi in volo: frecce, veleno, magia, sguardo di Medusa
       colpi = colpi.filter((c) => adesso - c.t < c.dur + 0.35);
       for (const c of colpi) {
@@ -523,12 +529,12 @@
       // atmosfera: neve che cade, nebbia, buio della notte
       if (scena.S.neve) { g.fillStyle = 'rgba(255,255,255,.85)'; for (const f of scena.fiocchi) { const x = ((f[0] - cam * 0.8 + Math.sin(adesso + f[1]) * 10) % ex.W + ex.W) % ex.W, y = (f[1] + adesso * 30 * f[2]) % ex.H; g.beginPath(); g.arc(x, y, f[2], 0, Math.PI * 2); g.fill(); } }
       if (scena.S.nebbia) { for (let k = 0; k < 3; k++) { g.fillStyle = 'rgba(200,210,220,.07)'; g.beginPath(); g.ellipse(((k * 400 - cam * 0.9 + adesso * 12) % (ex.W + 400) + ex.W + 400) % (ex.W + 400) - 200, 400 + k * 25, 260, 40, 0, 0, Math.PI * 2); g.fill(); } }
-      if (ex.modo === 'nonmorti' && !s.gi) { g.fillStyle = 'rgba(10,15,40,.22)'; g.fillRect(0, 0, ex.W, ex.H); }
+      if (ex.modo === 'nonmorti' && !s.gi) { g.fillStyle = 'rgba(10,15,40,.22)'; g.fillRect(0, 0, VW(), ex.H); }
       // scritte
       scritte = scritte.filter((w) => adesso - w.t < (w.grande ? 2.2 : 1));
       g.textAlign = 'center';
       for (const w of scritte) {
-        const tt = adesso - w.t, dur = w.grande ? 2.2 : 1, x = w.x === null ? ex.W / 2 : w.x - cam;
+        const tt = adesso - w.t, dur = w.grande ? 2.2 : 1, x = w.x === null ? VW() / 2 : w.x - cam;
         g.globalAlpha = Math.min(1, (dur - tt) * 3); g.font = `900 ${w.grande ? 34 : 14}px system-ui`;
         g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.55)'; g.strokeText(w.txt, x, w.y - (w.grande ? 0 : tt * 30)); g.fillStyle = w.grande ? '#fff' : '#ffd23f'; g.fillText(w.txt, x, w.y - (w.grande ? 0 : tt * 30));
       }
@@ -536,8 +542,8 @@
       g.restore();
       minimappa(g, s);
       // frecce ai bordi: ci sono nemici fuori dallo schermo vicino alla propria statua
-      const lato = mioLato(), pericolo = s.u.some((q) => q[2] !== lato && q[1] !== 'minatore' && Math.abs(q[3] - (lato ? ex.L - ex.STATUA : ex.STATUA)) < 700 && (q[3] < cam || q[3] > cam + ex.W));
-      if (pericolo && Math.floor(adesso * 3) % 2) { g.fillStyle = 'rgba(232,69,60,.85)'; g.font = '900 22px system-ui'; g.textAlign = lato ? 'right' : 'left'; g.fillText(lato ? '⚠️ ▶' : '◀ ⚠️', lato ? ex.W - 10 : 10, 70); }
+      const lato = mioLato(), pericolo = s.u.some((q) => q[2] !== lato && q[1] !== 'minatore' && Math.abs(q[3] - (lato ? ex.L - ex.STATUA : ex.STATUA)) < 700 && (q[3] < cam || q[3] > cam + VW()));
+      if (pericolo && Math.floor(adesso * 3) % 2) { g.fillStyle = 'rgba(232,69,60,.85)'; g.font = '900 22px system-ui'; g.textAlign = lato ? 'right' : 'left'; g.fillText(lato ? '⚠️ ▶' : '◀ ⚠️', lato ? VW() - 10 : 10, 70); }
     },
   });
   function anello(g, x, y, k, col, r) { g.strokeStyle = `${col}${Math.max(0, 0.8 * (1 - k))})`; g.lineWidth = 4 * (1 - k) + 1; g.beginPath(); g.ellipse(x, y, r * (0.4 + k * 0.6), r * (0.4 + k * 0.6) * 0.45, 0, 0, Math.PI * 2); g.stroke(); }

@@ -30,6 +30,8 @@
       return `<span class="ab-colore" style="background:${COL[s.s.col]}">${NOMI[s.s.col]}</span><span>${FORME[s.s.fo] || ''} · turno ${s.s.ci}</span><span>🧍 in piedi: ${s.s.e.filter((x) => !x.f).length}</span>${miei ? `<span>${miei}</span>` : ''}`;
     },
     fineRound: (p, s, ctx) => `Punti totali: ${p.punti[ctx.mio]}`,
+    // in alto, accanto ai totali, i punti del round fin qui (chi è caduto ha già i suoi)
+    delRound: (ctx, s, i) => { const v = s.s.pr && s.s.pr[i]; if (v == null) return ''; const e = s.s.e[i]; return `+${v}${e && e.f ? ' ⬇' : ''}`; },
     dopoTick(ctx, d, prima) {
       for (const [x, y, colpito, forte] of d.s.pu) { colpi.push({ x, y, t: performance.now(), forte }); window.Nuovi.suono(colpito ? [[forte ? 110 : 160, forte ? 0.16 : 0.08]] : [[400, 0.03]], { tipo: 'square', volume: 0.06 }); }
       for (const [x, y, x2, y2] of d.s.ge || []) { geli.push({ x, y, x2, y2, t: performance.now() }); window.Nuovi.suono([[1400, 0.05], [900, 0.1]], { volume: 0.05 }); }

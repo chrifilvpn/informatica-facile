@@ -317,9 +317,9 @@ module.exports = {
     alias: ['biliardino', 'calciobalilla', 'calcio balilla', 'foosball', 'calcetto', 'calcio', 'stecche'],
     opzioni: [{ id: 'gol', nome: 'Si vince a', valori: [5, 10, 3], etichette: ['5 gol', '10 gol', '3 gol'], predefinito: 5 }],
     regole: [
-      'Il calcio balilla visto dall\'alto, in verticale: la tua porta è sempre quella in basso. Ogni squadra ha 4 stecche: portiere (1 omino), difesa (2), centrocampo (5) e attacco (3); le stecche delle due squadre sono una in mezzo all\'altra come nel biliardino vero.',
+      'Il calcio balilla visto dall\'alto: in verticale la tua porta è sempre quella in basso; sugli schermi larghi (computer, telefono in orizzontale) il tavolo si gira e la tua porta è quella a sinistra. Ogni squadra ha 4 stecche: portiere (1 omino), difesa (2), centrocampo (5) e attacco (3); le stecche delle due squadre sono una in mezzo all\'altra come nel biliardino vero.',
       'In 2 (uno contro uno) comandi tutte le stecche della tua squadra; in 4 (due contro due, compagni i posti 1 e 3 contro 2 e 4) il primo della squadra comanda portiere e difesa, il secondo centrocampo e attacco.',
-      'Muovi le stecche con il mouse o col dito sul campo (l\'omino più vicino si mette dove punti), oppure con le frecce destra e sinistra (A e D) o il joystick. Le stecche non vanno più veloci di così: bisogna anticipare.',
+      'Muovi le stecche con il mouse o col dito sul campo (l\'omino più vicino si mette dove punti), oppure con le frecce destra e sinistra (A e D; col tavolo in orizzontale su e giù, W e S) o il joystick. Le stecche non vanno più veloci di così: bisogna anticipare.',
       'Per tirare premi spazio, clicca o tocca il pulsante ⚽ Tira: tutti gli omini delle tue stecche ruotano e quello che ha la pallina davanti (o sotto) la calcia verso la porta avversaria. Colpendola di lato la si manda di lato.',
       'La pallina rimbalza sulle sponde, sugli omini e sui pali. Gol quando entra nella porta; dopo un gol batte, dal suo centrocampo, chi l\'ha subito. Se la pallina resta ferma dove nessuno ci arriva si rimette in gioco.',
       'Vince la squadra che arriva per prima a 5 gol (o 10, o 3, se scelto prima di iniziare).',

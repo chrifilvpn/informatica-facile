@@ -19,6 +19,7 @@ function fineTrucco(g, sempre = false) {
 }
 const W = 1000, H = 620, R = 15, V = 300;
 const LUNGHEZZA = 6000; // monete in salita: lunghezza del percorso
+const ULTIMI = 15; // monete in salita: secondi per arrivare dopo il primo (prima uno fermo in cima teneva il round fino a 3 minuti)
 
 // MAPPE A TEMA: a ogni round si sceglie un'ambientazione, che decide quali pezzi di percorso escono e come sono.
 // Pezzi: muro con varchi, massi, zig-zag (due muri sfalsati), corsie (una sola porta in cima: le altre sono vicoli
@@ -79,7 +80,7 @@ class Salita extends Arena {
     this.ostacoli = []; this.monete = []; this.nO = 0;
     this.generato = H - 260;
     this.e = Array.from({ length: this.n }, (_, i) => ({ id: i, x: W / 2 + (i - (this.n - 1) / 2) * 60, y: H * 0.6, vx: 0, vy: 0, fuori: false, arrivo: null, monete: 0, fuoriT: null, fermo: 0, immune: 0, salto: 0 }));
-    this.arrivi = [];
+    this.arrivi = []; this.chiude = null;
     this.mente = {};
     this.genera();
   }
@@ -213,7 +214,13 @@ class Salita extends Arena {
       // monete
       if (this.modo === 'monete') {
         for (const m of this.monete) if (!m.presa && Math.hypot(m.x - e.x, m.y - e.y) < R + (win ? 45 : 12)) { m.presa = true; e.monete++; this.punti[p]++; }
-        if (e.y <= fineP) { e.arrivo = this.tempoRound; this.arrivi.push(p); const bonus = [30, 20, 10][this.arrivi.length - 1] || 5; this.punti[p] += bonus; this.cambiato = true; this.annuncia(p, `arriva in cima! +${bonus} 🏁`, `sei arrivato in cima! +${bonus} 🏁`); }
+        if (e.y <= fineP) { e.arrivo = this.tempoRound; this.arrivi.push(p); const bonus = [30, 20, 10][this.arrivi.length - 1] || 5; this.punti[p] += bonus; this.cambiato = true;
+          // il primo arrivato fa partire il conto alla rovescia per gli altri
+          const altri = this.arrivi.length === 1 && this.e.some((x) => !x.fuori && x.arrivo === null);
+          if (altri) this.chiude = this.tempoRound + ULTIMI;
+          const coda = altri ? ` Gli altri hanno ${ULTIMI} secondi! ⏳` : '';
+          this.annuncia(p, `arriva in cima! +${bonus} 🏁${coda}`, `sei arrivato in cima! +${bonus} 🏁${coda}`);
+        }
       }
       // troppo in basso: presi dai fantasmi / rimasti indietro
       if (win && e.y > this.cam + H - 40) { e.y = this.cam + H - 40; spingiFuori(e, this.ostacoli); e.y = Math.min(e.y, this.cam + H - 23); }
@@ -225,7 +232,7 @@ class Salita extends Arena {
     this.monete = this.monete.filter((m) => !m.presa);
     const inGara = this.e.filter((e) => !e.fuori && e.arrivo === null).length;
     if (this.modo === 'fuga') return inGara === 0 || (this.n > 1 && inGara === 1 && this.e.filter((e) => e.fuori).length === this.n - 1 && this.soloDa(3)) || this.tempoRound > 150;
-    return inGara === 0 || this.tempoRound > 180;
+    return inGara === 0 || this.tempoRound > 180 || (this.chiude !== null && this.tempoRound >= this.chiude);
   }
   // colpito da un pericolo (o finito nella lava): torna un po' indietro, resta fermo un attimo e perde 2 monete
   colpisci(p, cosa) {
@@ -349,6 +356,7 @@ class Salita extends Arena {
         : { id: o.id, t: o.tipo === 'muro' ? 1 : o.tipo === 'zona' ? 2 : 3, z: o.z, x: Math.round(o.x), y: Math.round(o.y), w: Math.round(o.w), h: Math.round(o.h) })),
       mo: this.monete.filter((m) => vis(m.y)).map((m) => ({ id: m.id, x: Math.round(m.x), y: Math.round(m.y) })),
       prog: this.modo === 'monete' ? Math.min(1, -this.cam / LUNGHEZZA) : null,
+      cd: this.chiude !== null ? Math.max(0, Math.ceil(this.chiude - this.tempoRound)) : null,
     };
   }
 }
@@ -385,6 +393,7 @@ module.exports = {
         'Ambientazioni: foresta (alberi, siepi, ruscelli che rallentano, tronchi che rotolano), ghiacciaio (sul ghiaccio si scivola e si frena a fatica; blocchi di ghiaccio, palle di neve), vulcano (fiumi di lava da passare sui ponti: la lava ti respinge e ti fa perdere 2 monete; palle di fuoco) e tempio perduto (stanze, corsie, colonne, lame, sabbie mobili che rallentano). Anche un pericolo che ti tocca ti fa perdere 2 monete.',
         'Il percorso ha una lunghezza fissa (la barra mostra quanto manca) ed è pieno di monete, spesso proprio nei varchi dei muri: ogni moneta vale un punto.',
         'Chi arriva in cima prende un bonus: 30 punti il primo, 20 il secondo, 10 il terzo, 5 gli altri. Chi resta indietro è fuori, ma tiene le monete già prese.',
+        'Quando arriva il primo, gli altri hanno 15 secondi per arrivare in cima: poi il round finisce (chi non è arrivato tiene le monete, ma niente bonus).',
         'Dopo 3 round (o 1, o 5) vince chi ha più punti. Il gioco è in tempo reale: si ferma per tutti quando qualcuno apre le dispense.',
         'Il computer facile guarda poco avanti e non cerca le monete; il medio le cerca; il difficile guarda lontano, prende le monete e sta sempre davanti.'],
     },
