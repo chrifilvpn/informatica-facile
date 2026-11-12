@@ -15,15 +15,6 @@
 .is-strato .is-chiudi { min-height: 2.2rem; font-size: .95rem; }
 .is-strato .is-pannello input[type="checkbox"] { width: auto; flex: none; margin: 0; }
 .is-strato .is-pannello input[type="range"] { width: 100%; }
-/* IL COMPUTER: la scena prende tutta la larghezza della finestra (prima si fermava a 64rem, circa metà di uno schermo
-   grande) e le istruzioni sotto non le rubano altezza: sono nei comandi (tasto H) e nelle Regole */
-@media (pointer: fine) {
-  .ar:has(.is-strato) { width: 100%; }
-  .ar:has(.is-strato) .ar-istr { display: none; }
-  .tavolo.libero .panno:has(.is-strato) { align-items: start; }
-  /* ⚙ e ⛶ restano sopra la scena anche quando il riquadro è più largo della tela (--tela-w lo mette arena.js) */
-  .ar-box > .ar-sopra:has(.is-strato) { position: absolute; top: 0; bottom: 0; left: 50%; width: var(--tela-w, 100%); transform: translateX(-50%); }
-}
 /* IL TELEFONO: in orizzontale la partita prende tutto lo schermo (il riquadro diventa fisso sopra la pagina) */
 html.is-pagina-piena, html.is-pagina-piena body { overflow: hidden; overscroll-behavior: none; }
 .is-schermo-tel { position: fixed !important; inset: 0; z-index: 1000; width: auto !important; height: 100%; margin: 0; display: grid; place-items: center; background: #000; touch-action: none; }
