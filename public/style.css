@@ -578,6 +578,12 @@ button.tr-cella:active { transform: scale(.95); }
 }
 .f4-col { display: grid; grid-template-rows: repeat(calc(var(--rig) + 1), var(--cella)); padding: 0; border: 0; background: none; border-radius: 10px; }
 button.f4-col { cursor: pointer; }
+/* telefono: Tris e Forza 4 usano quasi tutta la larghezza dello schermo (prima stavano in un riquadro piccolo) */
+@media (max-width: 620px) {
+  .tr-tabellone:not(.tr-ultimate) { --dim: min(94vw, calc(100vh - 17rem), 460px); }
+  .tr-ultimate { --dim: min(96vw, calc(100vh - 15rem), 560px); gap: 6px; padding: 6px; }
+  .f4 { --cella: min(calc((96vw - 1.2rem) / var(--col)), calc((100vh - 19rem) / (var(--rig) + 1)), 68px); }
+}
 .f4-sopra { display: grid; place-items: center; }
 .f4-buco { display: grid; place-items: center; position: relative; overflow: visible;
   background: radial-gradient(circle at 50% 50%, rgba(8, 22, 17, .88) 0 38%, #2463c7 39% 45%, transparent 46%); }

@@ -44,6 +44,9 @@
 .af-tag { display: inline-block; padding: 0 .4rem; border-radius: 6px; background: #f4eedc; color: #2a2116; border-left: 6px solid var(--g); font-size: .85rem; margin: 1px; }
 .af-tag.soldi { border-left-color: #2fa35a; }
 .af-sel { position: absolute; top: 1cqi; right: 1cqi; z-index: 3; display: flex; align-items: flex-start; gap: 4px; }
+.af-riga { display: flex; align-items: center; justify-content: center; gap: 1.6cqi; width: 100%; }
+.af-riga .af-decidi { flex: 1 1 0; min-width: 0; }
+.af-sel.accanto { position: static; flex: none; }
 .af-carta-prop { width: 24cqi; background: #fffdf5; color: #2a2116; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 18px rgba(0, 0, 0, .45); font-size: 1.6cqi; }
 .af-testa-prop { background: var(--g); color: #fff; font-weight: 800; text-align: center; padding: .8cqi; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); font-size: 2cqi; }
 .af-prezzo { margin: .5cqi; text-align: center; font-weight: 700; }
@@ -77,4 +80,32 @@
   .af-tab { width: 100%; }
   .af-lato { max-height: none; }
 }
+/* telefono: tabellone ingrandibile (lente.js) e, sotto, la parte delle decisioni con scritte di grandezza normale */
+.af-cornice { width: 100%; padding: 5px; box-sizing: border-box; }
+.af-cornice .af-tab { box-shadow: 0 0 0 4px #b9965a; }
+.af-cornice .ln-vista { padding: 4px; }
+.af-cornice .ln-vista:not(.ln-zoom) + .ln-bt { right: 17%; bottom: 17%; }
+.af-cornice .af-logo { font-size: 7cqi; }
+.af-cornice .af-giro { font-size: 2.6cqi; }
+.af-cornice .af-dado { width: 9cqi; height: 9cqi; }
+.af-sotto { display: grid; justify-items: center; gap: .5rem; width: 100%; padding: .55rem; border-radius: 12px; background: radial-gradient(ellipse at 50% 30%, #2f6a43, #1c4a2c); color: #f4f1e6; box-sizing: border-box; }
+.af-sotto:empty { display: none; }
+.af-sotto .af-decidi p, .af-sotto .af-attesa { font-size: .95rem; }
+.af-sotto .af-pic { font-size: .8rem !important; }
+.af-sotto { padding: .45rem; gap: .4rem; }
+.af-sotto .af-riga { gap: .5rem; align-items: flex-start; }
+.af-sotto .af-decidi { gap: .35rem; }
+.af-sotto .af-decidi p { font-size: .88rem; }
+.af-sotto .af-decidi .bottone { padding: .45rem .7rem; font-size: .9rem; }
+.af-sotto .af-carta-prop { width: 9.2rem; font-size: .68rem; line-height: 1.25; }
+.af-sotto .af-testa-prop { font-size: .82rem; padding: .25rem; }
+.af-sotto .af-prezzo { margin: .15rem; }
+.af-sotto .af-aff td { padding: 0 .4rem; }
+.af-sotto .af-carta-prop .af-pic { margin: .25rem .4rem; }
+.af-sotto .af-sel:not(.accanto) { position: static; }
+.af-sotto .af-cartina { max-width: 18rem; padding: .4rem .8rem; }
+.af-sotto .af-cartina b, .af-sotto .af-cartina p { font-size: .9rem; }
+.af-sotto .af-diario { max-width: none; font-size: .78rem; padding: .35rem .6rem; }
+.af-sotto .af-diario .af-pal { width: .6rem; height: .6rem; }
 @media (prefers-reduced-motion: reduce) { .af-pedina.attiva, .af-dado, .af-cartina { animation: none; } }
+.af-sotto .af-carta-prop .af-pic, .af-sotto .af-carta-prop .af-aff td { font-size: .68rem !important; }

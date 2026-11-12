@@ -84,7 +84,7 @@
       const dadi = at ? `<div class="cq-dadi"><span>${esc(chi(ctx, p.padrone[at.da]))} ⚔️ ${esc(chi(ctx, at.dif))}</span>${at.ultimo.a.map((v, k) => dado(v, k < at.ultimo.d.length && v > at.ultimo.d[k] ? 'vince att' : 'att')).join('')}<b>vs</b>${at.ultimo.d.map((v, k) => dado(v, k < at.ultimo.a.length && v >= at.ultimo.a[k] ? 'vince dif' : 'dif')).join('')}
         <small>${at.tiri > 1 ? `${at.tiri} tiri · ` : ''}perse ${at.perseA} in attacco, ${at.perseD} in difesa${at.conquistato ? ' · conquistato!' : ''}</small></div>` : '';
       const legenda = Array.from({ length: p.n }, (_, k) => `<span class="${p.turno === k ? 'di-turno' : ''} ${p.fuori.includes(k) ? 'fuori' : ''}"><i style="background:${COLORI[k % COLORI.length]}"></i>${esc(chi(ctx, k))} <b>${p.territoriPer[k]}</b>/${p.soglia}${p.carte[k] ? ` · 🃏${p.carte[k]}` : ''}</span>`).join('');
-      return `<div class="cq"><div class="cq-legenda">${legenda}</div>${mappa}${info}${comandi}${dadi}</div>`;
+      return `<div class="cq"><div class="cq-legenda">${legenda}</div><div class="cq-cornice">${window.Lente.html('conquista', mappa, { max: 2.6, alto: '46vh' })}</div>${info}${comandi}${dadi}</div>`;
     },
     dopo(ctx) {
       const p = ctx.partita, at = p.attacco;

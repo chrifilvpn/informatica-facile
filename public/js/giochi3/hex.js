@@ -42,7 +42,7 @@
       else msg = mio ? `Tocca a te: collega ${io === 0 ? 'sopra e sotto' : 'sinistra e destra'}` : `${esc(ctx.nome(p.turno))} ci pensa…`;
       const bottoni = `${p.puoScambiare ? '<button type="button" class="bottone" data-az="scambia">🔄 Scambia (prendi la prima pedina)</button>' : ''}${p.puoAnnullare ? `<button type="button" class="bottone piccolo-bt" data-az="annullaMossa">↶ Annulla mossa${p.annullate ? ` <small>(${p.annullate})</small>` : ''}</button>` : ''}`;
       return `<div class="hx"><div class="ot-punti">${conto(ctx.mio)}<span class="ot-vs">–</span>${conto(1 - ctx.mio)}</div>
-        <div class="hx-tavola">${svg}</div><p class="pa-msg ot-msg" aria-live="polite">${msg}</p>${bottoni ? `<div class="nk-bottoni">${bottoni}</div>` : ''}</div>`;
+        <div class="hx-tavola">${window.Lente.html(`hex${N}`, svg, { max: N >= 11 ? 2.6 : 2, angolo: 'alto', alto: '52vh' })}</div><p class="pa-msg ot-msg" aria-live="polite">${msg}</p>${bottoni ? `<div class="nk-bottoni">${bottoni}</div>` : ''}</div>`;
     },
     dopo(ctx) {
       const p = ctx.partita;
@@ -50,7 +50,7 @@
     },
     stato(ctx) { const p = ctx.partita; if (p.finita || p.turno == null) return null; return p.turno === ctx.mio ? 'Tocca a te' : `Tocca a ${ctx.nome(p.turno)}`; },
     punteggio() { return ''; },
-    infoPosto(ctx, posto) { return ctx.partita.ruolo[posto] === 0 ? '🔴 sopra-sotto' : '🔵 sinistra-destra'; },
+    infoPosto(ctx, posto) { return ctx.partita.ruolo[posto] === 0 ? '<i class="hx-ped-mini ros"></i> sopra-sotto' : '<i class="hx-ped-mini blu"></i> sinistra-destra'; },
     clic(ctx, el) {
       if (el.dataset.az === 'annullaMossa') return ctx.invia({ tipo: 'annulla' });
       if (el.dataset.az === 'scambia') return ctx.invia({ tipo: 'scambia' });
