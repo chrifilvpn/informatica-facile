@@ -9,7 +9,9 @@
       const mio = p.turno === ctx.mio && !p.finita && !p.inAttesa;
       const bombeFinali = new Set(p.tutteBombe || []);
       const celle = p.scoperte.map((x, i) => {
-        if (x) return `<div class="cb-cella ${x.bomba ? 'bomba' : 'sicura'} ${p.ultima === i ? 'appena' : ''}" style="--col:${COLORI[x.posto % COLORI.length]}" title="${esc(x.posto === ctx.mio ? 'tu' : ctx.nome(x.posto))}">${x.bomba ? '💣' : '✓'}</div>`;
+        // effetti sull'ultima casella: esplosione con schegge per la bomba, anello di luce per quella sicura
+        const effetto = p.ultima !== i ? '' : x.bomba ? '<span class="cb-boom" aria-hidden="true"></span><span class="cb-schegge" aria-hidden="true"></span>' : '<span class="cb-luce" aria-hidden="true"></span>';
+        if (x) return `<div class="cb-cella ${x.bomba ? 'bomba' : 'sicura'} ${p.ultima === i ? 'appena' : ''}" style="--col:${COLORI[x.posto % COLORI.length]}" title="${esc(x.posto === ctx.mio ? 'tu' : ctx.nome(x.posto))}">${x.bomba ? '💣' : '✓'}${effetto}</div>`;
         if (bombeFinali.has(i)) return '<div class="cb-cella rivelata">💣</div>';
         return mio ? `<button type="button" class="cb-cella coperta attiva" data-az="scopri" data-c="${i}" aria-label="Casella ${i + 1}"></button>` : '<div class="cb-cella coperta"></div>';
       }).join('');
@@ -20,7 +22,7 @@
       else if (mio) msg = p.piatto ? `Piatto del turno: <b>${p.piatto}</b>. Un'altra casella o ti fermi?` : 'Tocca a te: scopri una casella';
       else msg = `Tocca a ${esc(ctx.nome(p.turno))}${p.piatto ? ` · piatto ${p.piatto}` : ''}`;
       return `<div class="cb">
-        <div class="cb-griglia ${mio ? 'mio' : ''}" style="--lato:${p.lato}">${celle}</div>
+        <div class="cb-griglia ${mio ? 'mio' : ''} ${p.ultima != null && p.scoperte[p.ultima] && p.scoperte[p.ultima].bomba && p.inAttesa ? 'scossa' : ''}" style="--lato:${p.lato}">${celle}</div>
         <p class="pa-msg" aria-live="polite">${msg}</p>
         <p class="pa-info">${p.finita ? '&nbsp;' : `${p.rimaste} caselle coperte, ${p.bombeRimaste} bombe · rischio della prossima ${rischio}%`}</p>
       </div>`;

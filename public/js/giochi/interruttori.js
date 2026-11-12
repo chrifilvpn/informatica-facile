@@ -18,6 +18,8 @@
           ? `<button type="button" class="${cls}" data-az="accendi" data-k="${k}" aria-label="Interruttore ${k + 1}">${inner}</button>`
           : `<div class="${cls}" aria-label="Interruttore ${k + 1}${acceso ? ', acceso' : ''}">${inner}</div>`;
       }).join('');
+      // una lampadina per interruttore sopra il pannello: si accende (con un piccolo sfarfallio) quando lo accendi
+      const lampade = p.accesi.map((chi, k) => `<i class="it-lampada ${chi !== null ? 'accesa' : ''} ${p.ultimo && p.ultimo.k === k && !p.ultimo.bomba ? 'appena' : ''} ${botto && p.bomba === k ? 'rotta' : ''}"></i>`).join('');
       const rimasti = p.accesi.filter((x) => x === null).length;
       let msg;
       if (p.finita) msg = p.risultato.vincitori[0] === ctx.mio ? '🏆 Sei l\'ultimo rimasto: hai vinto!' : `🏆 Vince ${esc(ctx.nome(p.risultato.vincitori[0]))}`;
@@ -27,6 +29,7 @@
       else msg = `Tocca a ${esc(ctx.nome(p.turno))}`;
       const col = Math.min(p.quanti, p.quanti > 10 ? Math.ceil(p.quanti / 2) : p.quanti);
       return `<div class="it">
+        <div class="it-lampade ${botto ? 'spente' : ''}" style="--col:${col}" aria-hidden="true">${lampade}</div>
         <div class="it-pannello ${botto ? 'botto' : ''} ${mio ? 'mio' : ''}" style="--col:${col};${botto ? ritardo(ctx.ui, `botto-${p.botti}`) : ''}">
           <div class="it-viti"><i></i><i></i><i></i><i></i></div>${leve}
           <div class="it-boom" aria-hidden="true">BOOM!</div>

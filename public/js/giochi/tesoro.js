@@ -13,7 +13,9 @@
         if (x) {
           const di = p.modo === 'turni' ? ` title="${esc(x.posto === ctx.mio ? 'tuo' : ctx.nome(x.posto))}"` : '';
           const c = x.cosa === 'niente' ? `<b class="ts-num n${x.numero}">${x.numero || ''}</b>` : ICONA[x.cosa];
-          return `<div class="ts-cella scavata ${x.cosa} ${p.ultimo === i ? 'appena' : ''} ${p.modo === 'turni' && x.posto !== ctx.mio ? 'altrui' : ''}"${di}>${c}</div>`;
+          // effetti dello scavo appena fatto: zolle che saltano, la moneta che brilla, la gemma che scintilla, la bomba che esplode
+          const effetto = p.ultimo !== i ? '' : `<span class="ts-zolle" aria-hidden="true"></span>${x.cosa === 'moneta' || x.cosa === 'gemma' ? '<span class="ts-brilla" aria-hidden="true"><i></i><i></i><i></i></span>' : x.cosa === 'bomba' ? '<span class="cb-boom" aria-hidden="true"></span>' : ''}`;
+          return `<div class="ts-cella scavata ${x.cosa} ${p.ultimo === i ? 'appena' : ''} ${p.modo === 'turni' && x.posto !== ctx.mio ? 'altrui' : ''}"${di}>${c}${effetto}</div>`;
         }
         if (p.tutto) { const c = p.tutto[i]; return `<div class="ts-cella rivelata">${c === 'niente' ? '' : ICONA[c]}</div>`; }
         return mio ? `<button type="button" class="ts-cella coperta attiva" data-az="scava" data-c="${i}" aria-label="Scava la casella ${i + 1}"></button>` : '<div class="ts-cella coperta"></div>';

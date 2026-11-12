@@ -472,6 +472,8 @@ public/js/giochi3/hex.js
 public/js/giochi3/hockey.js
 public/js/giochi3/isolation.css
 public/js/giochi3/isolation.js
+public/js/giochi3/lente.css
+public/js/giochi3/lente.js
 public/js/giochi3/luci.css
 public/js/giochi3/luci.js
 public/js/giochi3/navale.css

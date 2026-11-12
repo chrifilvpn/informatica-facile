@@ -87,7 +87,7 @@ class Xiangqi {
     this.id = 'xiangqi';
     this.n = n;
     this.rosso = primo;
-    this.simboli = opzioni.pezzi === 'cinesi' ? 'cinesi' : 'italiani';
+    this.simboli = ['cinesi', 'italiani'].includes(opzioni.pezzi) ? opzioni.pezzi : 'disegni';
     this.b = Array.from(iniziale());
     this.turno = primo;
     this.nMosse = 0; this.ultima = null; this.senzaPrese = 0; this.posizioni = {}; this.catturati = [[], []];
@@ -261,7 +261,7 @@ module.exports = {
     descrizione: 'Lo xiangqi: pezzi sugli incroci, il fiume in mezzo, i palazzi dei generali, i cannoni che mangiano saltando. Dai scacco matto al generale.',
     alias: ['scacchi cinesi', 'xiangqi', 'xiang qi', 'scacchi orientali', 'elefanti e cannoni'],
     opzioni: [
-      { id: 'pezzi', nome: 'Pezzi', valori: ['italiani', 'cinesi'], etichette: ['Con i nomi italiani', 'Con i caratteri cinesi'], predefinito: 'italiani' },
+      { id: 'pezzi', nome: 'Pezzi', valori: ['disegni', 'italiani', 'cinesi'], etichette: ['Disegnati', 'Con i nomi italiani', 'Con i caratteri cinesi'], predefinito: 'disegni' },
     ],
     regole: [
       'Scacchiera di 9 colonne e 10 righe: i pezzi stanno sugli INCROCI delle linee. In mezzo c\'è il fiume; in basso e in alto ci sono i palazzi (3×3, con le diagonali). Il rosso muove per primo.',
@@ -270,7 +270,7 @@ module.exports = {
       'Carri: come la torre degli scacchi, quanto vogliono in orizzontale o verticale. Cannoni: si muovono come i carri, ma per MANGIARE devono saltare esattamente un pezzo (di qualsiasi colore) lungo la linea.',
       'Soldati: un passo in avanti; dopo aver attraversato il fiume anche un passo di lato. Non tornano mai indietro e non si trasformano.',
       'Si vince con lo scacco matto, oppure se l\'avversario non ha più mosse (nello xiangqi lo stallo è una sconfitta). Non si può fare una mossa che lascia il proprio generale sotto scacco. Pareggio: stessa posizione tre volte, o 60 mosse a testa senza catture.',
-      'Comandi: tocca un tuo pezzo (i punti verdi sono le mosse possibili, quelli rossi le catture) e poi l\'incrocio d\'arrivo. Con l\'opzione si possono vedere i caratteri cinesi tradizionali.',
+      'Comandi: tocca un tuo pezzo (i punti verdi sono le mosse possibili, quelli rossi le catture) e poi l\'incrocio d\'arrivo. I pezzi sono disegnati (corona = generale, ventaglio = consigliere, elefante, cavallo, carro con le ruote, cannone, soldato con scudo e lancia; il nome compare anche tenendo il dito o il mouse sul pezzo); con l\'opzione si possono avere invece le sigle italiane o i caratteri cinesi tradizionali.',
       'Il computer facile gioca quasi a caso; il medio guarda due mosse avanti; il difficile calcola molte mosse avanti seguendo gli scambi fino in fondo. Contro il computer c\'è "↶ Annulla mossa".',
     ],
   },

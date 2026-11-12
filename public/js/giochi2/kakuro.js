@@ -66,7 +66,8 @@
   function misura(L) {
     const largo = document.documentElement.clientWidth;
     const W = largo >= 900 ? Math.min(700, largo - 440) : largo - 20;
-    const H = largo >= 900 ? window.innerHeight - 290 : 9999;
+    // sul telefono la griglia lascia posto sotto a tastierino, comandi e combinazioni (tutto senza scorrere)
+    const H = largo >= 900 ? window.innerHeight - 290 : window.innerHeight - 385;
     // L caselle, L − 1 spazi da 2 pixel e il bordo da 2 per parte
     return Math.max(26, Math.min(70, Math.floor((Math.min(W, H) - 4 - 2 * (L - 1)) / L)));
   }

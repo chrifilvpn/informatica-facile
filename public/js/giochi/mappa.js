@@ -33,7 +33,12 @@
       else if (p.stato === 'fermo') msg = 'Mosse finite. Aspetta gli altri.';
       else if (p.scelto !== null) msg = 'Mossa scelta: ci si muove quando hanno scelto tutti…';
       else msg = `Mossa ${p.mosse + 1} di ${p.maxMosse}: scegli dove andare`;
-      const altri = p.n > 1 ? `<p class="piccolo mn-altri">${p.altri.map((a, i) => `<span style="color:${COLORI[i % COLORI.length]}">${esc(i === io ? 'Tu' : ctx.nome(i))}: ${{ viaggio: a.pronto ? '✓ pronto' : '…', uscito: '🚪 uscito', preso: '👾 preso', fermo: '⏹ fermo' }[a.stato]}</span>`).join(' · ')}</p>` : '';
+      // chi ha già scelto la mossa: una targhetta per giocatore col suo colore (prima era una riga «Tu: … · Ada: ✓»)
+      const STATI = { uscito: '🚪 uscito', preso: '👾 preso', fermo: '⏹ senza mosse' };
+      const altri = p.n > 1 ? `<div class="mn-altri">${p.altri.map((a, i) => {
+        const testo = a.stato === 'viaggio' ? (a.pronto ? '✓ ha scelto' : 'sta scegliendo…') : STATI[a.stato];
+        return `<span class="mn-chi ${a.stato === 'viaggio' && a.pronto ? 'pronto' : ''} ${a.stato !== 'viaggio' ? 'fuori' : ''}" style="--c:${COLORI[i % COLORI.length]}"><i></i><b>${esc(i === io ? 'Tu' : ctx.nome(i))}</b> ${testo}</span>`;
+      }).join('')}</div>` : '';
       return `<div class="mn">
         <p class="pa-round">Mappa ${p.nMappa} di ${p.nMappe} · ${p.nNemici} nemici nascosti</p>
         <div class="mn-griglia" style="--lato:${p.lato}">${celle.join('')}</div>
@@ -48,7 +53,7 @@
     statoAttesa: () => 'Prossima mappa…',
     stato(ctx) { const p = ctx.partita; if (p.finita) return null; return p.stato === 'viaggio' ? `Mossa ${p.mosse + 1}/${p.maxMosse}` : 'Aspetti gli altri'; },
     punteggio(ctx) { const p = ctx.partita; return p.punti.map((x, i) => `<span style="color:${COLORI[i % COLORI.length]}">${esc(i === ctx.mio ? 'Tu' : ctx.nome(i))} <b>${x}</b></span>`).join('') + '<span class="obiettivo">uscita: 10 + 2 per mossa avanzata</span>'; },
-    infoPosto(ctx, posto) { const a = ctx.partita.altri[posto]; return `${a.mosse} mosse · ${ctx.partita.punti[posto]} punti`; },
+    infoPosto(ctx, posto) { const a = ctx.partita.altri[posto]; return `${a.mosse} ${a.mosse === 1 ? 'mossa' : 'mosse'} · ${ctx.partita.punti[posto]} ${ctx.partita.punti[posto] === 1 ? 'punto' : 'punti'}`; },
     clic(ctx, el) { if (el.dataset.az === 'muovi') ctx.invia({ tipo: 'muovi', cella: Number(el.dataset.c) }); },
   };
   Object.assign(window.Tavoli, { mappa: tavolo });
