@@ -58,6 +58,11 @@ class Tabellone {
   blocca() {
     for (const [a, b] of celle(this.t, this.r)) { const cy = this.y + b; if (cy < 0) { this.vivo = false; return 0; } this.g[cy * W + this.x + a] = TIPI.indexOf(this.t) + 1; }
     let tolte = 0;
+    // per l'animazione nel browser: il tabellone prima di togliere le righe e quali righe spariscono
+    const prima = this.g.join('');
+    const piene = [];
+    for (let y = 0; y < H; y++) if (this.g.slice(y * W, y * W + W).every(Boolean)) piene.push(y);
+    if (piene.length) this.lampo = { k: (this.lampo ? this.lampo.k : 0) + 1, quando: Date.now(), g: prima, y: piene };
     for (let y = H - 1; y >= 0; y--) {
       if (this.g.slice(y * W, y * W + W).every(Boolean)) { this.g.splice(y * W, W); this.g.unshift(...new Array(W).fill(0)); tolte++; y++; }
     }
@@ -192,6 +197,8 @@ class Tetris {
         g: b.g.join(''), v: b.vivo, p: b.punti, r: b.righe, l: b.livello,
         // il pezzo in caduta, il fantasma e i prossimi servono in grande solo a chi gioca; agli altri basta il pezzo
         pz: b.vivo ? { t: b.t, r: b.r, x: b.x, y: b.y } : null,
+        // righe appena tolte: si mandano per mezzo secondo (i messaggi possono perdersi), il browser le anima una volta
+        ...(b.lampo && ora - b.lampo.quando < 500 ? { lp: { k: b.lampo.k, g: b.lampo.g, y: b.lampo.y } } : {}),
         ...(i === p ? { f: b.vivo ? b.fantasma() : null, h: b.hold, hu: b.holdUsato, nx: b.prossimi() } : {}),
       })),
       via: Math.max(0, this.via - ora), pausa: this.inPausa,

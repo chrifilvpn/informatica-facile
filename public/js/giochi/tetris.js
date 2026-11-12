@@ -15,7 +15,44 @@
   }
   const celle = (t, r) => forme[t][r % forme[t].length];
 
-  function tabellone(tela, b, l, conFantasma) {
+  // animazione delle righe tolte: lampo bianco, le righe si schiacciano, poi quelle sopra scendono
+  const LAMPO = 230, CADE = 170;
+  const lampi = new Map(); // posto -> { k, g, y, t0 }
+  function segnaLampi(d) {
+    (d.t || []).forEach((b, i) => {
+      if (!b.lp) return;
+      const v = lampi.get(i);
+      if (v && v.k === b.lp.k) return;
+      lampi.set(i, { k: b.lp.k, g: b.lp.g, y: b.lp.y, t0: performance.now() });
+    });
+  }
+  function disegnaLampo(g, a, l, W, H) {
+    const t = performance.now() - a.t0;
+    if (t >= LAMPO + CADE) return false;
+    const via = new Set(a.y);
+    for (let y = 0; y < H; y++) {
+      if (via.has(y)) {
+        if (t >= LAMPO) continue;
+        const f = t / LAMPO;
+        // le righe piene lampeggiano e si chiudono verso il centro
+        const alto = l * (1 - f * f);
+        const bianco = Math.floor(t / 60) % 2 === 0;
+        g.globalAlpha = 1 - f * 0.6;
+        g.fillStyle = bianco ? '#ffffff' : '#ffe9a3';
+        g.fillRect(0, y * l + (l - alto) / 2, W * l, alto);
+        g.globalAlpha = 1;
+        continue;
+      }
+      // le altre righe scendono di tante righe quante ne spariscono sotto di loro
+      const sotto = a.y.filter((r) => r > y).length;
+      const f = t < LAMPO ? 0 : Math.min(1, (t - LAMPO) / CADE);
+      const yy = y + sotto * f * f;
+      for (let x = 0; x < W; x++) { const v = Number(a.g[y * W + x]); if (v) mattone(g, x, yy, l, COLORI[v]); }
+    }
+    return true;
+  }
+
+  function tabellone(tela, b, l, conFantasma, lampo) {
     const dpr = window.devicePixelRatio || 1;
     const W = 10, H = 20;
     if (tela.width !== W * l * dpr) { tela.width = W * l * dpr; tela.height = H * l * dpr; tela.style.width = `${W * l}px`; tela.style.height = `${H * l}px`; }
@@ -25,10 +62,11 @@
     g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = 1;
     for (let x = 1; x < W; x++) { g.beginPath(); g.moveTo(x * l + 0.5, 0); g.lineTo(x * l + 0.5, H * l); g.stroke(); }
     for (let y = 1; y < H; y++) { g.beginPath(); g.moveTo(0, y * l + 0.5); g.lineTo(W * l, y * l + 0.5); g.stroke(); }
-    for (let i = 0; i < W * H; i++) { const v = Number(b.g[i]); if (v) mattone(g, i % W, Math.floor(i / W), l, b.v ? COLORI[v] : '#555c6e'); }
+    const anima = lampo && b.v && disegnaLampo(g, lampo, l, W, H);
+    if (!anima) for (let i = 0; i < W * H; i++) { const v = Number(b.g[i]); if (v) mattone(g, i % W, Math.floor(i / W), l, b.v ? COLORI[v] : '#555c6e'); }
     if (b.pz) {
       const col = COLORI[tipi.indexOf(b.pz.t) + 1];
-      if (conFantasma && b.f != null) for (const [a, c] of celle(b.pz.t, b.pz.r)) if (b.f + c >= 0) { g.strokeStyle = col; g.lineWidth = 2; g.globalAlpha = 0.55; g.strokeRect((b.pz.x + a) * l + 2, (b.f + c) * l + 2, l - 4, l - 4); g.globalAlpha = 1; }
+      if (conFantasma && !anima && b.f != null) for (const [a, c] of celle(b.pz.t, b.pz.r)) if (b.f + c >= 0) { g.strokeStyle = col; g.lineWidth = 2; g.globalAlpha = 0.55; g.strokeRect((b.pz.x + a) * l + 2, (b.f + c) * l + 2, l - 4, l - 4); g.globalAlpha = 1; }
       for (const [a, c] of celle(b.pz.t, b.pz.r)) if (b.pz.y + c >= 0) mattone(g, b.pz.x + a, b.pz.y + c, l, col);
     }
     if (!b.v) { g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, 0, W * l, H * l); }
@@ -57,14 +95,14 @@
     const pulsH = pulsanti && pulsanti.offsetHeight && getComputedStyle(pulsanti).position !== 'fixed' ? pulsanti.offsetHeight + 14 : 0;
     const sopra = Math.max(0, box.getBoundingClientRect().top + (window.scrollY || 0));
     const l = Math.max(12, Math.min(34, Math.floor((window.innerHeight - sopra - pulsH - (matchMedia('(pointer: coarse)').matches ? 16 : 30)) / 20)));
-    tabellone(mia.tela, io, l, true);
+    tabellone(mia.tela, io, l, true, lampi.get(ctx.mio));
     lMio = l;
     pezzetto(mia.hold, io.h, Math.round(l * 0.6), io.hu);
     (io.nx || []).forEach((t, k) => pezzetto(mia.next[k], t, Math.round(l * (k ? 0.5 : 0.6))));
     mia.info.textContent = '';
     // sul telefono i tabelloni degli altri sono piccoli: si guarda il proprio
     const piccoli = matchMedia('(pointer: coarse)').matches;
-    for (const [i, tela] of altre) tabellone(tela, stato.t[i], piccoli ? (ctx.partita.n > 4 ? 4 : 6) : ctx.partita.n > 4 ? 7 : 10, false);
+    for (const [i, tela] of altre) tabellone(tela, stato.t[i], piccoli ? (ctx.partita.n > 4 ? 4 : 6) : ctx.partita.n > 4 ? 7 : 10, false, lampi.get(i));
     const conta = document.querySelector('.tt-conta');
     if (conta) conta.textContent = stato.pausa ? '⏸' : stato.via > 0 ? String(Math.ceil(stato.via / 1000)) : '';
     for (const el of document.querySelectorAll('[data-tt-punti]')) { const b = stato.t[Number(el.dataset.ttPunti)]; el.textContent = `${b.p} · ${b.r} righe · liv. ${b.l}`; }
@@ -84,10 +122,11 @@
     libero: true,
     reset(ctx) {
       ctxT = ctx; forme = ctx.partita.forme; tipi = ctx.partita.tipi;
-      if (!mia || mia.di !== ctx.partita) stato = ctx.partita.stato;
+      if (!mia || mia.di !== ctx.partita) { stato = ctx.partita.stato; lampi.clear(); }
       assicura(ctx);
     },
     tick(ctx, d) {
+      segnaLampi(d);
       stato = d;
       if (Date.now() - (ctx.ui._puntiDal || 0) > 500) { ctx.ui._puntiDal = Date.now(); const el = document.getElementById('punteggio'); if (el) el.innerHTML = tetris.punteggio(ctx); }
     },
