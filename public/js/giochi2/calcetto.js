@@ -57,12 +57,18 @@
     return meglio;
   }
 
+  // schermi larghi (computer, telefono in orizzontale): il tavolo si gira e la propria porta va a sinistra; prima era
+  // una striscia stretta al centro dello schermo. Le coordinate "di vista" restano quelle del tavolo in verticale.
+  const orizz = () => window.innerWidth > window.innerHeight * 1.15;
+  // dal punto toccato alla x "di vista" del tavolo in verticale (in orizzontale è l'altezza sullo schermo)
+  const xVista = (e, r, W) => (orizz() ? ((e.clientY - r.top) / r.height) * W : ((e.clientX - r.left) / r.width) * W);
+
   // comandi locali (per la previsione): il mouse sul campo e le frecce
   const attivo = () => ctxC && ctxC.partita && ctxC.partita.gioco === 'calcetto' && !ctxC.partita.finita;
   document.addEventListener('pointermove', (e) => {
     if (!attivo() || !e.target.classList || !e.target.classList.contains('ar-tela')) return;
     const r = e.target.getBoundingClientRect();
-    mouseX = ((e.clientX - r.left) / r.width) * ctxC.partita.W; mouseNuovo = true; ultimoComando = performance.now();
+    mouseX = xVista(e, r, ctxC.partita.W); mouseNuovo = true; ultimoComando = performance.now();
   });
   document.addEventListener('pointerdown', (e) => {
     if (!attivo()) return;
@@ -71,24 +77,28 @@
   document.addEventListener('keydown', (e) => {
     if (!attivo() || e.repeat || (e.target.closest && e.target.closest('input, textarea'))) return;
     const k = e.key.toLowerCase();
-    if (k === 'arrowleft' || k === 'a') tasti = -1; else if (k === 'arrowright' || k === 'd') tasti = 1;
+    if (k === 'arrowleft' || k === 'a' || (orizz() && (k === 'arrowup' || k === 'w'))) tasti = -1; else if (k === 'arrowright' || k === 'd' || (orizz() && (k === 'arrowdown' || k === 's'))) tasti = 1;
     else if ([' ', 'enter', 'j', 'k'].includes(k)) tiroLocale = performance.now();
     if (tasti) ultimoComando = performance.now();
   });
   document.addEventListener('keyup', (e) => {
     const k = e.key.toLowerCase();
-    if ((k === 'arrowleft' || k === 'a') && tasti < 0) tasti = 0;
-    if ((k === 'arrowright' || k === 'd') && tasti > 0) tasti = 0;
+    if (['arrowleft', 'a', 'arrowup', 'w'].includes(k) && tasti < 0) tasti = 0;
+    if (['arrowright', 'd', 'arrowdown', 's'].includes(k) && tasti > 0) tasti = 0;
   });
 
   const tavolo = window.Arena.tavolo({
     id: 'calcetto',
     mouse: 'bersaglio',
+    misura: (p) => (orizz() ? [p.H, p.W] : [p.W, p.H]),
+    coordMondo: (e, r, p) => [xVista(e, r, p.W), 0],
+    // in orizzontale le stecche corrono in su e in giù: su/giù (W/S) spostano gli omini come sinistra/destra
+    tasti: (x, y) => (orizz() ? [Math.max(-1, Math.min(1, x + y)), 0] : [x, y]),
     comandi: 'tasto',
     nomeAzione: '⚽ Tira',
     obiettivo: 'gol',
     suonoAzione: [[300, 0.03]],
-    istruzioni: () => (window.Arena.touch() ? 'Trascina il dito sul campo: gli omini si mettono dove tocchi. Premi ⚽ Tira per calciare.' : 'Muovi il mouse (o frecce destra/sinistra, A/D): gli omini si mettono dove punti. Clic o spazio per tirare.') + ' La tua porta è in basso.',
+    istruzioni: () => (window.Arena.touch() ? 'Trascina il dito sul campo: gli omini si mettono dove tocchi. Premi ⚽ Tira per calciare.' : `Muovi il mouse (o frecce ${orizz() ? 'su/giù, W/S' : 'destra/sinistra, A/D'}): gli omini si mettono dove punti. Clic o spazio per tirare.`) + (orizz() ? ' La tua porta è a sinistra.' : ' La tua porta è in basso.'),
     ruolo: (p, s, ctx) => {
       const ex = p.extra; if (!ex) return '';
       const sq = ctx.mio % 2, cosa = !ex.aSquadre ? 'tutte le stecche' : ctx.mio < 2 ? 'portiere e difesa' : 'centrocampo e attacco';
@@ -120,7 +130,10 @@
       if (k2 !== chiave) { sfondo = preparaSfondo(W, H, ex); chiave = k2; metallo = null; }
       if (!metallo) { metallo = g.createLinearGradient(0, -4, 0, 4); metallo.addColorStop(0, '#f4f6f8'); metallo.addColorStop(0.5, '#9aa1ab'); metallo.addColorStop(1, '#e2e5ea'); }
       const ora = performance.now(), dt = Math.min(0.05, (ora - (ultimoFotogramma || ora)) / 1000); ultimoFotogramma = ora;
+      const oz = orizz();
       g.save();
+      // in orizzontale: il tavolo girato di un quarto in senso orario, la propria porta (in basso) va a sinistra
+      if (oz) { g.translate(H, 0); g.rotate(Math.PI / 2); }
       if (giro) { g.translate(W, H); g.rotate(Math.PI); }
       g.drawImage(sfondo, 0, 0, W, H);
       const pa = prima && prima.s && prima.s.a ? prima.s.a : null;
@@ -164,12 +177,22 @@
       for (const c of colpi) { const k = (ora - c.t) / 250; g.strokeStyle = `rgba(255,255,200,${1 - k})`; g.lineWidth = 3; g.beginPath(); g.arc(c.x, c.y, 12 + k * (c.forte ? 26 : 12), 0, Math.PI * 2); g.stroke(); }
       g.restore();
       // punteggio sul bordo (sempre dritto)
-      g.font = '800 34px system-ui, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
-      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(16, H / 2 - 52, 58, 104);
-      g.fillStyle = COL[1 - sq].maglia; g.fillText(String(s.s.g[1 - sq]), 30, H / 2 - 24);
-      g.fillStyle = COL[sq].maglia; g.fillText(String(s.s.g[sq]), 30, H / 2 + 26);
+      g.font = '800 34px system-ui, sans-serif'; g.textBaseline = 'middle';
+      if (oz) {
+        // in alto al centro: i nostri gol a sinistra (dalla parte della nostra porta), i loro a destra
+        g.textAlign = 'center';
+        g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(H / 2 - 56, 16, 112, 54);
+        g.fillStyle = COL[sq].maglia; g.fillText(String(s.s.g[sq]), H / 2 - 26, 44);
+        g.fillStyle = COL[1 - sq].maglia; g.fillText(String(s.s.g[1 - sq]), H / 2 + 26, 44);
+      } else {
+        g.textAlign = 'left';
+        g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(16, H / 2 - 52, 58, 104);
+        g.fillStyle = COL[1 - sq].maglia; g.fillText(String(s.s.g[1 - sq]), 30, H / 2 - 24);
+        g.fillStyle = COL[sq].maglia; g.fillText(String(s.s.g[sq]), 30, H / 2 + 26);
+      }
       g.textBaseline = 'alphabetic';
-      if (s.s.gp) { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(0, H / 2 - 70, W, 140); g.fillStyle = '#ffd76a'; g.textAlign = 'center'; g.font = '900 88px system-ui, sans-serif'; g.fillText('GOL!', W / 2, H / 2 + 30); }
+      const [LW, LH] = oz ? [H, W] : [W, H];
+      if (s.s.gp) { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(0, LH / 2 - 70, LW, 140); g.fillStyle = '#ffd76a'; g.textAlign = 'center'; g.font = '900 88px system-ui, sans-serif'; g.fillText('GOL!', LW / 2, LH / 2 + 30); }
     },
   });
   // il punteggio in alto: le due squadre

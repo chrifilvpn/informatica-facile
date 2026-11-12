@@ -586,6 +586,7 @@ test/giochi3/hex.js
 test/giochi3/hockey.js
 test/giochi3/isolation.js
 test/giochi3/luci.js
+test/giochi3/migliorie-azione-novembre.js
 test/giochi3/migliorie-azione.js
 test/giochi3/navale.js
 test/giochi3/nurikabe.js
