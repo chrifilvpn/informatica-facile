@@ -162,6 +162,15 @@
     const kFit = Math.min(F.W / zw, F.H / zh, 2.2);
     if (s.cam.fit || forza) {
       if (kFit * C >= 30 || forza) { s.cam.k = kFit; s.cam.ox = (F.W - zw * kFit) / 2 - z.x0 * C * kFit; s.cam.oy = (F.H - zh * kFit) / 2 - z.y0 * C * kFit; s.cam.fit = true; s.cam.zona = true; return; }
+      // la scena intera non sta (succede sul telefono): si inquadrano almeno tutte le creature in campo, così
+      // all'inizio della battaglia si vedono anche i nemici e non solo il proprio personaggio
+      const vive = cb.creature.filter((c) => vivo(c));
+      if (vive.length) {
+        const x0 = Math.max(0, Math.min(...vive.map((c) => c.x)) - 1), x1 = Math.min(cb.scena.w - 1, Math.max(...vive.map((c) => c.x)) + 1);
+        const y0 = Math.max(0, Math.min(...vive.map((c) => c.y)) - 1), y1 = Math.min(cb.scena.h - 1, Math.max(...vive.map((c) => c.y)) + 1);
+        const bw = (x1 - x0 + 1) * C, bh = (y1 - y0 + 1) * C, kC = Math.min(F.W / bw, F.H / bh, (F.W < 600 ? 28 : 36) / C);
+        if (kC * C >= 17) { s.cam.k = kC; s.cam.fit = false; s.cam.ox = (F.W - bw * kC) / 2 - x0 * C * kC; s.cam.oy = (F.H - bh * kC) / 2 - y0 * C * kC; limita(F, s); return; }
+      }
       s.cam.k = (F.W < 600 ? 28 : 36) / C; s.cam.fit = false; centra(F, io(F.ctx) || cb.creature.find((c) => c.id === cb.attivo), false);
     }
     limita(F, s);

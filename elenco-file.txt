@@ -147,6 +147,7 @@ giochi2/mahjong.js
 giochi2/mastermind.js
 giochi2/memory.js
 giochi2/monumenti-dati.js
+giochi2/monumenti-disegni.js
 giochi2/monumenti.js
 giochi2/mulino.js
 giochi2/nomicose-dati.js
@@ -590,6 +591,7 @@ test/giochi3/isolation.js
 test/giochi3/luci.js
 test/giochi3/migliorie-azione-novembre.js
 test/giochi3/migliorie-azione.js
+test/giochi3/monumenti-disegni.js
 test/giochi3/navale.js
 test/giochi3/nurikabe.js
 test/giochi3/picross.js

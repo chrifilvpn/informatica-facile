@@ -154,7 +154,7 @@
       let destra;
       if (x.esito) {
         const nuovo = trascorso(ctx.ui, `dr-p-${x.id}-${x.esito.totale}-${x.esito.d20.valore}`) < 1400;
-        destra = `<span class="dr-esito ${x.esito.riuscita ? 'ok' : 'ko'}">${A().d20(x.esito.d20.valore, { dim: 54, colore: x.esito.riuscita ? '#2a7a4a' : '#8a2a2a', animato: nuovo })}<b>${x.esito.totale}</b><small>${x.esito.riuscita ? 'Riuscita!' : 'Fallita'}${x.esito.naturale === 20 ? ' · 20!' : x.esito.naturale === 1 ? ' · 1…' : ''}</small></span>`;
+        destra = `<span class="dr-esito ${x.esito.riuscita ? 'ok' : 'ko'}">${A().d20(x.esito.d20.valore, { dim: 54, colore: x.esito.riuscita ? '#2a7a4a' : '#8a2a2a', animato: nuovo })}<b>${x.esito.totale}</b><small>${x.esito.riuscita ? 'Riuscita!' : 'Fallita'}${x.esito.naturale === 20 ? '<br>20 naturale!' : x.esito.naturale === 1 ? '<br>1 naturale' : ''}</small></span>`;
       } else if (mia) {
         const isp = pg && pg.ispirazione ? `<label class="dr-opz"><input type="checkbox" data-opz="isp" ${ctx.ui.usaIsp ? 'checked' : ''}> ✨ usa l'ispirazione (vantaggio)</label>` : '';
         const bard = pg && (pg.effetti || []).some((e) => e.effetto === 'ispirato') ? `<label class="dr-opz"><input type="checkbox" data-opz="bard" ${ctx.ui.usaBard ? 'checked' : ''}> 🎵 ispirazione bardica</label>` : '';

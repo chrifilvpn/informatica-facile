@@ -72,7 +72,8 @@
 .dr .dr-pg-liv { position: absolute; right: -1px; bottom: -1px; width: 20px; height: 20px; border-radius: 50%; background: #1a120a; border: 1.5px solid var(--dr-oro); color: var(--dr-oro2); font: 700 .7rem/17px var(--dr-titoli); text-align: center; font-style: normal; }
 .dr .dr-pg-info { display: grid; gap: .12rem; min-width: 0; }
 .dr .dr-pg-info b { font-family: var(--dr-titoli); font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dr .dr-pg-info small { font-size: .7rem; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* stirpe, classe e chi lo gioca vanno a capo invece di finire tagliati («Dragonide guerriero · comp…») */
+.dr .dr-pg-info small { font-size: .7rem; opacity: .7; line-height: 1.2; overflow-wrap: anywhere; }
 .dr .dr-pf { position: relative; height: 15px; border-radius: 4px; background: #160c08; overflow: hidden; border: 1px solid rgba(0, 0, 0, .6); }
 .dr .dr-pf i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#5fd06e, #2f8a3e); transition: width .5s; }
 .dr .dr-pf.medio i { background: linear-gradient(#f0c24a, #b8861e); }
@@ -184,7 +185,7 @@
 .dr .dr-opz { font-size: .72rem; display: flex; gap: .25rem; align-items: center; cursor: pointer; }
 .dr .dr-esito { display: grid; justify-items: center; line-height: 1.1; }
 .dr .dr-esito b { font-family: var(--dr-titoli); font-size: 1.05rem; }
-.dr .dr-esito small { font-size: .7rem; font-weight: 700; }
+.dr .dr-esito small { font-size: .7rem; font-weight: 700; text-align: center; white-space: nowrap; }
 .dr .dr-esito.ok small { color: #8ee09a; }
 .dr .dr-esito.ko small { color: #ff9a80; }
 .dr .dr-esito.dr-in-attesa { display: flex; align-items: center; height: 40px; line-height: 1; font-size: 1.4rem; opacity: .7; animation: dr-ondeggia 1.6s infinite; }
@@ -270,7 +271,8 @@
 .dr .dr-cb-armi, .dr .dr-cb-incs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .3rem; }
 .dr .dr-cb-arma, .dr .dr-cb-inc { display: grid; gap: .05rem; text-align: left; padding: .38rem .5rem; border-radius: 8px; border: 1px solid rgba(216, 178, 90, .25); background: linear-gradient(#33241a, #241910); color: inherit; font-size: .8rem; }
 .dr .dr-cb-arma b, .dr .dr-cb-inc b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dr .dr-cb-arma small, .dr .dr-cb-inc small { font-size: .68rem; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* il dettaglio del tiro (dado, bonus, gittata) va a capo invece di finire tagliato */
+.dr .dr-cb-arma small, .dr .dr-cb-inc small { font-size: .68rem; opacity: .7; line-height: 1.2; overflow-wrap: anywhere; }
 .dr .dr-cb-arma.sel, .dr .dr-cb-inc.sel, .dr .dr-cb-az.sel { border-color: #ffd860; box-shadow: 0 0 0 1px #ffd860, 0 0 12px rgba(255, 216, 96, .3); }
 .dr .dr-cb-arma:hover:not(:disabled), .dr .dr-cb-inc:hover:not(:disabled), .dr .dr-cb-az:hover:not(:disabled) { border-color: var(--dr-oro); }
 .dr .dr-cb-inc { background: linear-gradient(#2c2236, #1e1726); border-color: rgba(176, 128, 255, .3); }

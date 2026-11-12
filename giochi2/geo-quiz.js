@@ -65,9 +65,10 @@ const SAGOME_BANCA = {
 };
 
 // ---- monumenti: il nome del monumento, si sceglie dove si trova ----
+const { DISEGNI_MONUMENTI } = require('./monumenti-disegni');
 const dove = (m) => (m.citta === m.paese ? m.citta : `${m.citta} (${m.paese})`);
 const elMonumenti = MONUMENTI.map((m) => ({
-  nome: dove(m), paese: m.paese, fama: m.fama, continente: CONTINENTE[m.paese], icona: m.icona,
+  nome: dove(m), paese: m.paese, fama: m.fama, continente: CONTINENTE[m.paese], icona: m.icona, disegno: DISEGNI_MONUMENTI[m.nome] || null,
   domanda: `Dove si trova: ${m.nome}?`, indizio: `${m.icona} ${m.nome}: ${m.indizio}`,
 }));
 const MONUMENTI_BANCA = {

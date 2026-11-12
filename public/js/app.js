@@ -52,10 +52,18 @@
   document.addEventListener('visibilitychange', schermoAcceso);
   if (window.Boss) Boss.onCambio(schermoAcceso);
   let tAvviso;
+  // al tavolo avvisi e annunci si mettono sopra la barra in alto (centrati su di essa), non sopra gli avversari
+  function inBarra(el) {
+    const b = !$('#schermo-gioco').hidden && $('#schermo-gioco .barra').getBoundingClientRect();
+    const su = !!(b && b.height && b.bottom > 0);
+    el.classList.toggle('in-barra', su);
+    el.style.top = su ? `${Math.max(b.top + b.height / 2, el.offsetHeight / 2 + 4)}px` : '';
+  }
   function avviso(t, ms = 2600) {
     const el = $('#avviso');
     el.textContent = t;
     el.hidden = false;
+    inBarra(el);
     clearTimeout(tAvviso);
     tAvviso = setTimeout(() => (el.hidden = true), ms);
   }
@@ -64,6 +72,7 @@
     const el = $('#annuncio');
     el.textContent = t;
     el.hidden = false;
+    inBarra(el);
     el.classList.remove('vai'); void el.offsetWidth; el.classList.add('vai');
     clearTimeout(tAnnuncio);
     tAnnuncio = setTimeout(() => (el.hidden = true), 1900);

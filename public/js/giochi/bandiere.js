@@ -8,6 +8,9 @@
   const puoRispondere = (p) => p && QUIZ.includes(p.gioco) && !p.finita && !p.inAttesa && !p.mia;
   const figura = (b, cls = '') => (b ? `<svg class="${b.sagoma ? 'bd-sagoma' : ''} ${cls}" viewBox="0 0 ${b.w} ${b.h || 200}" role="img" aria-label="${b.sagoma ? 'Sagoma da indovinare' : 'Bandiera'}">${b.svg}</svg>` : '');
 
+  // monumenti: il disegno fatto apposta (viewBox 200×160), arriva dal server già pronto
+  const disegno = (svg) => `<svg viewBox="0 0 200 160">${svg}</svg>`;
+
   function bottoni(ctx) {
     const p = ctx.partita;
     const svela = p.giusta !== null && p.giusta !== undefined;
@@ -37,7 +40,7 @@
     if (!p.finita || !p.ripasso) return '';
     if (!p.ripasso.length) return '<p class="bd-msg si">🏆 Nessun errore: tutte giuste!</p>';
     return `<section class="bd-ripasso" aria-label="Da ripassare"><h3>📚 Da ripassare (${p.ripasso.length})</h3><div class="bd-rip-elenco">${p.ripasso.map((x) => `
-      <figure>${x.svg ? figura({ svg: x.svg, w: x.w, h: x.h, sagoma: x.sagoma }) : `<span class="bd-rip-icona">${esc(x.icona || '❓')}</span>`}<figcaption>${x.domanda ? `<small>${esc(x.domanda)}</small>` : ''}<b>${esc(x.nome)}</b>${x.detto ? `<small>avevi detto ${esc(x.detto)}</small>` : '<small>tempo scaduto</small>'}</figcaption></figure>`).join('')}</div></section>`;
+      <figure>${x.svg ? figura({ svg: x.svg, w: x.w, h: x.h, sagoma: x.sagoma }) : x.disegno ? `<span class="bd-rip-icona">${disegno(x.disegno)}</span>` : `<span class="bd-rip-icona">${esc(x.icona || '❓')}</span>`}<figcaption>${x.domanda ? `<small>${esc(x.domanda)}</small>` : ''}<b>${esc(x.nome)}</b>${x.detto ? `<small>avevi detto ${esc(x.detto)}</small>` : '<small>tempo scaduto</small>'}</figcaption></figure>`).join('')}</div></section>`;
   }
 
   const tavolo = {
@@ -50,7 +53,7 @@
       return `<div class="bd">
         <p class="pa-round">${esc(p.cosa || 'Bandiera')} ${p.domanda} di ${p.nDomande}${p.migliore > 1 ? ` · serie migliore: ${p.migliore}` : ''}</p>
         ${tempo}
-        ${p.bandiera ? `<div class="bd-bandiera ${p.bandiera.sagoma ? 'sagoma' : ''}">${figura(p.bandiera)}</div>` : `<div class="bd-icona" aria-hidden="true">${esc(p.icona || '❓')}</div>`}
+        ${p.bandiera ? `<div class="bd-bandiera ${p.bandiera.sagoma ? 'sagoma' : ''}">${figura(p.bandiera)}</div>` : p.disegno ? `<div class="bd-icona bd-disegno" aria-hidden="true">${disegno(p.disegno)}</div>` : `<div class="bd-icona" aria-hidden="true">${esc(p.icona || '❓')}</div>`}
         <p class="bd-domanda">${esc(p.testo || 'Di che paese è questa bandiera?')}</p>
         ${p.indizio ? `<p class="bd-indizio">${esc(p.indizio)}</p>` : ''}
         ${messaggio(ctx)}

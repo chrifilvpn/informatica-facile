@@ -184,7 +184,7 @@ window.Arena = (() => {
       const [LW, LH] = cfg.misura ? cfg.misura(p, pieno) : [p.W, p.H];
       const scala = pieno ? Math.min(box.clientWidth / LW, box.clientHeight / LH) : Math.min(box.clientWidth / LW, Math.max(140, window.innerHeight - sopra - spazioSotto) / LH);
       const dpr = Math.min(window.devicePixelRatio || 1, cfg.maxDpr || 8), w = Math.round(LW * scala), h = Math.round(LH * scala);
-      if (tela.width !== Math.round(w * dpr) || tela.height !== Math.round(h * dpr)) { tela.width = Math.round(w * dpr); tela.height = Math.round(h * dpr); tela.style.width = `${w}px`; tela.style.height = `${h}px`; }
+      if (tela.width !== Math.round(w * dpr) || tela.height !== Math.round(h * dpr)) { tela.width = Math.round(w * dpr); tela.height = Math.round(h * dpr); tela.style.width = `${w}px`; tela.style.height = `${h}px`; box.style.setProperty('--tela-w', `${w}px`); }
       const g = tela.getContext('2d');
       g.setTransform(dpr * scala, 0, 0, dpr * scala, 0, 0);
       let [dopo, primaD, u] = coppia();

@@ -489,7 +489,15 @@
 .wd-tasto.largo { max-width: 4.4rem; flex: 1.6; font-size: .85rem; }
 .wd-tasto:hover:not(:disabled) { background: rgba(247, 240, 222, .28); }
 .wd-tasto.e2 { background: var(--wd-si); } .wd-tasto.e1 { background: var(--wd-quasi); color: #241a05; } .wd-tasto.e0 { background: #26302b; color: rgba(243, 236, 217, .5); }
-.wd-altri { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: .8rem; width: min(18rem, 100%); }
+.wd-altri { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem 1.2rem; width: min(18rem, 100%); }
+.wd-altro { width: 7rem; }
+/* schermo largo: la tua griglia sta al centro della tavola e quelle degli altri a fianco (prima tutto il blocco
+   era centrato insieme, e la griglia principale finiva spostata a sinistra) */
+@media (min-width: 900px) {
+  .wd { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .wd-centro { grid-column: 2; }
+  .wd-altri { grid-column: 3; justify-self: start; justify-content: flex-start; }
+}
 .wd-altro p { margin: 0 0 .3rem; display: flex; justify-content: space-between; font-size: .85rem; }
 .wd-mini { display: grid; grid-template-columns: repeat(var(--n), 11px); gap: 2px; margin-bottom: 2px; }
 .wd-mini i { height: 11px; border-radius: 2px; background: rgba(247, 240, 222, .1); }
@@ -1872,6 +1880,10 @@ button.rl-c:hover:not(:disabled) { box-shadow: inset 0 0 0 2px var(--oro); }
 .bd-icona { font-size: clamp(4rem, 16vh, 7rem); line-height: 1.1; text-align: center; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); }
 .bd-indizio { margin: .2rem auto 0; max-width: 34rem; font-size: .9rem; opacity: .85; text-align: center; }
 .bd-rip-icona { display: grid; place-items: center; font-size: 2.6rem; height: 4rem; }
+.bd-rip-icona svg { height: 4rem; width: auto; border-radius: 6px; }
+.bd-icona.bd-disegno { font-size: 0; line-height: 0; }
+.bd-disegno svg { height: clamp(8rem, 28vh, 15rem); width: auto; max-width: 100%; border-radius: 12px; box-shadow: 0 8px 26px rgba(0, 0, 0, .4); }
+@media (max-width: 620px) { .bd-disegno svg { height: clamp(7rem, 24vh, 11rem); } }
 .bd-rip-elenco figure svg.bd-sagoma { background: none; box-shadow: none; }
 .bd-domanda { margin: .45rem auto .1rem; max-width: 34rem; text-align: center; font-weight: 700; font-size: clamp(1.05rem, 2.6vh, 1.3rem); }
 .bd-msg:empty { display: none; }
@@ -1958,4 +1970,13 @@ button.rl-c:hover:not(:disabled) { box-shadow: inset 0 0 0 2px var(--oro); }
   .mi-centro { min-height: 9rem; }
   .pa-scena, .pa-svg { max-height: 62vh; }
   .hb-area { min-height: 62vh; } .hb-reaz { min-height: 56vh; }
+}
+/* ALIEN: ISOLATION 3D (la scena con .is-strato) SUL COMPUTER: la scena prende tutta la larghezza della finestra (prima si fermava a 64rem, circa metà di uno schermo
+   grande) e le istruzioni sotto non le rubano altezza: sono nei comandi (tasto H) e nelle Regole */
+@media (pointer: fine) {
+  .ar:has(.is-strato) { width: 100%; }
+  .ar:has(.is-strato) .ar-istr { display: none; }
+  .tavolo.libero .panno:has(.is-strato) { align-items: start; }
+  /* ⚙ e ⛶ restano sopra la scena anche quando il riquadro è più largo della tela (--tela-w lo mette arena.js) */
+  .ar-box > .ar-sopra:has(.is-strato) { position: absolute; top: 0; bottom: 0; left: 50%; width: var(--tela-w, 100%); transform: translateX(-50%); }
 }
