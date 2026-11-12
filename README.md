@@ -20,6 +20,13 @@ Made by chry_pala. Altri giochi arriveranno uno alla volta.
 
 ## Novità di questa versione
 
+- **Migliorie di Carte e Casinò (12 novembre)**:
+  - **Poker, Texas Hold'em, Omaha**: sui portatili le tue carte e i comandi per puntare stanno uno accanto all'altro; sul telefono il pannello delle puntate è più compatto e resta attaccato al fondo dello schermo. Si punta senza scorrere.
+  - **Blackjack, Sette e mezzo, Baccarat, Roulette, Più o meno**: gettoni, «Conferma/Punta» e i comandi della mano restano in fondo allo schermo mentre si scorre il tavolo (telefono e portatili bassi).
+  - **Scopa, Scopone, Cirulla, Asso pigliatutto**: accanto al nome c'è «N carte prese» invece di «N carte», che sembrava il numero di carte in mano.
+  - **Telefono**: carte più grandi e valori più leggibili in FreeCell e Piramide; la mano del Tressette (10 carte) non esce più dai bordi (valeva per tutte le mani lunghe); mazzo e briscola più grandi nella Briscola; i pozzetti del Burraco non toccano più il bordo.
+  - **Briscola chiamata**: provata la regola «il chiamante difficile apre di briscola se ne ha tre alte»: in 3000 mani tra computer lo faceva vincere meno (73% invece di 79%). Il difficile decide già l'apertura con le simulazioni e apre di briscola quando conviene (circa 1 volta su 5 in quei casi), quindi la regola spenta è stata tolta.
+
 - **Migliorie di strategia e rompicapo (12 novembre)**:
   - **Scacchi cinesi con i pezzi disegnati** (nuova opzione predefinita «Disegnati»): corona = generale, ventaglio = consigliere, elefante, cavallo, carro con le ruote, cannone, soldato con scudo e lancia; restano le opzioni con le sigle italiane e con i caratteri cinesi.
   - **Pallino del colore accanto al nome** in Otello, Go, Mulino, Dama internazionale e Scacchi cinesi: l'emoji ⚫ spariva sul fondo scuro, ora è un pallino col bordo chiaro; nel titolo «Tocca a te (neri)».
@@ -28,6 +35,7 @@ Made by chry_pala. Altri giochi arriveranno uno alla volta.
   - **Affari in città sul computer**: la scheda della proprietà non copre più Compra e Asta, sta accanto ai pulsanti (e compare da sola per la casella da comprare o all'asta).
   - **La mappa nascosta**: pedina e nemici più grandi e visibili, targhette chiare di chi ha già scelto la mossa («✓ ha scelto», «sta scegliendo…»).
   - **Effetti**: Caselle e bombe (esplosione con schegge e scossa, anello di luce sulle caselle sicure), Scava il tesoro (zolle che saltano, moneta che gira e brilla, gemma che scintilla, bomba che esplode), Interruttori (una lampadina per interruttore che si accende con uno sfarfallio e si spegne col BOOM).
+
 - **Rianalisi di strategia e rompicapo (10 novembre)**:
   - **Go sui goban grandi**: sul 19×19 (e a volte sul 13×13) il computer medio e difficile metteva le pietre in fila sul bordo (A19, B19, C19…) o passava dopo poche mosse, perché le partite simulate erano poche rispetto agli incroci e tutte le mosse restavano a pari merito. Ora ogni incrocio ha un «buon senso» di partenza (linee 3 e 4 e punti vicini alle pietre prima, bordo vuoto dopo), il tempo per pensare cresce con la grandezza del goban e non passa più a goban mezzo vuoto. La descrizione del gioco ora nomina anche il 19×19.
   - **Annunci grandi sul telefono** («Ada conquista Medio Oriente!», «Bomba!»…): si stringevano a metà schermo andando a capo in 3-4 righe dentro un ovale che copriva la barra; ora usano tutta la larghezza e stanno su una o due righe.

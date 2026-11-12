@@ -61,6 +61,10 @@
 .bu-no { color: #f0b3a8; }
 
 @media (max-width: 620px) {
-  .bu-banco { gap: .4rem; }
+  .bu-banco { gap: .4rem; padding-right: .45rem; }
+  /* pozzetti: le carte girate sono più larghe del loro posto, si lascia aria perché non tocchino il bordo */
+  .bu-pozzetti { padding: .15rem .2rem; border-radius: 10px; background: rgba(0, 0, 0, .12); }
+  .bu-pozz-carte { gap: 0; }
+  .bu-pozz-carte .carta { margin: 0 calc(var(--w) * .26); }
   .bu-zona h3 { font-size: .78rem; }
 }
