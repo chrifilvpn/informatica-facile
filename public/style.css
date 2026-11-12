@@ -331,7 +331,7 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .pos-sinistra { grid-area: sin; }
 .pos-destra { grid-area: des; }
 .panno { grid-area: panno; position: relative; min-height: 170px; overflow: auto; }
-.io { grid-area: io; display: grid; justify-items: center; gap: .35rem; min-width: 0; }
+.io { grid-area: io; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: .35rem; min-width: 0; }
 
 .posto-altro { position: relative; display: grid; justify-items: center; align-content: center; gap: .3rem; text-align: center; min-width: 0; }
 .posto-altro:empty { visibility: hidden; }
@@ -385,6 +385,12 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .etichetta-briscola { position: absolute; left: 0; bottom: calc(var(--carta-l) * -.35); font-size: .82rem; color: var(--tenue); display: flex; align-items: center; gap: .3rem; white-space: nowrap; }
 .etichetta-briscola svg { width: 15px; height: 15px; color: var(--avorio); }
 .croce { position: absolute; inset: 0 0 0 calc(var(--carta-l) * 1.7); }
+/* briscola sul telefono: mazzo e briscola più grandi, con la briscola quasi tutta fuori dal mazzo così si legge bene */
+@media (max-width: 620px) {
+  .area-mazzo { --carta-l: 62px; width: calc(var(--carta-l) * 2.15); }
+  .area-mazzo .briscola-sotto .carta { left: calc(var(--carta-l) * .9); top: calc(var(--carta-l) * .22); }
+  .area-mazzo ~ .croce { left: calc(62px * 2.05); }
+}
 .giocata { position: absolute; left: 50%; top: 50%; animation: cala .28s ease-out; }
 .giocata.slot-0 { transform: translate(-50%, 8%) rotate(-3deg); }
 .giocata.slot-1 { transform: translate(18%, -50%) rotate(6deg); }
@@ -1002,6 +1008,27 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 .pk-comandi .bottone { min-width: 7.5rem; }
 .pk-slider { display: grid; gap: .45rem; width: 100%; }
 .pk-slider input[type="range"] { padding: 0; accent-color: var(--oro); border: 0; background: none; }
+.pk-sotto { display: grid; gap: .9rem; justify-items: center; width: 100%; }
+.pk-io { display: grid; gap: .5rem; justify-items: center; }
+/* portatili e schermi larghi ma bassi: le mie carte a sinistra e i comandi a destra, così si punta senza scorrere */
+@media (min-width: 900px) and (max-height: 900px) {
+  .pk-sotto { display: flex; align-items: center; justify-content: center; gap: 1.8rem; }
+  .pk-sotto > .pk-comandi { width: min(30rem, 46%); padding: .7rem .9rem; gap: .5rem; }
+  .pk-sotto > .pk-comandi .cs-gettoni { flex-wrap: nowrap; width: 100%; }
+  .pk-sotto > .pk-comandi .mini-bt { flex: 1; min-width: 0; }
+  .pk-ovale { margin: 2.3rem 0 .4rem; }
+}
+/* telefono (e finestre basse e strette): comandi compatti, attaccati al fondo dello schermo mentre le carte scorrono */
+@media (max-width: 899px) {
+  .pk-sotto { display: contents; }
+  .pk-comandi { position: sticky; bottom: 0; z-index: 4; gap: .4rem; padding: .5rem .6rem .4rem; background: rgba(12, 30, 24, .95); box-shadow: 0 -8px 18px rgba(0, 0, 0, .35); }
+  .pk-comandi .bj-comandi { gap: .35rem; flex-wrap: nowrap; width: 100%; }
+  .pk-comandi .bj-comandi .bottone { min-width: 0; flex: 1; padding-left: .4rem; padding-right: .4rem; white-space: nowrap; }
+  .pk-comandi .pk-slider { gap: .3rem; }
+  .pk-comandi .cs-gettoni { flex-wrap: nowrap; gap: .3rem; width: 100%; }
+  .pk-comandi .cs-gettoni .mini-bt { flex: 1; min-width: 0; padding-left: .2rem; padding-right: .2rem; }
+  .pk-comandi .piccolo { font-size: .72rem; }
+}
 
 /* ---------- fine partita: prima si guarda il tavolo, poi i risultati ---------- */
 .fine-barra { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); transform: translateX(-50%); z-index: 40;

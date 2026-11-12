@@ -296,9 +296,9 @@ function botGioco(g, p, livello) {
   const perCosto = [...mano].sort((a, b) => costo(a) - costo(b));
   const liscio = perCosto[0];
   if (!g.tavolo.length) {
-    // apre: il chiamante (e il socio che si è svelato) tira fuori le briscole se ne ha tante; gli altri lisciano
-    const mieB = mano.filter(isB).sort((a, b) => forza(b) - forza(a));
-    if (livello === 'XX' && p === g.chiamata.chiamante && mieB.length >= 3 && forza(mieB[0]) >= 8) return gioca(mieB[0]);
+    // apre lisciando. Il difficile decide l'apertura con le simulazioni (simula), che provano anche le briscole: una regola
+    // fissa "il chiamante con 3 briscole alte apre di briscola" l'abbiamo provata in 3000 mani tra computer e faceva vincere
+    // il chiamante difficile meno spesso (73% invece di 79%), quindi non c'è.
     return gioca(liscio);
   }
   const puntiTavolo = g.tavolo.reduce((s, x) => s + punti(x.carta), 0);

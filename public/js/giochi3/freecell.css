@@ -18,5 +18,13 @@
 .fc .carta.fc-salita { animation: fc-sale .5s ease-out; }
 @keyframes fc-sale { from { transform: translateY(20px) scale(.9); opacity: .4; } }
 .fc.finito .fc-tavolo { animation: nk-fine 1.1s ease-out; }
-@media (max-width: 600px) { .fc-tavolo { --passo: calc(var(--cw) * .36); } .fc-alto { gap: .2rem; } }
+/* telefono: carte più larghe possibile (meno spazio tra le colonne), più scoperte nelle pile e con valore e seme più grandi */
+@media (max-width: 600px) {
+  .fc-tavolo { --cw: min(5.6rem, calc((100vw - 1.5rem) / 8.35)); --passo: calc(var(--cw) * .42); width: calc(var(--cw) * 8.35); }
+  .fc-gruppo { gap: calc(var(--cw) * .05); }
+  .fc-alto { gap: .2rem; }
+  .fc .carta .indice { width: 30%; left: 3%; top: 3%; }
+  .fc .carta .indice b { font-size: calc(var(--w) * .3); }
+  .fc .carta .indice svg { width: calc(var(--w) * .19); height: calc(var(--w) * .19); }
+}
 @media (prefers-reduced-motion: reduce) { .fc .carta.fc-aiuto, .fc-posto.fc-aiuto, .fc .carta.fc-salita { animation: none; } }

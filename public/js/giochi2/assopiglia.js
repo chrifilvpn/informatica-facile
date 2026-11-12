@@ -90,7 +90,7 @@
     infoPosto(ctx, posto) {
       const p = ctx.partita, f = p.aSquadre ? posto % 2 : posto, s = p.scope[f];
       const bello = p.settebello === f ? ' <span class="ap-mini-bello" title="Ha il settebello">★7</span>' : '';
-      return `${plur(p.preseCarte[f], 'carta', 'carte')} · ${p.preseDenari[f]} den.${bello}${s ? `, <b class="scope">${plur(s, 'scopa', 'scope')}</b>` : ''}`;
+      return `${plur(p.preseCarte[f], 'carta presa', 'carte prese')} · ${p.preseDenari[f]} den.${bello}${s ? `, <b class="scope">${plur(s, 'scopa', 'scope')}</b>` : ''}`;
     },
     punteggio(ctx) {
       const p = ctx.partita;

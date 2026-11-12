@@ -1269,7 +1269,10 @@
     } else if (!p.seduti[io]) {
       comandi = `<div class="cs-pannello"><p>Sei senza fiche: guardi questa mano.</p>${p.fiche[io] <= 0 ? '<button type="button" class="bottone primario-bt" data-az="ricarica">💰 Ricarica 1000 fiche (dalla prossima mano)</button>' : ''}</div>`;
     }
-    return `<div class="cs pk"><div class="pk-ovale"><div class="pk-centro">${centro}${piatto}</div>${posti}</div>${mieHtml}${extraMio || ''}${comandi}</div>`;
+    // le mie carte e i comandi stanno in un blocco solo: sui portatili bassi vanno uno accanto all'altro, sul telefono i
+    // comandi restano attaccati al fondo dello schermo (così si punta senza scorrere)
+    const io2 = mieHtml || extraMio ? `<div class="pk-io">${mieHtml}${extraMio || ''}</div>` : '';
+    return `<div class="cs pk"><div class="pk-ovale"><div class="pk-centro">${centro}${piatto}</div>${posti}</div><div class="pk-sotto">${io2}${comandi}</div></div>`;
   }
   const statoPoker = (ctx) => {
     const p = ctx.partita;

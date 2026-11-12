@@ -1791,12 +1791,17 @@ button.rl-c:hover:not(:disabled) { box-shadow: inset 0 0 0 2px var(--oro); }
   .rl-frase { font-size: .78rem; }
   .rl-ruota { width: min(10.5rem, 44vw); }
 }
-/* roulette sul telefono: gettoni e "Conferma puntata" restano attaccati in basso mentre si scorre il tappeto */
-@media (max-width: 620px) {
-  .rl > .cs-pannello { position: sticky; bottom: 0; z-index: 3; width: 100%; background: #0f2a20; backdrop-filter: none; box-shadow: 0 -8px 18px rgba(0, 0, 0, .35); padding: .45rem .5rem; gap: .3rem; }
-  .rl > .cs-pannello .cs-importo { font-size: .8rem; margin: 0; }
-  .rl > .cs-pannello .cs-gettone-bt .cs-gettone { width: 2.3rem; height: 2.3rem; }
+/* casinò (blackjack, sette e mezzo, baccarat, roulette, più o meno): gettoni, "Conferma" e i comandi della mano restano
+   attaccati in basso mentre si scorre il tavolo, sul telefono e sui portatili bassi (dove il tavolo sta tutto non cambia niente) */
+.bj > .cs-pannello, .bc > .cs-pannello, .rl > .cs-pannello, .hl > .cs-pannello { position: sticky; bottom: 0; z-index: 3; background: #0f2a20; backdrop-filter: none; box-shadow: 0 -8px 18px rgba(0, 0, 0, .35); }
+@media (max-width: 620px), (max-height: 760px) {
+  .bj > .cs-pannello, .bc > .cs-pannello, .rl > .cs-pannello, .hl > .cs-pannello { padding: .45rem .6rem; gap: .3rem; }
+  :is(.bj, .bc, .rl, .hl) > .cs-pannello .cs-importo { font-size: .8rem; margin: 0; }
+  :is(.bj, .bc, .rl, .hl) > .cs-pannello .cs-gettone-bt .cs-gettone { width: 2.3rem; height: 2.3rem; }
+  :is(.bj, .bc, .rl, .hl) > .cs-pannello .piccolo { font-size: .75rem; }
+  :is(.bj, .bc, .rl, .hl) > .cs-pannello .bj-comandi .bottone { min-height: 0; padding-top: .45rem; padding-bottom: .45rem; }
 }
+@media (max-width: 620px) { .bj > .cs-pannello, .bc > .cs-pannello, .rl > .cs-pannello, .hl > .cs-pannello { width: 100%; } }
 
 /* quiz con il motore di Bandiere: sagome dei paesi, monumenti, capitali */
 .bd-bandiera.sagoma svg { background: none; box-shadow: none; border-radius: 0; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45)); }
