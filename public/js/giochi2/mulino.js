@@ -118,14 +118,14 @@
     stato(ctx) {
       const p = ctx.partita;
       if (p.finita || p.turno == null) return null;
-      const col = p.colori[p.turno] === 'nero' ? '⚫' : '⚪';
-      if (p.daTogliere) return p.turno === ctx.mio ? `Mulino! Togli una pedina ${col}` : `${ctx.nome(p.turno)} fa mulino ${col}`;
+      const col = p.colori[p.turno] === 'nero' ? '(neri)' : '(bianchi)';
+      if (p.daTogliere) return p.turno === ctx.mio ? 'Mulino! Togli una pedina dell’avversario' : `${ctx.nome(p.turno)} fa mulino`;
       return p.turno === ctx.mio ? `Tocca a te ${col}` : `Tocca a ${ctx.nome(p.turno)} ${col}`;
     },
     punteggio() { return ''; },
     infoPosto(ctx, posto) {
       const p = ctx.partita;
-      return `${p.colori[posto] === 'nero' ? '⚫' : '⚪'} ${p.sulTavolo[posto]} sul tavoliere${p.mano[posto] ? `, ${p.mano[posto]} in mano` : ''}`;
+      return `${p.colori[posto] === 'nero' ? '<span class="pedina-segno nero"></span>' : '<span class="pedina-segno bianco"></span>'} ${p.sulTavolo[posto]} sul tavoliere${p.mano[posto] ? `, ${p.mano[posto]} in mano` : ''}`;
     },
     clic(ctx, el) {
       const p = ctx.partita, ui = ctx.ui;

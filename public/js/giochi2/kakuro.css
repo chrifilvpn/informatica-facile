@@ -52,3 +52,20 @@
 .kk-comandi small { opacity: .7; font-size: .75em; }
 @media (hover: none) { .kk-c:hover { background: #fbf8f0; } }
 @media (prefers-reduced-motion: reduce) { .kk-v, .kk-c.aiutata, .kk.finito .kk-griglia { animation: none; } }
+/* telefono: tastierino su una fila, comandi in una riga che scorre di lato, combinazioni compatte: tutto in una
+   schermata senza dover scorrere la pagina */
+@media (max-width: 899px) {
+  .kk { gap: .4rem; padding: 0 0 .3rem; }
+  .kk-sx { gap: .3rem; }
+  .kk-dx { gap: .4rem; }
+  .kk-tasti { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: .25rem; width: 100%; }
+  .kk-tasto { height: 40px; font-size: 1.15rem; border-radius: 8px; }
+  .kk-tasto.canc { font-size: .95rem; }
+  .kk-comandi { justify-self: stretch; width: 100%; box-sizing: border-box; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; gap: .3rem; padding-bottom: 2px; }
+  .kk-comandi .bottone { flex: none; padding: .35rem .6rem; font-size: .82rem; white-space: nowrap; }
+  .kk-combinazioni { order: 3; min-height: 0; padding: .35rem .55rem; gap: .2rem; }
+  .kk-cf-titolo { display: none; }
+  .kk-cf, .kk-cf.vuoto { font-size: .76rem; line-height: 1.3; gap: .15rem; }
+  .kk-cf-l { max-height: 3.3rem; }
+  .kk-combo { font-size: .8rem; }
+}

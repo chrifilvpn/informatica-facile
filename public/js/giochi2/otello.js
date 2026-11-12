@@ -47,12 +47,12 @@
     stato(ctx) {
       const p = ctx.partita;
       if (p.finita || p.turno == null) return null;
-      const col = p.colori[p.turno] === 'nero' ? '⚫' : '⚪';
+      const col = p.colori[p.turno] === 'nero' ? '(neri)' : '(bianchi)';
       return p.turno === ctx.mio ? `Tocca a te ${col}` : `Tocca a ${ctx.nome(p.turno)} ${col}`;
     },
     // il conteggio delle pedine è già sopra la damiera, con chi deve muovere evidenziato
     punteggio() { return ''; },
-    infoPosto(ctx, posto) { const p = ctx.partita; return `${p.colori[posto] === 'nero' ? '⚫' : '⚪'} ${p.conteggio[posto]} pedine`; },
+    infoPosto(ctx, posto) { const p = ctx.partita; return `${p.colori[posto] === 'nero' ? '<span class="pedina-segno nero"></span>' : '<span class="pedina-segno bianco"></span>'} ${p.conteggio[posto]} pedine`; },
     clic(ctx, el) {
       if (el.dataset.az === 'annullaMossa') return ctx.invia({ tipo: 'annulla' });
       if (el.dataset.az !== 'metti') return;

@@ -15,3 +15,5 @@
 .hx-bordo.blu { stroke: #1f6fd1; }
 .hx-ped-mini { display: inline-block; width: .9rem; height: .9rem; border-radius: 50%; }
 .hx-ped-mini.ros { background: #d7263d; } .hx-ped-mini.blu { background: #1f6fd1; }
+/* telefono: la tavola usa tutta la larghezza (cornice sottile) e si ingrandisce con ＋ o con due dita */
+@media (max-width: 620px) { .hx-tavola { width: 98vw; padding: .25rem; border-radius: 12px; } .hx .ln-vista { border-radius: 10px; } }
