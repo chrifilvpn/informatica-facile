@@ -60,3 +60,22 @@ button.mmd-buco { cursor: pointer; background: none; box-shadow: none; }
 .mmd-mini .mmd-risp i { width: .45rem; height: .45rem; }
 @media (min-width: 900px) { .mmd-altri { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .mmd-riga.nuova .mmd-risp i, .mmd-segreto.aperto, .mmd-piolo.messo { animation: none; } }
+/* telefono: tutto in una schermata senza scorrere. Risposte su una fila sola (righe più basse), pioli e tavolozza
+   un po' più piccoli; gli altri giocatori si vedono già in alto (tentativi), il loro riquadro si nasconde */
+@media (max-width: 620px) {
+  .mmd { padding: 0; }
+  .mmd-centro { gap: .35rem; }
+  .mmd-info { font-size: .78rem; line-height: 1.25; }
+  .mmd-legenda { font-size: .72rem; }
+  .mmd-plancia { --buco: clamp(1.05rem, min(6.4vw, calc((100vh - 25.5rem) / 10 - 4px)), 1.9rem); padding: .35rem .4rem; }
+  .mmd-righe { gap: 2px; }
+  .mmd-riga { padding: 1px 6px; gap: .35rem; }
+  .mmd-risp, .mmd-risp.n5 { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: .5rem; gap: 2px; padding: 2px 3px; }
+  .mmd-risp i { width: .5rem; height: .5rem; }
+  .mmd-segreto { margin-bottom: .3rem; padding: .2rem; min-height: calc(var(--buco) + .4rem); }
+  .mmd-comandi { gap: .3rem; }
+  .mmd-tavolozza { gap: .3rem; }
+  .mmd-colore { max-width: 2.5rem; max-height: 2.5rem; }
+  .mmd-tasti .bottone { padding-top: .4rem; padding-bottom: .4rem; }
+  .mmd-altri { display: none; }
+}

@@ -215,7 +215,7 @@
         return `<div class="bn bn-schiera">
           ${griglia({ celle, titolo: 'La tua flotta', sottotitolo: tutte ? 'Tutto pronto?' : `Mancano ${comp.length - ui.navi.length} navi`, cls: 'bn-mia' })}
           <aside class="bn-pannello">
-            <p class="bn-istruzioni">Scegli una nave e clicca sulla griglia. <kbd>R</kbd> la gira. Clicca una nave già messa per toglierla. Le navi non possono toccarsi, nemmeno in diagonale.</p>
+            <p class="bn-istruzioni">Scegli una nave e clicca sulla griglia.<span class="bn-solo-tastiera"> <kbd>R</kbd> la gira.</span> Clicca una nave già messa per toglierla. Le navi non possono toccarsi, nemmeno in diagonale.</p>
             <div class="bn-lista">${lista}</div>
             <div class="bn-comandi">
               <button type="button" class="bottone piccolo-bt" data-az="ruota">↻ Ruota (${ui.vert ? 'verticale' : 'orizzontale'})</button>

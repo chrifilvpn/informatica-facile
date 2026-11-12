@@ -656,6 +656,22 @@ button.f4-col:hover .f4-buco { background: radial-gradient(circle at 50% 50%, rg
 .bn-nave-bt.usata { opacity: .3; }
 .bn-sagoma { width: calc(var(--l) * 16px); height: 12px; border-radius: 6px; background: linear-gradient(#aab4bd, #7d8a95); }
 .bn-comandi { display: flex; flex-wrap: wrap; gap: .4rem; }
+/* telefono: tutto in una schermata. Nello schieramento la griglia si misura anche sull'altezza, le navi stanno in
+   una fila che scorre di lato e i pulsanti in una riga; in battaglia la mia flotta diventa una mappa piccola */
+@media (max-width: 620px) {
+  .bn-schiera { --c: min(calc((100vw - 2.8rem) / 11), calc((100vh - 23.5rem) / 11), 36px); gap: .5rem; }
+  .bn-schiera .bn-pannello { gap: .4rem; }
+  .bn-schiera .bn-istruzioni { font-size: .76rem; line-height: 1.3; }
+  .bn-schiera .bn-solo-tastiera { display: none; }
+  .bn-schiera .bn-lista { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: .3rem; }
+  .bn-schiera .bn-nave-bt { flex: none; padding: .3rem .45rem; gap: .15rem; }
+  .bn-schiera .bn-sagoma { width: calc(var(--l) * 11px); height: 9px; }
+  .bn-schiera .bn-comandi { flex-wrap: nowrap; display: grid; grid-template-columns: repeat(3, auto) 1fr; gap: .3rem; }
+  .bn-schiera .bn-comandi .bottone, .bn-schiera .bn-pronto { padding: .4rem .5rem; font-size: .8rem; white-space: nowrap; }
+  .bn-battaglia.bn-n2 { --cc: min(calc((100vw - 2.8rem) / 11), calc((100vh - 14.5rem) / 15.6), 36px); --c: var(--cc); gap: .5rem; }
+  .bn-battaglia.bn-n2 .bn-mia { --c: calc(var(--cc) * .42); }
+  .bn-battaglia.bn-n2 .bn-mia .bn-lab { font-size: 0; }
+}
 .bn-pronto { padding: .8rem; font-size: 1.05rem; border-radius: 10px; cursor: pointer; }
 
 /* sezioni aggiunte in fondo alle regole (comandi della chat, modalità studio) */

@@ -212,6 +212,16 @@
 .bb-record { width: 100%; padding: .7rem 1rem; border-radius: 12px; background: rgba(0, 0, 0, .22); }
 .bb-record ol { margin: .3rem 0 0; padding-left: 1.4rem; }
 .bb-record li.nuovo { color: #ffd166; font-weight: 700; }
+/* telefono: griglia e pezzi misurati anche sull'altezza, così si gioca senza scorrere; le griglie piccole degli
+   altri (sfida) si vedono a fine partita o quando la tua è bloccata, i loro punti sono già nella barra in alto */
+@media (max-width: 620px) {
+  .bb { --cella: min(9.2vw, calc((100vh - 20.5rem) / 11.1), 46px); }
+  .bb-principale { gap: .45rem; }
+  .bb-testa b { font-size: 1.35rem; }
+  .bb-vassoio { padding: .4rem; }
+  .bb-nota { font-size: .8rem; }
+  .bb-altri:not(.sempre) { display: none; }
+}
 
 /* ======================= LA PEPPA TENCIA ======================= */
 .pp { width: 100%; display: grid; gap: 1rem; justify-items: center; }
