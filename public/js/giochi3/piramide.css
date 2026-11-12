@@ -24,4 +24,12 @@
 .pi-scarti > .carta { position: absolute; left: calc(var(--cw) * .5); top: 0; }
 .pi-vuoto { width: var(--cw); height: calc(var(--cw) * 1.4); display: grid; place-items: center; border-radius: 8px; border: 2px dashed rgba(255, 255, 255, .2); color: var(--tenue); font-size: .75rem; }
 .pi.finito .pi-tavolo { animation: nk-fine 1.1s ease-out; }
+/* telefono: carte più grandi (meno spazio tra una e l'altra) e valore e seme più grandi, perché ogni carta si vede solo in alto */
+@media (max-width: 600px) {
+  .pi-tavolo { --cw: min(5.2rem, calc((100vw - 1.5rem) / 7.4), 8.6vh); }
+  .pi-fila { gap: calc(var(--cw) * .06); }
+  .pi .carta .indice { width: 30%; left: 3%; top: 3%; }
+  .pi .carta .indice b { font-size: calc(var(--w) * .3); }
+  .pi .carta .indice svg { width: calc(var(--w) * .19); height: calc(var(--w) * .19); }
+}
 @media (prefers-reduced-motion: reduce) { .pi .carta.pi-aiuto, .pi-tallone.pi-aiuto { animation: none; } }

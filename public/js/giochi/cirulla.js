@@ -45,7 +45,7 @@
     azioni: S.azioni,
     infoPosto(ctx, posto) {
       const p = ctx.partita, f = p.aSquadre ? posto % 2 : posto, s = p.scope[f];
-      return `${plur(p.preseCarte[f], 'carta', 'carte')}${s ? `, <b class="scope">${plur(s, 'scopa', 'scope')}</b>` : ''}`;
+      return `${plur(p.preseCarte[f], 'carta presa', 'carte prese')}${s ? `, <b class="scope">${plur(s, 'scopa', 'scope')}</b>` : ''}`;
     },
     punteggio(ctx) {
       const p = ctx.partita;
