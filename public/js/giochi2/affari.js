@@ -55,6 +55,7 @@
     panno(ctx) {
       const p = ctx.partita, ui = ctx.ui, io = ctx.mio;
       const nome = (k) => (k === io ? 'Tu' : ctx.nome(k));
+      const stretto = window.matchMedia && window.matchMedia('(max-width: 620px)').matches;
       p._nome = nome;
       const conNomi = (t) => esc(t).replace(/@(\d)/g, (_, k) => `<b style="color:${PEDINE[k]}">${esc(nome(Number(k)))}</b>`);
       // ---- le 40 caselle ----
@@ -102,10 +103,19 @@
       // nel diario anche il proprio nome (i testi sono in terza persona)
       const nomeVero = (k) => esc((ctx.stato.giocatori[k] && ctx.stato.giocatori[k].nome) || ctx.nome(k));
       const diario = !p.diario.length ? '' : `<ol class="af-diario">${p.diario.slice(-7).map((d) => `<li><span class="af-pal" style="background:${PEDINE[d.posto]}"></span>${nomeVero(d.posto)} ${conNomi(d.testo)}</li>`).join('')}</ol>`;
-      const sel = ui.afSel != null ? `<div class="af-sel">${dettaglio(ui.afSel, p)}<button class="bottone mini-bt" data-az="chiudi">✕</button></div>` : '';
+      // scheda della proprietà: se c'è una decisione con pulsanti (compra, asta…) sta ACCANTO ai pulsanti invece di
+      // coprirli; mentre si compra o si fa l'asta compare da sola quella della casella in gioco
+      const conPulsanti = /data-az=/.test(decisione);
+      const inGioco = p.fase === 'compra' ? c : p.fase === 'asta' && p.asta ? p.asta.c : null;
+      const schedaVista = ui.afSel != null ? ui.afSel : conPulsanti && inGioco != null ? inGioco : null;
+      const chiudi = ui.afSel != null ? '<button class="bottone mini-bt" data-az="chiudi">✕</button>' : '';
+      const sel = schedaVista == null ? '' : `<div class="af-sel ${conPulsanti ? 'accanto' : ''}">${dettaglio(schedaVista, p)}${chiudi}</div>`;
+      const parteDecisione = conPulsanti && sel ? `<div class="af-riga">${decisione}${sel}</div>` : `${decisione}${sel}`;
       const centro = `<div class="af-centro"><div class="af-logo">AFFARI <small>IN CITTÀ</small></div>
-        <p class="af-giro">Giro ${p.giro}${p.limiteGiri ? ` di ${p.limiteGiri}` : ''}${p.conParcheggio && p.piatto ? ` · 🅿️ ${euro(p.piatto)}` : ''}</p>${dadi}${cartaHtml}${decisione}${sel}${diario}</div>`;
-      const tabellone = `<div class="af-tab">${caselle}${centro}</div>`;
+        <p class="af-giro">Giro ${p.giro}${p.limiteGiri ? ` di ${p.limiteGiri}` : ''}${p.conParcheggio && p.piatto ? ` · 🅿️ ${euro(p.piatto)}` : ''}</p>${dadi}${stretto ? '' : `${cartaHtml}${parteDecisione}${diario}`}</div>`;
+      // sul telefono il tabellone si ingrandisce (＋, −, due dita) e pulsanti, carte e diario stanno sotto, a grandezza normale
+      const tabellone = stretto ? `<div class="af-cornice">${window.Lente.html('affari', `<div class="af-tab">${caselle}${centro}</div>`, { max: 2.6, alto: '62vh' })}</div><div class="af-sotto">${cartaHtml}${parteDecisione}${diario}</div>`
+        : `<div class="af-tab">${caselle}${centro}</div>`;
 
       // ---- lato: giocatori e le mie proprietà ----
       const gioc = p.soldi.map((s, k) => `<div class="af-gioc ${p.turno === k ? 'di-turno' : ''} ${p.vivo[k] ? '' : 'fuori'}"><span class="af-pal" style="background:${PEDINE[k]}"></span><b>${esc(nome(k))}</b>

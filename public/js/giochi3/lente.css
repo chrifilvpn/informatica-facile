@@ -1,0 +1,12 @@
+/* LENTE: tavolieri ingrandibili sul telefono (vedi lente.js) */
+.ln { position: relative; width: 100%; }
+.ln-vista { overflow: hidden; border-radius: inherit; }
+.ln-vista.ln-zoom { overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
+.ln-dentro { width: calc(100% * var(--ln-z, 1)); }
+.ln-bt { display: none; position: absolute; right: 6px; bottom: 6px; z-index: 4; flex-direction: column; gap: 6px; }
+.ln-bt button { width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .55); background: rgba(12, 28, 22, .78); color: #fff;
+  font: 700 1.25rem/1 var(--sans); display: grid; place-items: center; padding: 0; cursor: pointer; box-shadow: 0 3px 8px rgba(0, 0, 0, .45); }
+.ln-bt.alto { bottom: auto; top: 6px; }
+.ln-bt button:disabled { opacity: .35; cursor: default; }
+.ln-bt button[data-lente-bt="-"]:disabled { visibility: hidden; }
+@media (max-width: 820px) { .ln-bt { display: flex; } }

@@ -79,7 +79,7 @@
       else testa = `<div class="bb-testa"><span>${p.modo === 'coop' ? 'Punti di squadra' : 'Punti'} <b>${b.punti}</b></span><span>Linee <b>${b.linee}</b></span>${b.combo > 1 ? `<span class="bb-combo">combo ×${b.combo}</span>` : ''}</div>`;
       let altri = '';
       if (p.modo === 'sfida') {
-        altri = `<aside class="bb-altri" aria-label="Le griglie degli altri">${p.plance.map((x, i) => (i === p.mia ? '' : `<div class="bb-altro ${x.vivo ? '' : 'fuori'}"><p>${esc(ctx.nome(i))} <b>${x.punti}</b></p>${griglia(ctx, x, { mini: true })}</div>`)).join('')}</aside>`;
+        altri = `<aside class="bb-altri ${p.finita || !b.vivo ? 'sempre' : ''}" aria-label="Le griglie degli altri">${p.plance.map((x, i) => (i === p.mia ? '' : `<div class="bb-altro ${x.vivo ? '' : 'fuori'}"><p>${esc(ctx.nome(i))} <b>${x.punti}</b></p>${griglia(ctx, x, { mini: true })}</div>`)).join('')}</aside>`;
       }
       let nota = '';
       if (p.finita) nota = '';
