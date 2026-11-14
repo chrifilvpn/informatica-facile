@@ -1,0 +1,147 @@
+/* ESCAPE ROOM: una stanza buia color petrolio con schede di carta invecchiata (gli enigmi), l'orologio rosso in alto
+   a destra che diventa lampeggiante sotto i 2 minuti, i lucchetti in ottone e la porta di legno in fondo. Ogni
+   ambientazione cambia la luce della stanza. Sul telefono le schede vanno una sotto l'altra. */
+.er {
+  --er-fondo: #14232b; --er-luce: #2e5160; --er-carta: #f4ead2; --er-carta2: #e8dcbd; --er-inch: #2b2418;
+  --er-ottone: #c99a3b; --er-ottone2: #8a6420; --er-rosso: #e5484d; --er-verde: #3fb27f;
+  width: min(72rem, 100%); display: grid; gap: .7rem; padding: .2rem .3rem 1rem; color: var(--testo);
+  background: radial-gradient(120% 80% at 50% 0%, var(--er-luce), var(--er-fondo) 70%); border-radius: 18px; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .05);
+}
+.er.er-tema-faro { --er-fondo: #101b2c; --er-luce: #2c4566; }
+.er.er-tema-stazione { --er-fondo: #120f24; --er-luce: #3a2d63; }
+.er.er-tema-scuola { --er-fondo: #1f1a14; --er-luce: #4a3b26; }
+
+.er-testa { position: sticky; top: 0; z-index: 3; background: linear-gradient(var(--er-luce), rgba(0, 0, 0, 0)), var(--er-fondo); border-radius: 18px 18px 0 0; padding-bottom: .5rem !important; display: flex; justify-content: space-between; align-items: stretch; gap: .6rem; padding: .6rem .7rem 0; }
+.er-dove { display: grid; gap: .15rem; min-width: 0; }
+.er-dove small { color: var(--tenue); font-size: .8rem; }
+.er-dove h2 { margin: 0; font: 400 clamp(1.25rem, 4.5vw, 1.8rem)/1.1 var(--serif); }
+.er-tappe { display: flex; gap: .3rem; margin-top: .25rem; }
+.er-tappe i { width: 1.6rem; height: .4rem; border-radius: 4px; background: rgba(255, 255, 255, .15); }
+.er-tappe i.qui { background: var(--er-ottone); }
+.er-tappe i.fatta { background: var(--er-verde); }
+.er-orologio { display: grid; justify-items: center; align-content: center; padding: .35rem .8rem; border-radius: 12px; background: #0b0f12; border: 2px solid #33393d; min-width: 7.2rem; box-shadow: inset 0 0 12px rgba(0, 0, 0, .8); }
+.er-orologio small { font-size: .68rem; color: #8c9a9f; text-transform: uppercase; letter-spacing: .06em; }
+.er-orologio b { font: 700 clamp(1.6rem, 6vw, 2.2rem)/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: #ff6b5e; text-shadow: 0 0 10px rgba(255, 80, 60, .6); font-variant-numeric: tabular-nums; }
+.er-orologio span { font-size: .72rem; color: #8c9a9f; margin-top: .15rem; }
+.er-orologio.er-poco b { animation: er-batti 1s steps(2, start) infinite; }
+.er-orologio.er-ferma b { color: #9aa6ab; text-shadow: none; }
+@keyframes er-batti { 50% { opacity: .35; } }
+
+.er-intro, .er-stanza-testo { margin: 0 .8rem; font-size: .92rem; line-height: 1.4; color: #d9e4e0; }
+.er-intro { font-style: italic; padding: .55rem .75rem; border-left: 3px solid var(--er-ottone); background: rgba(0, 0, 0, .2); border-radius: 0 10px 10px 0; }
+
+.er-cartello { margin: 0 .6rem; padding: .7rem .9rem; border-radius: 12px; text-align: center; background: rgba(0, 0, 0, .35); border: 2px solid rgba(255, 255, 255, .12); animation: er-entra .5s ease-out both; }
+.er-cartello b { font: 400 1.3rem/1.2 var(--serif); }
+.er-cartello p { margin: .3rem 0 0; font-size: .92rem; }
+.er-cartello.vinto { background: linear-gradient(135deg, #1f6b4a, #2d8a5f); border-color: #7fe0bd; }
+.er-cartello.perso { background: linear-gradient(135deg, #5a1d1d, #7a2626); border-color: #ff8f8f; }
+.er-cartello.porta-aperta { background: linear-gradient(135deg, #6b4a1f, #8a6420); border-color: #f2c84b; }
+@keyframes er-entra { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.er-schede { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); gap: .75rem; padding: 0 .6rem; align-items: start; }
+.er-scheda { background: linear-gradient(170deg, var(--er-carta), var(--er-carta2)); color: var(--er-inch); border-radius: 12px; padding: .7rem .75rem .8rem; display: grid; gap: .5rem; box-shadow: 0 3px 0 rgba(0, 0, 0, .35), 0 8px 18px rgba(0, 0, 0, .25); min-width: 0; }
+.er-scheda header { display: flex; gap: .55rem; align-items: flex-start; }
+.er-scheda h3 { margin: 0; font: 700 1.02rem/1.2 var(--sans); }
+.er-scheda header p { margin: .15rem 0 0; font-size: .84rem; color: #5b4f3a; }
+.er-scheda header > div { flex: 1; min-width: 0; }
+.er-ico { font-size: 1.6rem; line-height: 1; }
+.er-premio { display: grid; justify-items: center; font-size: 1.1rem; line-height: 1; padding: .3rem .45rem; border-radius: 8px; background: #2b2418; color: var(--er-ottone); min-width: 2.2rem; }
+.er-premio b { color: #fff; font-size: 1.05rem; }
+.er-premio.chiuso { background: rgba(43, 36, 24, .12); color: inherit; }
+.er-scheda.aperta { opacity: .9; background: linear-gradient(170deg, #e6f2e8, #cfe5d4); }
+.er-scheda.aperta header p { color: #2f5a40; }
+
+.er-pezzi { display: grid; gap: .45rem; }
+.er-pezzo { background: rgba(255, 255, 255, .55); border: 1px dashed rgba(43, 36, 24, .35); border-radius: 10px; padding: .45rem .55rem; min-width: 0; }
+.er-pezzo h4 { margin: 0 0 .3rem; font-size: .86rem; font-weight: 800; }
+.er-pezzo h4 small { font-weight: 500; color: #6b5d45; }
+.er-testo { margin: .15rem 0; font-size: .88rem; line-height: 1.35; }
+.er-fila { display: flex; flex-wrap: wrap; gap: .35rem; margin: .25rem 0; }
+.er-tessera { display: grid; justify-items: center; gap: .1rem; padding: .3rem .45rem; border-radius: 8px; background: #fffaf0; border: 1px solid rgba(43, 36, 24, .2); min-width: 2.4rem; }
+.er-tessera b { font-size: 1.3rem; line-height: 1.1; font-weight: 800; white-space: nowrap; }
+.er-tessera small { font-size: .7rem; color: #6b5d45; white-space: nowrap; }
+.er-tabella, .er-griglia { border-collapse: collapse; font-size: .88rem; margin: .2rem 0; }
+.er-tabella th, .er-tabella td { padding: .2rem .5rem; border-bottom: 1px solid rgba(43, 36, 24, .15); text-align: left; }
+.er-tabella th { font-weight: 600; }
+.er-tabella td { font-weight: 800; font-variant-numeric: tabular-nums; }
+.er-griglia th, .er-griglia td { width: 2rem; height: 2rem; text-align: center; border: 1px solid rgba(43, 36, 24, .25); }
+.er-griglia td { font: 800 1.05rem/1 ui-monospace, Menlo, Consolas, monospace; background: #fffaf0; }
+.er-griglia th { font-size: .78rem; color: #6b5d45; background: rgba(43, 36, 24, .06); }
+.er-lista { margin: .2rem 0; padding-left: 1.3rem; font-size: .88rem; line-height: 1.4; }
+.er-lista li { margin: .12rem 0; }
+.er-altri { margin: 0; font-size: .84rem; padding: .45rem .55rem; border-radius: 10px; background: rgba(201, 154, 59, .2); line-height: 1.4; }
+
+/* i lucchetti */
+.er-lucchetto { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; padding: .5rem; border-radius: 12px; background: linear-gradient(160deg, #3b3322, #241f15); box-shadow: inset 0 0 0 2px var(--er-ottone2); }
+.er-lucchetto.er-col { flex-direction: column; align-items: stretch; }
+.er-casella { flex: 1; min-width: 0; width: calc(var(--n) * 1.6em + 1.4em); max-width: 100%; font: 800 1.5rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .45em; text-transform: uppercase; text-align: center; padding: .4rem .3rem .4rem .75rem; border-radius: 8px; border: 2px solid var(--er-ottone); background: #0f0d09; color: #ffe2a0; }
+.er-casella::placeholder { color: rgba(255, 226, 160, .25); }
+.er-casella:focus { outline: 3px solid rgba(242, 200, 75, .5); }
+.er-prova { white-space: nowrap; }
+.er-leve { display: grid; grid-template-columns: repeat(6, 1fr); gap: .3rem; }
+.er-leva { display: grid; justify-items: center; gap: .2rem; padding: .35rem 0 .25rem; border-radius: 8px; border: 1px solid var(--er-ottone2); background: #1a160f; color: #ffe2a0; cursor: pointer; font: 700 .85rem var(--sans); }
+.er-leva i { width: .55rem; height: 2.4rem; border-radius: 5px; background: #4a4234; position: relative; }
+.er-leva i::after { content: ''; position: absolute; left: 50%; top: calc(100% - 1rem); width: 1.15rem; height: 1.15rem; margin-left: -.575rem; border-radius: 50%; background: #9b8f78; transition: top .15s; box-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.er-leva.su i::after { top: -.15rem; background: var(--er-verde); }
+.er-leva:disabled { cursor: default; opacity: .6; }
+.er-slots { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+.er-slot { width: 2.3rem; height: 2.3rem; display: grid; place-items: center; border-radius: 8px; background: #0f0d09; border: 2px dashed var(--er-ottone2); color: #ffe2a0; font-size: 1.35rem; font-weight: 800; }
+.er-slot.pieno { border-style: solid; border-color: var(--er-ottone); }
+.er-tasti { display: flex; gap: .35rem; justify-content: center; flex-wrap: wrap; }
+.er-tasto { min-width: 2.9rem; min-height: 2.9rem; font-size: 1.35rem; padding: .2rem .5rem; }
+.er-canc { min-width: 2.3rem; min-height: 2.3rem; font-size: 1rem; }
+.er-fili { display: grid; gap: .3rem; }
+.er-filo { display: flex; align-items: center; gap: .5rem; padding: .3rem .5rem; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #ffe2a0; cursor: pointer; font: 800 .9rem var(--sans); }
+.er-filo i { flex: 1; height: .5rem; border-radius: 4px; background: repeating-linear-gradient(90deg, #6b6b6b 0 14px, #808080 14px 28px); box-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.er-filo.scelto { border-color: var(--er-rosso); background: rgba(229, 72, 77, .15); }
+.er-filo.scelto i { background: repeating-linear-gradient(90deg, #6b6b6b 0 14px, #808080 14px 28px); mask: linear-gradient(90deg, #000 45%, transparent 45% 55%, #000 55%); -webkit-mask: linear-gradient(90deg, #000 45%, transparent 45% 55%, #000 55%); }
+.er-filo:disabled { cursor: default; opacity: .6; }
+
+.er-tentativi { margin: 0; font-size: .8rem; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; color: #8a2b2b; }
+.er-tentativi span { background: rgba(229, 72, 77, .12); border-radius: 6px; padding: .1rem .4rem; font-weight: 800; }
+.er-tentativi small { font-weight: 500; color: #6b5d45; }
+.er-aiuto { margin: 0; font-size: .86rem; line-height: 1.35; padding: .4rem .55rem; border-radius: 10px; background: rgba(242, 200, 75, .3); }
+.er-aiuto.er-attesa { background: rgba(43, 36, 24, .08); }
+.er-chiedi { justify-self: start; font-size: .85rem; padding: .3rem .7rem; }
+.er-chiedi small { opacity: .75; }
+.er-dettagli summary { cursor: pointer; font-size: .82rem; font-weight: 700; color: #2f5a40; }
+.er-dettagli .er-pezzo { margin-top: .35rem; }
+
+/* la porta */
+.er-porta { background: linear-gradient(170deg, #b98a55, #8d6237); color: #fff8ea; box-shadow: 0 3px 0 rgba(0, 0, 0, .4), inset 0 0 0 3px rgba(60, 35, 10, .35); }
+.er-porta header p { color: #f3e2c4; }
+.er-porta .er-pezzo { background: rgba(0, 0, 0, .2); border-color: rgba(255, 255, 255, .3); }
+.er-porta .er-pezzo h4 small { color: #f3e2c4; }
+.er-porta .er-tessera { background: #2b1d0e; border-color: #f2c84b; color: #f2c84b; }
+.er-porta .er-altri { background: rgba(0, 0, 0, .22); }
+.er-porta .er-aiuto { background: rgba(0, 0, 0, .22); }
+.er-porta .er-tentativi { color: #ffd0d0; }
+.er-porta .er-tentativi small { color: #f3e2c4; }
+.er-porta.aperta { background: linear-gradient(170deg, #4f8a5f, #2f6b44); }
+.er-porta.aperta header p { color: #e3f3e8; }
+.er-frammenti { display: flex; flex-wrap: wrap; gap: .4rem; }
+.er-frammento { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .6rem; border-radius: 999px; background: #2b1d0e; color: #f2c84b; font-size: 1.1rem; animation: er-entra .4s ease-out both; }
+.er-frammento b { color: #fff; }
+.er-vuoto { font-size: .85rem; opacity: .8; font-style: italic; }
+.er-info { font-size: .75rem; color: var(--tenue); }
+
+@media (max-width: 620px) {
+  .er { border-radius: 0; padding: 0 0 1rem; }
+  .er-testa { padding: .5rem .5rem 0; }
+  .er-testa { padding: .4rem .5rem .35rem !important; align-items: center; }
+  .er-dove small { font-size: .72rem; }
+  .er-dove h2 { font-size: 1.15rem; }
+  .er-tappe { margin-top: .1rem; }
+  .er-tappe i { height: .3rem; width: 1.2rem; }
+  .er-orologio { min-width: 5.4rem; padding: .2rem .45rem; }
+  .er-orologio small { display: none; }
+  .er-orologio b { font-size: 1.45rem; }
+  .er-orologio span { font-size: .66rem; margin-top: .05rem; }
+  .er-schede { padding: 0 .35rem; gap: .6rem; }
+  .er-intro, .er-stanza-testo { margin: 0 .5rem; font-size: .86rem; }
+  .er-griglia th, .er-griglia td { width: 1.85rem; height: 1.85rem; }
+  .er-casella { font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .er-orologio.er-poco b, .er-cartello, .er-frammento { animation: none; }
+}
