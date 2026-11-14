@@ -1136,6 +1136,9 @@
     carte.slice(1).forEach((c, i) => { c.style.marginLeft = `${margini[i] - meno}px`; });
   }
   window.addEventListener('resize', () => stringiMano());
+  // la prima volta il tavolo può non avere ancora la sua misura (si apre proprio in quel momento): le carte non si
+  // stringevano abbastanza e nello scopone dal telefono la mano usciva di lato e rimpiccioliva tutta la pagina
+  if (window.ResizeObserver) new ResizeObserver(() => stringiMano()).observe(document.querySelector('#tavolo .io'));
 
   function disegnaGioco() {
     const p = stato.partita;

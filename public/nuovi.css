@@ -2011,3 +2011,11 @@ button.rl-c:hover:not(:disabled) { box-shadow: inset 0 0 0 2px var(--oro); }
   /* ⚙ e ⛶ restano sopra la scena anche quando il riquadro è più largo della tela (--tela-w lo mette arena.js) */
   .ar-box > .ar-sopra:has(.is-strato) { position: absolute; top: 0; bottom: 0; left: 50%; width: var(--tela-w, 100%); transform: translateX(-50%); }
 }
+/* telefono in orizzontale, giochi di carte e da tavolo con la mano (UNO, briscola, scopa, scala 40…): l'altezza non basta
+   per avversari + tavolo + nome + mano, e il tavolo finiva sotto la mano. Come sopra, la pagina scorre e niente si sovrappone. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  #schermo-gioco:is(:has(.tavolo:not(.libero)), :has(#mano:not([hidden]) > *), :has(.so), :has(.ms)):not(:has(.ar)):not(:has(.tt)):not(:has(.sn)):not(:has(.ah)):not(:has(.ch)):not(:has(.pt)):not(:has(.ce)) { height: auto; min-height: 100%; }
+  #schermo-gioco:is(:has(.tavolo:not(.libero)), :has(#mano:not([hidden]) > *), :has(.so), :has(.ms)):not(:has(.ar)):not(:has(.tt)):not(:has(.sn)):not(:has(.ah)):not(:has(.ch)):not(:has(.pt)):not(:has(.ce)) .tavolo { flex: none; grid-template-rows: auto auto auto; }
+  #schermo-gioco:is(:has(.tavolo:not(.libero)), :has(#mano:not([hidden]) > *), :has(.so), :has(.ms)):not(:has(.ar)):not(:has(.tt)):not(:has(.sn)):not(:has(.ah)):not(:has(.ch)):not(:has(.pt)):not(:has(.ce)) .panno { overflow: visible; min-height: 0; }
+  #schermo-gioco:is(:has(.tavolo:not(.libero)), :has(#mano:not([hidden]) > *), :has(.so), :has(.ms)):not(:has(.ar)):not(:has(.tt)):not(:has(.sn)):not(:has(.ah)):not(:has(.ch)):not(:has(.pt)):not(:has(.ce)) .io { padding-bottom: max(.4rem, env(safe-area-inset-bottom)); }
+}
