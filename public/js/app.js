@@ -349,7 +349,7 @@
         <span class="g-nome">${esc(g.nome)}</span>
         <span class="g-desc">${esc(g.descrizione)}</span>
         <span class="g-gioc">${g.giocatori.length === 1 ? `${g.giocatori[0]} giocatori` : `da ${g.giocatori[0]} a ${g.giocatori[g.giocatori.length - 1]} giocatori`}</span>
-        <span class="g-tag">${g.soloPersone ? '👥 solo persone' : '🤖 anche col computer'}${g.tempoReale ? ' · ⚡ tempo reale' : ''}${g.senzaLivelli ? ' · 🤝 in squadra' : ''}</span>
+        <span class="g-tag">${g.soloPersone ? '👥 solo persone' : '🤖 anche col computer'}${g.tempoReale ? ' · ⚡ tempo reale' : ''}${g.soloComputer ? ' · 🖥️ solo computer' : ''}${g.senzaLivelli ? ' · 🤝 in squadra' : ''}</span>
       </button>`).join('');
     disegnaImpostazioni();
   }

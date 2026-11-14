@@ -1,6 +1,10 @@
-// Le course di Putt Party 2D (usate dal server e dal browser, che lo scarica da /js/putt-buche.js).
-// Sei course: la Classica (le 9 buche di prima, ingrandite) e quattro a tema, ognuna con più di 6 buche disegnate
-// (a ogni partita se ne giocano 6 a caso), più l'Open Course: una mappa unica e grande con 6 buche in fila.
+// Le course di Minigolf Party 3D (usate dal server e dal browser, che lo scarica da /js/putt-buche.js).
+// Sette course: la Classica (le 9 buche di prima, ingrandite), cinque a tema (Pirati, Ghiaccio, Giungla, Spazio,
+// Colline), ognuna con più di 6 buche disegnate (a ogni partita se ne giocano 6 a caso), più l'Open Course: una mappa
+// unica e grande con 6 buche in fila. Il campo è una pianta (x, y) con l'altezza data da quota(b, x, y): dossi
+// [{ x, y, r, h }] (h negativo = conca) e pendii [{ x, y, a, l, h }] (una fascia che sale di h lungo la direzione a,
+// per l lunghezza, da un capo all'altro della buca). La pallina li sente (scende dai pendii, si ferma nelle conche) e
+// il browser li disegna in 3D.
 // Ogni buca ha la sua grandezza (W × H, più grande dello schermo: la telecamera segue la pallina) e:
 //   bordo (poligono), muri (segmenti alti), muretti (segmenti bassi: si saltano con le rampe),
 //   respingenti [x, y, r] (rilanciano forte), rocce [x, y, r] (rimbalzo normale: palme, pinguini, statue…),
@@ -150,6 +154,27 @@
       acqua: [[650, 200, 250, 500], [1350, 200, 250, 500]], rampe: [{ r: [500, 380, 110, 140], a: 0 }, { r: [1200, 380, 110, 140], a: 0 }], mobili: [{ x: 1080, y: 450, ax: 0, ay: 140, per: 2.4, fase: 0, r: 24 }], pu: [[1050, 280]] },
   ];
 
+  // ---------------- LE COLLINE: dossi, conche e pendii (la pallina sale, scende e si ferma nelle conche) ----------------
+  const COLLINE = [
+    { id: 'dosso', nome: 'Il dosso', par: 2, W: 2000, H: 900, bordo: rett(120, 250, 1760, 400), partenza: [200, 450], buca: [1780, 450],
+      dossi: [{ x: 1000, y: 450, r: 260, h: 45 }], rocce: [[1450, 340, 26]], pu: [[600, 330]] },
+    { id: 'conca', nome: 'La conca', par: 3, W: 1800, H: 1100, bordo: rett(120, 120, 1560, 860), partenza: [220, 550], buca: [1560, 550],
+      dossi: [{ x: 900, y: 550, r: 330, h: -55 }], mobili: [{ x: 900, y: 230, ax: 220, ay: 0, per: 4, fase: 0, r: 26 }], rocce: [[1250, 850, 28]], pu: [[900, 950]] },
+    { id: 'salita', nome: 'La salita', par: 3, W: 1950, H: 950, bordo: corsia([[150, 700], [1000, 700], [1000, 250], [1800, 250]], 260), partenza: [220, 700], buca: [1720, 250],
+      pendii: [{ x: 1000, y: 560, a: -PI / 2, l: 180, h: 45 }], rocce: [[1300, 180, 24]], pu: [[600, 760]] },
+    { id: 'onde', nome: 'Le onde', par: 3, W: 2200, H: 900, bordo: rett(120, 200, 1960, 500), partenza: [200, 450], buca: [1990, 450],
+      dossi: [{ x: 600, y: 450, r: 170, h: 38 }, { x: 900, y: 450, r: 150, h: -30 }, { x: 1200, y: 450, r: 170, h: 38 }, { x: 1500, y: 450, r: 150, h: -30 }], pu: [[1050, 270]] },
+    { id: 'cratere', nome: 'Il cratere', par: 3, W: 1700, H: 1300, bordo: ottagono(850, 650, 560), partenza: [400, 650], buca: [850, 650],
+      dossi: [{ x: 850, y: 650, r: 400, h: 85 }, { x: 850, y: 650, r: 110, h: -35 }], pu: [[850, 200], [850, 1100]] },
+    { id: 'fienile', nome: 'Il fienile', par: 4, W: 1900, H: 1100, bordo: rett(120, 120, 1660, 860), partenza: [220, 550], buca: [1700, 550],
+      muri: [[700, 120, 700, 750], [1200, 350, 1200, 980]], pendii: [{ x: 1300, y: 0, a: 0, l: 400, h: -60 }],
+      rocce: [[450, 350, 30], [450, 750, 30]], mobili: [{ x: 950, y: 550, ax: 0, ay: 250, per: 3.5, fase: 0, r: 26 }], pu: [[950, 230], [950, 870]] },
+    { id: 'mulino', nome: 'Il mulino sulla collina', par: 3, W: 2000, H: 900, bordo: rett(120, 200, 1760, 500), partenza: [200, 450], buca: [1780, 450],
+      pendii: [{ x: 450, y: 0, a: 0, l: 300, h: 55 }, { x: 1250, y: 0, a: 0, l: 300, h: -55 }], mulini: [{ x: 1000, y: 450, l: 130, w: 1.3, pale: 2 }], pu: [[1000, 270]] },
+    { id: 'gobbe', nome: 'Le gobbe del cammello', par: 4, W: 1900, H: 1300, bordo: corsia([[200, 250], [1600, 250], [1600, 1050], [250, 1050]], 250), partenza: [260, 250], buca: [320, 1050],
+      dossi: [{ x: 800, y: 250, r: 150, h: 35 }, { x: 1600, y: 650, r: 170, h: -40 }, { x: 900, y: 1050, r: 150, h: 35 }], mobili: [{ x: 1250, y: 1050, ax: 0, ay: 80, per: 3, fase: 1, r: 24 }], pu: [[1600, 450], [600, 1050]] },
+  ];
+
   // ---------------- OPEN COURSE: una mappa sola, 6 buche in fila su un percorso a serpentina ----------------
   // Si intreccia: i tubi passano sotto le altre corsie e ti portano a un'altra fila, le rampe saltano l'acqua e i muretti.
   const OPEN_W = 3800, OPEN_H = 2500;
@@ -184,6 +209,7 @@
     ghiaccio: { nome: 'Ghiaccio', tema: 'ghiaccio', buche: GHIACCIO },
     giungla: { nome: 'Tempio nella giungla', tema: 'giungla', buche: GIUNGLA },
     spazio: { nome: 'Spazio', tema: 'spazio', buche: SPAZIO },
+    colline: { nome: 'Le colline', tema: 'colline', buche: COLLINE },
     open: { nome: 'Open Course', tema: 'open', buche: OPEN, fisse: true },
   };
   const NOMI_COURSE = Object.keys(COURSE);
@@ -220,7 +246,31 @@
   const dentro = (x, y, r) => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
   function dentroPoligono(x, y, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
 
+  // l'altezza del campo (dossi e pendii) e la sua pendenza [dh/dx, dh/dy]
+  function quota(b, x, y) {
+    let h = 0;
+    for (const d of b.dossi || []) { const r = Math.hypot(x - d.x, y - d.y); if (r < d.r) h += (d.h * (1 + Math.cos((PI * r) / d.r))) / 2; }
+    for (const p of b.pendii || []) { const u = Math.max(0, Math.min(1, ((x - p.x) * Math.cos(p.a) + (y - p.y) * Math.sin(p.a)) / p.l)); h += p.h * u * u * (3 - 2 * u); }
+    return h;
+  }
+  function pendenza(b, x, y) {
+    let gx = 0, gy = 0;
+    for (const d of b.dossi || []) {
+      const dx = x - d.x, dy = y - d.y, r = Math.hypot(dx, dy);
+      if (r >= d.r || r < 1e-6) continue;
+      const k = (-d.h * PI * Math.sin((PI * r) / d.r)) / (2 * d.r) / r;
+      gx += k * dx; gy += k * dy;
+    }
+    for (const p of b.pendii || []) {
+      const c = Math.cos(p.a), s = Math.sin(p.a), u = ((x - p.x) * c + (y - p.y) * s) / p.l;
+      if (u <= 0 || u >= 1) continue;
+      const k = (p.h * 6 * u * (1 - u)) / p.l;
+      gx += k * c; gy += k * s;
+    }
+    return [gx, gy];
+  }
+
   // per compatibilità: BUCHE = le buche della Classica
   return { R_PALLA, R_BUCA, R_TUBO, R_SCATOLA, COURSE, NOMI_COURSE, BUCHE_PER_COURSE, BUCHE: CLASSICA, W: 1600, H: 960,
-    segmentiFissi, segmentiBassi, segmentiMobili, posScorrevole, rettScorrevole, mobiliAl, dentro, dentroPoligono, corsia };
+    quota, pendenza, segmentiFissi, segmentiBassi, segmentiMobili, posScorrevole, rettScorrevole, mobiliAl, dentro, dentroPoligono, corsia };
 });
