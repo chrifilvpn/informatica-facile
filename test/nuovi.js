@@ -1975,17 +1975,18 @@ fissa('DISEGNA E INDOVINA');
   console.log('✓ Disegna e indovina: 3 parole a scelta, 80 secondi, trattini e lettere di aiuto, tratti solo di chi disegna, risposta giusta nascosta, ci sei quasi, punti per velocità e a chi disegna, annulla e cancella, pausa, uscita, giri');
 }
 
-// ======================= PUTT PARTY 2D =======================
+// ======================= MINIGOLF PARTY 3D (era Putt Party 2D) =======================
 fissa('PUTT PARTY 2D');
 {
   const M = GIOCHI.putt;
   const { B, V_MAX, V_BUCA, POTERI, MAX_POTERI } = M._test;
   const { COURSE, NOMI_COURSE } = B;
-  assert.ok(M.meta.soloPersone && M.meta.pausaBoss, 'solo persone');
-  assert.deepStrictEqual(NOMI_COURSE, ['classica', 'pirati', 'ghiaccio', 'giungla', 'spazio', 'open']);
+  assert.ok(M.meta.soloPersone && M.meta.pausaBoss && M.meta.soloComputer, 'solo persone, solo al computer');
+  assert.deepStrictEqual(NOMI_COURSE, ['classica', 'pirati', 'ghiaccio', 'giungla', 'spazio', 'colline', 'open']);
   for (const c of NOMI_COURSE) if (c !== 'open') assert.ok(COURSE[c].buche.length > 6, `${c}: più di 6 buche disegnate`);
   assert.ok(COURSE.open.buche.length === 6 && COURSE.open.buche.every((b) => b.W === COURSE.open.buche[0].W && b.bordo === COURSE.open.buche[0].bordo), 'Open Course: una mappa sola con 6 buche');
-  assert.ok(M.meta.opzioni.find((o) => o.id === 'course').valori.join() === '1,3,5,6', 'nella lobby: 1, 3, 5 o 6 course');
+  assert.ok(M.meta.opzioni.find((o) => o.id === 'course').valori.join() === '1,3,5,7', 'nella lobby: 1, 3, 5 o 7 course');
+  assert.ok(M.meta.opzioni.find((o) => o.id === 'prima').valori.includes('colline'), 'si può partire dalle colline');
   // tutte le buche: più grandi dello schermo, partenza, buca e scatole sul prato, buca raggiungibile (rampe e tubi compresi)
   const dSeg = (x, y, [x1, y1, x2, y2]) => { const dx = x2 - x1, dy = y2 - y1, l = dx * dx + dy * dy || 1; const u = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / l)); return Math.hypot(x - x1 - u * dx, y - y1 - u * dy); };
   let nBuche = 0;
@@ -2008,7 +2009,7 @@ fissa('PUTT PARTY 2D');
     assert.ok(raggiunta, `${cid}/${b.id}: la buca si raggiunge`);
   }
   // le course in fila: 6 buche a caso per course, la prima scelta per prima, niente doppioni
-  for (const quante of [1, 3, 5, 6]) {
+  for (const quante of [1, 3, 5, 7]) {
     const x = M.crea({ n: 1, opzioni: { course: quante, prima: 'spazio' } });
     assert.ok(x.course.length === quante && x.course[0] === 'spazio' && new Set(x.course).size === quante, `${quante} course, la prima è quella scelta`);
     assert.strictEqual(x.ordine.length, quante * 6, `${quante} course = ${quante * 6} buche`);
@@ -2065,7 +2066,7 @@ fissa('PUTT PARTY 2D');
   const po = buca('spazio', 3); Object.assign(po.palle[0], { x: 740, y: 300 }); po.input(0, { t: 'tiro', a: 0, f: 0.12 }); avanti(po, 1500);
   assert.ok(po.palle[0].x > 1000, 'il portale porta dall\'altra parte del muro');
   // power-up: scatole (una volta a testa), al massimo 3, effetti
-  assert.ok(POTERI.length === 6 && MAX_POTERI === 3);
+  assert.ok(POTERI.length === 9 && MAX_POTERI === 3);
   const pw = buca('classica', 2, 3), [s1] = pw.buca.pu;
   Object.assign(pw.palle[0], { x: s1[0], y: s1[1] }); avanti(pw, 66);
   assert.strictEqual(pw.poteri[0].length, 1, 'passando sulla scatola si prende un power-up');
@@ -2104,7 +2105,71 @@ fissa('PUTT PARTY 2D');
   const pz = M.crea({ n: 1 }); pz.tick(pz.inizio + 1);
   const fin = pz.fineFase; pz.impostaPausa(true); pz.pausaDal -= 4000; pz.impostaPausa(false);
   assert.ok(pz.fineFase >= fin + 4000, 'la pausa non conta');
-  console.log(`✓ Putt Party 2D: 6 course (${nBuche} buche, tutte raggiungibili), 6 buche a caso per course, 1/3/5/6 course di fila, Open Course in ordine, pallina sempre nel campo, attrito realistico, buca precisa anche col passo lungo e di labbro, respingenti forti, acqua +1, rampa, portale, power-up (scatole, max 3, turbo, calamita, rifai, nebbia, mira nascosta, terremoto), tempo scaduto +3, meno colpi vince, pausa`);
+  // ---- novità del 3D ----
+  // tick: un potere usato tra un tick e l'altro fa partire l'aggiornamento (prima si perdeva e nessuno lo vedeva)
+  const ag = buca('classica', 0, 2); ag.poteri[0] = ['nebbia']; ag.usa(0, 0);
+  assert.strictEqual(ag.tick(ag.ultimoTick + 33), true, 'dopo un potere il tick dice che è cambiato qualcosa');
+  assert.ok(ag.vistaTick(0).fatti.some((f) => /Nebbia/.test(f.testo)) && ag.vistaTick(1).fatti.some((f) => /^@ manda la Nebbia/.test(f.testo)), 'il potere usato si vede nei fatti di tutti');
+  // poteri anche mentre la pallina corre: Turbo resta pronto per il tiro dopo, Rifai annulla il tiro in corsa
+  const co = buca('classica', 0); co.poteri[0] = ['turbo', 'rifai'];
+  const pt0 = [co.palle[0].x, co.palle[0].y];
+  co.input(0, { t: 'tiro', a: 0, f: 0.4 }); avanti(co, 100);
+  assert.ok(co.palle[0].vx > 0, 'la pallina corre');
+  assert.strictEqual(co.usa(0, 0), null, 'turbo si carica anche mentre la pallina corre');
+  assert.deepStrictEqual(co.palle[0].pronti, ['turbo']);
+  assert.strictEqual(co.usa(0, 0), null, 'rifai mentre corre');
+  assert.ok(co.palle[0].x === pt0[0] && co.palle[0].y === pt0[1] && !co.palle[0].vx && co.palle[0].colpi === 0, 'rifai: ferma la pallina, torna al punto del tiro, il colpo non conta');
+  co.input(0, { t: 'tiro', a: 0, f: 0.5 });
+  assert.ok(Math.abs(co.palle[0].vx - 0.5 * V_MAX * 1.6) < 1 && !co.palle[0].pronti.length, 'il turbo caricato vale al tiro dopo');
+  // perché non si può: un messaggio solo a chi ci ha provato
+  const no = buca('classica', 0, 2); no.poteri[0] = ['rifai', 'calamita', 'calamita'];
+  assert.ok(/non hai ancora tirato/.test(no.usa(0, 0)) && no.poteri[0].length === 3, 'rifai senza tiri: rifiutato, il potere resta');
+  assert.strictEqual(no.usa(0, 1), null); assert.ok(/già pronto/.test(no.usa(0, 1)), 'lo stesso potere due volte: rifiutato');
+  assert.ok(no.vistaTick(0).fatti.some((f) => /già pronto/.test(f.testo)) && !no.vistaTick(1).fatti.some((f) => /già pronto/.test(f.testo)), 'il perché lo legge solo chi ha provato');
+  assert.ok(/casella|potere/.test(no.usa(0, 5)), 'casella vuota');
+  // da in buca: quelli contro gli altri sì, quelli per sé no
+  const ib = buca('classica', 0, 2); ib.palle[0].dentro = true; ib.poteri[0] = ['colla', 'turbo'];
+  assert.strictEqual(ib.usa(0, 0), null, 'in buca si può ancora usare un potere contro gli altri');
+  assert.ok(ib.palle[1].colla && /già in buca/.test(ib.usa(0, 0)), 'in buca i poteri per sé no');
+  ib.input(1, { t: 'tiro', a: 0, f: 1 });
+  assert.ok(Math.abs(Math.hypot(ib.palle[1].vx, ib.palle[1].vy) - V_MAX * M._test.COLLA) < 1 && !ib.palle[1].colla, 'colla: il tiro dopo è più debole, poi passa');
+  const solo = buca('classica', 0); solo.poteri[0] = ['nebbia'];
+  assert.ok(/nessun avversario/.test(solo.usa(0, 0)) && solo.poteri[0].length === 1, 'da soli i poteri contro gli altri non si sprecano');
+  // terremoto anche sulle palline in corsa
+  const te = buca('classica', 0, 2); te.poteri[0] = ['terremoto']; te.input(1, { t: 'tiro', a: 0, f: 0.3 }); avanti(te, 66);
+  const v1 = [te.palle[1].vx, te.palle[1].vy]; te.usa(0, 0);
+  assert.ok(Math.hypot(te.palle[1].vx - v1[0], te.palle[1].vy - v1[1]) > 200 && te.vistaTick(1).palle[1].sc === 1, 'terremoto: spinge anche chi corre (e lo sente)');
+  // molla: il tiro parte con un salto (supera l'acqua del ponte)
+  const mo = buca('classica', 4); mo.poteri[0] = ['molla']; mo.usa(0, 0);
+  Object.assign(mo.palle[0], { x: 470, y: 300 }); mo.input(0, { t: 'tiro', a: 0, f: 0.6 });
+  assert.ok(mo.palle[0].aria > 0 && mo.vistaTick().palle[0].z === 0, 'molla: la pallina parte in aria');
+  avanti(mo, 300); assert.ok(mo.vistaTick().palle[0].z > 10, 'e si vede salire');
+  avanti(mo, 900); assert.ok(mo.palle[0].colpi === 1 && mo.palle[0].x > 1080, `con la molla salta l'acqua (${Math.round(mo.palle[0].x)})`);
+  // fantasma: passa attraverso i respingenti
+  const fa = buca('classica', 2); fa.poteri[0] = ['fantasma']; fa.usa(0, 0);
+  const [rx, ry] = fa.buca.respingenti[2]; Object.assign(fa.palle[0], { x: rx - 120, y: ry });
+  fa.input(0, { t: 'tiro', a: 0, f: 0.25 }); avanti(fa, 600);
+  assert.ok(fa.palle[0].x > rx + 40 || fa.palle[0].dentro, 'fantasma: attraversa il respingente');
+  // i poteri pronti passano alla buca dopo
+  const pb = buca('classica', 0); pb.palle[0].pronti = ['calamita']; pb.prossimaBuca(Date.now());
+  assert.deepStrictEqual(pb.palle[0].pronti, ['calamita'], 'un potere caricato e non usato vale nella buca dopo');
+  // colline: la pallina scende dal dosso, si ferma in fondo alla conca, non si ferma su un pendio ripido
+  const ci = (id) => COURSE.colline.buche.findIndex((b) => b.id === id);
+  const dosso = buca('colline', ci('dosso')), dd = dosso.buca.dossi[0];
+  Object.assign(dosso.palle[0], { x: dd.x - dd.r * 0.5, y: dd.y, vx: 0.1, vy: 0 }); avanti(dosso, 3000);
+  assert.ok(dosso.palle[0].x < dd.x - dd.r * 0.7, 'dal fianco del dosso la pallina scende');
+  const conca = buca('colline', ci('conca')), cc = conca.buca.dossi[0];
+  Object.assign(conca.palle[0], { x: cc.x - cc.r * 0.6, y: cc.y + 10, vx: 0.1, vy: 0 }); avanti(conca, 15000);
+  assert.ok(Math.hypot(conca.palle[0].x - cc.x, conca.palle[0].y - cc.y) < cc.r * 0.35 && !conca.palle[0].vx, 'nella conca si ferma in fondo');
+  assert.ok(!M._test.puoFermarsi(dosso.buca, { x: dd.x - dd.r * 0.5, y: dd.y }) && M._test.puoFermarsi(dosso.buca, { x: dd.x - dd.r - 50, y: dd.y }), 'su un pendio ripido non si ferma');
+  const su = { x: 200, y: 0, vx: 900, vy: 0, aria: 0 }, pendio = { ...COURSE.classica.buche[0], bordo: [[0, -300], [3000, -300], [3000, 300], [0, 300]], buca: [2900, 0], pendii: [{ x: 500, y: 0, a: 0, l: 500, h: 200 }] };
+  let indietro = false; for (let k = 0; k < 90; k++) { M._test.passo(pendio, su, 0.033, 0, [], [], []); if (su.vx < -100) indietro = true; }
+  assert.ok(indietro && su.x < 700, 'in salita senza forza la pallina torna indietro');
+  for (const b of COURSE.colline.buche) for (const pt of [b.partenza, b.buca]) assert.ok(M._test.puoFermarsi(b, { x: pt[0], y: pt[1] }), `colline/${b.id}: partenza e buca in piano`);
+  // dal telefono: il posto resta fermo e gli altri non lo aspettano
+  const tf = buca('classica', 0, 2); tf.input(1, { t: 'telefono' });
+  assert.ok(tf.usciti[1] && tf.telefono[1] && !tf.finita && tf.vista().telefono[1], 'telefono: il posto esce e lo si vede nel tabellone');
+  console.log(`✓ Minigolf Party 3D: 7 course (${nBuche} buche, tutte raggiungibili), 6 buche a caso per course, 1/3/5/7 course di fila, Open Course in ordine, pallina sempre nel campo, attrito realistico, dossi/conche/pendii, buca precisa anche col passo lungo e di labbro, respingenti forti, acqua +1, rampa, portale, 9 superpoteri usabili quando si vuole (anche in corsa e da in buca, col perché se no), aggiornamento non perso, tempo scaduto +3, meno colpi vince, pausa, telefono`);
 }
 
 // ======================= ELENCO DEI FILE (per il controllo all'avvio su Render) =======================
