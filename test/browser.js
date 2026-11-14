@@ -80,6 +80,14 @@ async function gioca(browser, id, nomeDisp) {
       }
       await p.waitForTimeout(110);
     }
+    // il tabellone non deve finire sotto il nome o la mano (succedeva sul telefono in orizzontale)
+    const sotto = await p.evaluate(() => {
+      const q = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return r.height > 2 && r.width > 2 && getComputedStyle(e).display !== 'none' ? r : null; };
+      const pan = q(document.querySelector('#panno'));
+      const primo = ['#mio-nome', '#azioni', '#mano'].map((s) => q(document.querySelector(s))).filter(Boolean).sort((x, y) => x.top - y.top)[0];
+      return pan && primo && pan.bottom > primo.top + 4 ? Math.round(pan.bottom - primo.top) : 0;
+    }).catch(() => 0);
+    if (sotto) errori.push(`il tabellone finisce sotto il nome/la mano di ${sotto} pixel`);
     // niente deve uscire di lato dallo schermo
     const largo = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     if (largo > 4) errori.push(`la pagina esce di lato di ${largo} pixel`);
