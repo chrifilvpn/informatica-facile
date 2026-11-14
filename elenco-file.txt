@@ -500,6 +500,7 @@ public/js/isolation/creature.js
 public/js/isolation/motore.js
 public/js/isolation/texture.js
 public/js/isolation/xenomorfo.js
+public/js/putt3d/scena.js
 public/js/tavoli-tabellone.js
 public/js/tavoli.js
 public/modelli/mani.task
