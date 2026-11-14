@@ -219,6 +219,7 @@ giochi3/isolation/alieno.js
 giochi3/isolation/creature.js
 giochi3/isolation/mappa.js
 giochi3/luci.js
+giochi3/lupus.js
 giochi3/navale-dati.js
 giochi3/navale-logica.js
 giochi3/navale.js
@@ -476,6 +477,8 @@ public/js/giochi3/lente.css
 public/js/giochi3/lente.js
 public/js/giochi3/luci.css
 public/js/giochi3/luci.js
+public/js/giochi3/lupus.css
+public/js/giochi3/lupus.js
 public/js/giochi3/navale.css
 public/js/giochi3/navale.js
 public/js/giochi3/nurikabe.css
@@ -589,6 +592,7 @@ test/giochi3/hex.js
 test/giochi3/hockey.js
 test/giochi3/isolation.js
 test/giochi3/luci.js
+test/giochi3/lupus.js
 test/giochi3/migliorie-azione-novembre.js
 test/giochi3/migliorie-azione.js
 test/giochi3/monumenti-disegni.js

@@ -96,7 +96,7 @@ const CATEGORIE = {
   carte: ['briscola', 'scopa', 'scopone', 'rubamazzo', 'scala40', 'peppa', 'fastwest', 'dubito', 'flip7', 'cirulla', 'solitario', 'uno', 'tressette', 'cucu', 'burraco', 'memory', 'machiavelli', 'assopiglia', 'uomonero', 'chiamata', 'piramide', 'freecell'],
   casino: ['blackjack', 'baccarat', 'higherlower', 'texas', 'poker5', 'roulette', 'settemezzo', 'videopoker', 'omaha'],
   strategia: ['tris', 'forza4', 'forza3d', 'battaglia', 'dama', 'damaint', 'scacchi', 'xiangqi', 'casellebombe', 'tesoro', 'coperti', 'interruttori', 'mappa', 'nascondino', 'shutbox', 'otello', 'ludo', 'oca', 'backgammon', 'yahtzee', 'bugiardi', 'conquista', 'mulino', 'quoridor', 'go', 'damacinese', 'affari', 'hex', 'navale', 'draghi'],
-  parole: ['impiccato', 'wordle', 'bandiere', 'capitali', 'sagome', 'monumenti', 'differenze', 'angolo', 'numero', 'impostore', 'coccodrillo', 'disegna', 'mensola', 'connessioni', 'codenames', 'morra', 'paroliere', 'nomicose', 'quiz', 'anagrammi', 'catena', 'cruciverba', 'anno', 'wavelength'],
+  parole: ['impiccato', 'wordle', 'bandiere', 'capitali', 'sagome', 'monumenti', 'differenze', 'angolo', 'numero', 'impostore', 'coccodrillo', 'disegna', 'mensola', 'connessioni', 'codenames', 'morra', 'paroliere', 'nomicose', 'quiz', 'anagrammi', 'catena', 'cruciverba', 'anno', 'wavelength', 'lupus'],
   azione: ['snake', 'tetris', 'airhockey', 'pallone', 'tasti', 'chirurgo', 'benchmark', 'putt', 'palloncini', 'gattotopi', 'colori', 'bumper', 'fuga', 'monete', 'arcobaleno', 'pioggia', 'paintball', 'piattaforme', 'massi', 'wanted', 'duello', 'strada', 'bersaglio', 'mangiatutto', 'tigerball', 'mind', 'bomberman', 'slither', 'corsa', 'calcetto', 'hockey', 'patata', 'tron', 'carri', 'asteroidi', 'pong4', 'battitura', 'cerchi', 'frutta', 'sfere', 'difesa', 'stickwar'],
   squid: ['stella', 'fune', 'dalgona', 'buio', 'alieno', 'ponte', 'calamaro', 'biglie'],
   rompicapo: ['campo', 'sblocca', 'sudoku', 'blockblast', 'mastermind', 'nonogram', 'duemila', 'kakuro', 'kenken', 'hanoi', 'sokoban', 'mahjong', 'luci', 'nurikabe', 'picross', 'collega', 'caramelle', 'bolle'],
@@ -108,7 +108,7 @@ for (const g of Object.values(GIOCHI)) if (!g.meta.categoria) g.meta.categoria =
 // tastiera insieme, 'uno' = basta l'uno o l'altro; tutti gli altri si giocano col solo mouse ('mouse')
 const CONTROLLI = {
   tastiera: ['snake', 'tetris', 'tasti', 'battitura', 'colori', 'bumper', 'fuga', 'monete', 'arcobaleno', 'pioggia', 'piattaforme', 'duello', 'mangiatutto', 'bomberman', 'hockey', 'patata', 'tron', 'stella', 'buio', 'calamaro', 'asteroidi', 'catena', 'nomicose', 'anagrammi', 'numero'],
-  entrambi: ['paintball', 'carri', 'gattotopi', 'alieno', 'isolation', 'disegna', 'impostore', 'codenames', 'cruciverba', 'benchmark', 'draghi', 'angolo', 'wavelength'],
+  entrambi: ['paintball', 'carri', 'gattotopi', 'alieno', 'isolation', 'disegna', 'impostore', 'codenames', 'cruciverba', 'benchmark', 'draghi', 'angolo', 'wavelength', 'lupus'],
   uno: ['airhockey', 'massi', 'strada', 'pong4', 'slither', 'palloncini', 'calcetto', 'sudoku', 'wordle', 'impiccato', 'quiz', 'bandiere', 'capitali', 'sagome', 'monumenti', 'paroliere', 'duemila', 'mind', 'ponte'],
 };
 for (const [c, ids] of Object.entries(CONTROLLI)) for (const id of ids) if (GIOCHI[id]) GIOCHI[id].meta.controlli = c;
