@@ -7,7 +7,8 @@
     "start": "node verifica.js && node server.js",
     "test": "node test/simula.js",
     "verifica": "node verifica.js",
-    "test:browser": "node test/browser.js"
+    "test:browser": "node test/browser.js",
+    "test:telefono": "node test/multi-tel.js"
   },
   "engines": {
     "node": ">=18"

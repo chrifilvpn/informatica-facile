@@ -612,6 +612,7 @@ test/giochi3/stickwar.js
 test/giochi3/wavelength.js
 test/giochi3/xiangqi.js
 test/migliorie3.js
+test/multi-tel.js
 test/novita.js
 test/nuovi.js
 test/serate.js

@@ -362,6 +362,14 @@ input::placeholder { color: rgba(243, 236, 217, .4); }
 .ventaglio.stretto .carta { margin-left: calc(var(--w) * -.82); }
 .ventaglio .carta:first-child { margin-left: 0; }
 .ventaglio .conta { margin-left: .35rem; font-size: .8rem; color: var(--tenue); }
+/* telefono: ai lati la colonna è stretta (66 px) e un ventaglio di 14 carte col numero, o una parola lunga sotto il nome
+   («penalità,»), uscivano dallo schermo e il telefono rimpiccioliva tutta la pagina (scopone, scala 40) */
+.posto-altro .info-posto { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 620px) {
+  .posto-altro .ventaglio { max-width: 100%; flex-wrap: wrap; justify-content: center; }
+  .posto-altro .ventaglio .carta:nth-child(n+11) { display: none; }
+  .posto-altro .ventaglio .conta { flex-basis: 100%; margin-left: 0; text-align: center; }
+}
 
 /* la mia mano */
 .mano { display: flex; gap: clamp(.35rem, 1.6vw, .8rem); justify-content: center; padding-top: 1rem; min-height: calc(var(--carta-l) * 1.55); max-width: 100%; }
