@@ -322,8 +322,8 @@ function etichetta(testo, colore) {
   g.fillStyle = 'rgba(10,20,30,.62)'; g.beginPath(); g.roundRect(128 - w / 2, 10, w, 44, 22); g.fill();
   g.fillStyle = colore; g.beginPath(); g.arc(128 - w / 2 + 18, 32, 8, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#fff'; g.fillText(testo, 128 + 8, 33);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture(c), depthTest: false, transparent: true }));
-  s.scale.set(64, 16, 1); s.renderOrder = 10;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture(c), depthTest: false, transparent: true, sizeAttenuation: false }));
+  s.scale.set(0.16, 0.04, 1); s.renderOrder = 10;
   return s;
 }
 
@@ -471,6 +471,7 @@ export function crea(tela) {
     }
     // ---- muri: assi lungo i segmenti, spezzate se il terreno sale e scende ----
     const mMuro = materialeMuro(tema), mCima = materialeMuro(tema, true);
+    pezziMuro = []; vetro = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false });
     const muro = (sg, alto, spesso, m1, m2) => {
       const [x1, y1, x2, y2] = sg, L = Math.hypot(x2 - x1, y2 - y1); if (L < 1) return;
       const a = Math.atan2(y2 - y1, x2 - x1), pezzi = Math.max(1, Math.ceil(L / 90));
@@ -483,6 +484,7 @@ export function crea(tela) {
         box.position.set(mx, (su + giu) / 2, my); box.rotation.y = -a; box.castShadow = true; box.receiveShadow = true; mondo.add(box);
         const cima = new THREE.Mesh(new THREE.BoxGeometry(l + 0.5, 3, spesso + 3), m2);
         cima.position.set(mx, su + 1.5, my); cima.rotation.y = -a; cima.castShadow = true; mondo.add(cima);
+        pezziMuro.push({ box, cima, x: mx, y: my, m1, m2, l });
       }
     };
     for (const sg of PB.segmentiFissi(b)) muro(sg, 16, 14, mMuro, mCima);
@@ -612,7 +614,16 @@ export function crea(tela) {
   }
 
   // quanto si va dritti da (x, y) nella direzione a prima di toccare un muro (al massimo max)
-  let segFissi = [];
+  let segFissi = [], pezziMuro = [], vetro = null;
+  // i pezzi di muro tra la telecamera e la pallina diventano trasparenti (così non coprono mezza scena)
+  function muriTrasparenti(cx, cy, bx, by) {
+    const vx = bx - cx, vy = by - cy, l = Math.hypot(vx, vy) || 1;
+    for (const p of pezziMuro) {
+      const t = ((p.x - cx) * vx + (p.y - cy) * vy) / (l * l), d = Math.abs((p.x - cx) * vy - (p.y - cy) * vx) / l;
+      const via = bx !== null && t > -0.3 && t < 0.8 && d < 70 + p.l / 2;
+      p.box.material = via ? vetro : p.m1; p.cima.material = via ? vetro : p.m2; p.box.castShadow = !via;
+    }
+  }
   function raggioMuri(x0, y0, a, max) {
     const dx = Math.cos(a), dy = Math.sin(a);
     let best = max;
@@ -684,7 +695,10 @@ export function crea(tela) {
       const pronti = q.pt || [];
       P.aura.visible = pronti.length > 0 || !!q.co;
       if (P.aura.visible) { P.aura.material.color.set(q.co ? 0xc28a1a : pronti.includes('turbo') ? 0xff7a1a : pronti.includes('calamita') ? 0x5fd3ff : pronti.includes('molla') ? 0x9dff7a : 0xe6e6ff); P.aura.position.y = -R + 1.5; P.aura.scale.setScalar(1 + Math.sin(t * 7) * 0.08); }
-      P.et.visible = !io; P.et.position.set(q.x, h + 22, q.y);
+      // il nome degli altri (non sopra la mia pallina: se sono vicini lo si toglie)
+      const mq = s.palle[s.mio];
+      P.et.visible = !io && !(mq && !mq.d && Math.hypot(q.x - mq.x, q.y - mq.y) < 40);
+      P.et.position.set(q.x, h + 22, q.y);
       // la scia quando corre
       const pts = P.scia.userData.punti;
       if (q.m) { pts.push([q.x, h, q.y]); if (pts.length > 30) pts.shift(); } else if (pts.length) pts.shift();
@@ -720,10 +734,11 @@ export function crea(tela) {
     } else {
       tx = C.segui.x; tz = C.segui.y; ty = quotaVista(b, tx, tz) + R;
       const avanti = 40; tx += Math.cos(C.yaw) * avanti; tz += Math.sin(C.yaw) * avanti;
-      // se dietro la pallina c'è un muro la telecamera non ci finisce dentro: si avvicina e sale (come una gru)
+      // se dietro la pallina c'è un muro che la coprirebbe, la telecamera si avvicina
       let oriz = Math.cos(C.pitch) * C.dist, su = Math.sin(C.pitch) * C.dist;
       const muro = raggioMuri(C.segui.x, C.segui.y, C.yaw + Math.PI, oriz + 20);
-      if (muro < oriz + 20) { const o2 = Math.max(18, muro - 22); su = Math.sqrt(Math.max(0, C.dist * C.dist - o2 * o2)) * 0.9 + 25; oriz = o2; }
+      // (solo se il muro copre davvero la pallina: altrimenti la telecamera resta fuori e guarda sopra il muro)
+      if (muro < oriz + 20 && su * (muro / oriz) < 22) { oriz = Math.max(18, muro - 22); su = Math.max(su, 40); }
       pos = [C.segui.x - Math.cos(C.yaw) * oriz, ty + su + 6, C.segui.y - Math.sin(C.yaw) * oriz];
       const terra = quotaVista(b, pos[0], pos[2]) + 14; if (pos[1] < terra) pos[1] = terra;
     }
@@ -733,6 +748,7 @@ export function crea(tela) {
     let sx = 0, sy = 0;
     if (s.scossa > 0) { sx = (Math.random() - 0.5) * s.scossa * 10; sy = (Math.random() - 0.5) * s.scossa * 10; }
     camera.position.set(cam.x + sx, cam.y + sy, cam.z);
+    if (C.segui && !C.alto) muriTrasparenti(cam.x, cam.z, C.segui.x, C.segui.y); else muriTrasparenti(0, 0, null, null);
     camera.lookAt(cam.tx, cam.ty, cam.tz);
     // l'ombra segue quello che si guarda
     sole.position.set(cam.tx + 500, cam.ty + 900, cam.tz + 300); sole.target.position.set(cam.tx, cam.ty, cam.tz);

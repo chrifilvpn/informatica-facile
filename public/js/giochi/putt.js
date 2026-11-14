@@ -95,8 +95,10 @@
     const q = u.palle[ctxA.mio];
     return q && !q.d && !q.m && !(ctxA.partita.usciti || [])[ctxA.mio];
   }
+  const forzaSpazio = (c) => { const u = ((performance.now() - c.t0) / 1700) % 1; return u < 0.5 ? u * 2 : 2 - u * 2; };
   function tira() {
     const c = carica; carica = null;
+    if (c && c.da === 'spazio') c.f = forzaSpazio(c);
     if (!c || c.f < 0.03 || !puoTirare()) return;
     ctxA.emetti('input', { t: 'tiro', a: cam.yaw, f: Math.round(c.f * 1000) / 1000 });
     suono([[200 + c.f * 260, 0.05], [140, 0.04]], { tipo: 'triangle', volume: 0.1 });
@@ -275,14 +277,14 @@
       S.preparaPalle(p.colori, nomi);
       const palle = palleOra(), io = ultimo.palle[ctxA.mio] || {}, mia = palle[ctxA.mio];
       // nuova buca: la telecamera guarda verso la bandierina
-      if (cam.k !== `${p.k}`) { cam.k = `${p.k}`; cam.yaw = direzioneIniziale(b); cam.alto = false; cam.guarda = -1; carica = null; }
+      if (cam.k !== `${p.k}`) { cam.k = `${p.k}`; cam.yaw = direzioneIniziale(b); cam.alto = false; cam.guarda = -1; carica = null; ultimaScossa = io.sc || 0; }
       // tasti tenuti premuti
       const lento = tasti.has('shift') ? 0.22 : 1;
       if (tasti.has('a') || tasti.has('arrowleft')) cam.yaw -= 1.7 * lento * dt;
       if (tasti.has('d') || tasti.has('arrowright')) cam.yaw += 1.7 * lento * dt;
       if (tasti.has('w') || tasti.has('arrowup')) cam.pitch = Math.min(1.35, cam.pitch + 0.9 * dt);
       if (tasti.has('s') || tasti.has('arrowdown')) cam.pitch = Math.max(0.08, cam.pitch - 0.9 * dt);
-      if (carica && carica.da === 'spazio') { const u = ((ora - carica.t0) / 1700) % 1; carica.f = u < 0.5 ? u * 2 : 2 - u * 2; }
+      if (carica && carica.da === 'spazio') carica.f = forzaSpazio(carica);
       if (carica && !puoTirare()) carica = null;
       // chi segue la telecamera
       const inBuca = !mia || mia.d || (p.usciti || [])[ctxA.mio];
@@ -290,7 +292,8 @@
       if (!inBuca) segui = mia;
       else if (cam.guarda >= 0 && palle[cam.guarda] && !palle[cam.guarda].d) segui = palle[cam.guarda];
       // scossa del terremoto
-      if (io.sc && io.sc !== ultimaScossa) { if (ultimaScossa) { scossa = 0.8; suono([[90, 0.25]], { tipo: 'sawtooth', volume: 0.08 }); } ultimaScossa = io.sc; }
+      if ((io.sc || 0) > ultimaScossa) { scossa = 0.8; suono([[90, 0.25]], { tipo: 'sawtooth', volume: 0.08 }); }
+      ultimaScossa = io.sc || 0;
       scossa = Math.max(0, scossa - dt);
       const t = ultimo.pausa ? ultimo.t : ultimo.t + (ora - arrivo) / 1000;
       S.disegna({
@@ -410,5 +413,5 @@
     clic() {},
   };
   Object.assign(window.Tavoli, { putt: tavolo });
-  window.__putt3d = { cam, get scena() { return S; }, get errore() { return errore; } }; // per le prove automatiche
+  window.__putt3d = { cam, get scena() { return S; }, get errore() { return errore; }, get carica() { return carica; }, get puoTirare() { return puoTirare(); } }; // per le prove automatiche
 })();
