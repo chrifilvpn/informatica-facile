@@ -209,6 +209,8 @@ giochi3/draghi/regole.js
 giochi3/draghi/salva.js
 giochi3/draghi/stazione.js
 giochi3/draghi/tempo-reale.js
+giochi3/escape-dati.js
+giochi3/escape.js
 giochi3/forza3d.js
 giochi3/freecell.js
 giochi3/frutta.js
@@ -462,6 +464,8 @@ public/js/giochi3/draghi-voce.css
 public/js/giochi3/draghi-voce.js
 public/js/giochi3/draghi.css
 public/js/giochi3/draghi.js
+public/js/giochi3/escape.css
+public/js/giochi3/escape.js
 public/js/giochi3/forza3d.css
 public/js/giochi3/forza3d.js
 public/js/giochi3/freecell.css
@@ -585,6 +589,7 @@ test/giochi3/draghi-musica.js
 test/giochi3/draghi-stessopc.js
 test/giochi3/draghi-voce.js
 test/giochi3/draghi.js
+test/giochi3/escape.js
 test/giochi3/forza3d.js
 test/giochi3/freecell.js
 test/giochi3/frutta.js
