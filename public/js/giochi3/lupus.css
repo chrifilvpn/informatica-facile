@@ -1,0 +1,159 @@
+/* LUPUS IN FABULA: il cielo dietro al tavolo cambia con la fase (notte blu con luna e stelle, alba rosata, giorno
+   dorato), il narratore in una pergamena scura con il gufo, la carta del ruolo che si gira, il villaggio a tessere. */
+.lp {
+  --lp-notte1: #0b1430; --lp-notte2: #1c2a55; --lp-luna: #f4ecc8; --lp-oro: #e8b64c; --lp-rosso: #c8433a;
+  --lp-crema: #f6eedb; --lp-ombra: rgba(4, 8, 22, .55);
+  position: relative; isolation: isolate; width: 100%; max-width: 70rem; margin: 0 auto; padding: .6rem .6rem 1rem;
+  border-radius: 16px; overflow: hidden; color: var(--lp-crema); min-height: 100%;
+  background: linear-gradient(180deg, var(--lp-notte1), var(--lp-notte2) 70%, #23305a);
+  transition: background 1.2s;
+}
+.lp.lp-alba { background: linear-gradient(180deg, #2c2a5a, #a8577a 55%, #f0a868); }
+.lp.lp-giorno { background: linear-gradient(180deg, #3d78b8, #77a9d6 55%, #c9dbc0); color: #1d1a12; }
+
+/* il cielo */
+.lp-cielo { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.lp-astro { position: absolute; top: 1.1rem; right: 1.4rem; width: 3.2rem; height: 3.2rem; border-radius: 50%; transition: all 1.2s; }
+.lp-notte .lp-astro { background: radial-gradient(circle at 35% 35%, #fffbe6, var(--lp-luna) 60%, #d9cfa4); box-shadow: 0 0 30px 8px rgba(244, 236, 200, .35); }
+.lp-alba .lp-astro { top: 70%; background: #ffd27a; box-shadow: 0 0 40px 18px rgba(255, 190, 110, .45); }
+.lp-giorno .lp-astro { background: #ffe07a; box-shadow: 0 0 40px 14px rgba(255, 230, 120, .55); }
+.lp-stelle { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s;
+  background-image: radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 8%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 44% 22%, #fff, transparent), radial-gradient(1px 1px at 63% 12%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 78% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 8%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 40%, #fff, transparent), radial-gradient(1.4px 1.4px at 52% 38%, #fff, transparent),
+    radial-gradient(1px 1px at 35% 48%, #fff, transparent), radial-gradient(1.2px 1.2px at 85% 50%, #fff, transparent);
+  animation: lp-brilla 4s ease-in-out infinite alternate; }
+.lp-notte .lp-stelle { opacity: 1; }
+@keyframes lp-brilla { from { filter: brightness(.7); } to { filter: brightness(1.3); } }
+.lp-colline { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; opacity: .55;
+  background: radial-gradient(120% 100% at 20% 100%, #0a0f22 60%, transparent 61%), radial-gradient(120% 100% at 80% 100%, #0d1430 58%, transparent 59%); }
+.lp-giorno .lp-colline { background: radial-gradient(120% 100% at 20% 100%, #5f8a4c 60%, transparent 61%), radial-gradient(120% 100% at 80% 100%, #739c57 58%, transparent 59%); opacity: .5; }
+
+/* in alto: fase e tempo */
+.lp-testa { position: relative; z-index: 1; margin-bottom: .6rem; }
+.lp-fase { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding-right: 4.2rem; min-height: 2.6rem; }
+.lp-fase b { font: 400 clamp(1.15rem, 4.6vw, 1.55rem)/1.15 var(--serif); }
+.lp-icona { font-size: 1.5rem; }
+.lp-orologio { font: 700 1.05rem/1 var(--sans); padding: .25rem .5rem; border-radius: 8px; background: var(--lp-ombra); color: var(--lp-crema); font-variant-numeric: tabular-nums; }
+.lp-orologio.lp-poco { background: var(--lp-rosso); animation: lp-pulsa 1s infinite; }
+@keyframes lp-pulsa { 50% { transform: scale(1.08); } }
+.lp-voce { position: absolute; right: .45rem; top: .45rem; display: inline-flex; align-items: center; gap: .25rem; min-height: 36px; padding: .2rem .6rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .35); background: var(--lp-ombra); color: var(--lp-crema); cursor: pointer; font-size: .95rem; }
+.lp-voce span { font-size: .78rem; }
+.lp-voce:not(.on) { opacity: .7; }
+.lp-barra { height: 5px; margin-top: .45rem; border-radius: 3px; background: var(--lp-ombra); overflow: hidden; }
+.lp-barra i { display: block; height: 100%; background: var(--lp-oro); transform-origin: left; animation: lp-scorre linear forwards; }
+@keyframes lp-scorre { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+.lp-corpo { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: .8rem; align-items: start; }
+.lp-col { display: grid; gap: .7rem; min-width: 0; width: 100%; }
+
+/* il narratore */
+.lp-narratore { position: relative; padding: .7rem 4.6rem .7rem 3.1rem; border-radius: 12px; background: rgba(8, 12, 30, .72); color: var(--lp-crema); border: 1px solid rgba(232, 182, 76, .35); box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
+.lp-gufo { position: absolute; left: .6rem; top: .6rem; font-size: 1.7rem; }
+.lp-frasi { display: grid; gap: .35rem; }
+.lp-frase { margin: 0; font: 400 1.02rem/1.4 var(--serif); animation: lp-appare .9s both; animation-delay: var(--t, 0ms); }
+.lp-frase:last-child { font-size: 1.1rem; }
+.lp-frase b, .lp-storia b, .lp-diario b { color: var(--lp-oro); font-weight: 700; }
+.lp-t-morte { color: #ffb4a8; }
+.lp-t-fine { color: #ffe08a; font-weight: 600; }
+@keyframes lp-appare { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+.lp-link { background: none; border: 0; padding: .3rem 0; color: var(--lp-oro); text-decoration: underline; cursor: pointer; font-size: .9rem; min-height: 32px; }
+.lp-giorno .lp-compito .lp-link { color: #8a5a00; }
+.lp-storia { margin: .4rem 0 0; padding-left: 1.1rem; max-height: 14rem; overflow: auto; font-size: .9rem; line-height: 1.4; display: grid; gap: .2rem; }
+
+/* la carta del ruolo */
+.lp-carta { position: relative; display: block; width: 100%; min-height: 6.4rem; padding: 0; border: 0; background: none; cursor: pointer; perspective: 900px; color: inherit; text-align: left; }
+.lp-dorso, .lp-fronte { position: absolute; inset: 0; display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; border-radius: 12px; backface-visibility: hidden; transition: transform .6s; }
+.lp-dorso { background: repeating-linear-gradient(45deg, #3a2a1a, #3a2a1a 8px, #46331f 8px, #46331f 16px); border: 2px solid var(--lp-oro); color: var(--lp-crema); }
+.lp-dorso .lp-luna { font-size: 2.2rem; }
+.lp-dorso b { font: 400 1.15rem var(--serif); display: block; }
+.lp-dorso small { display: block; opacity: .8; }
+.lp-fronte { transform: rotateY(180deg); background: linear-gradient(135deg, #fbf3dc, #ead7a6); color: #2a1e0e; border: 2px solid #b9893a; }
+.lp-carta.lp-rossa .lp-fronte { background: linear-gradient(135deg, #3b0f12, #6d1c1f); color: #ffe7da; border-color: #e0574c; }
+.lp-carta.aperta .lp-dorso { transform: rotateY(180deg); }
+.lp-carta.aperta .lp-fronte { transform: rotateY(360deg); }
+.lp-carta:not(.aperta) .lp-fronte { visibility: hidden; transition: transform .6s, visibility 0s .3s; }
+.lp-grande { font-size: 2.8rem; line-height: 1; }
+.lp-fronte b { display: block; font: 400 1.3rem var(--serif); }
+.lp-fronte small { display: block; font-size: .88rem; line-height: 1.3; margin-top: .15rem; }
+.lp-fronte .lp-branco { font-weight: 700; }
+.lp-fronte .lp-nascondi { opacity: .6; font-size: .75rem; }
+.lp-carta:focus-visible { outline: 3px solid var(--lp-oro); outline-offset: 2px; border-radius: 12px; }
+
+/* cosa devo fare */
+.lp-compito { padding: .65rem .8rem; border-radius: 12px; background: rgba(8, 12, 30, .55); border: 1px solid rgba(255, 255, 255, .15); display: grid; gap: .45rem; }
+.lp-giorno .lp-compito { background: rgba(255, 250, 235, .85); color: #2a2110; border-color: rgba(0, 0, 0, .1); }
+.lp-compito p { margin: 0; line-height: 1.35; }
+.lp-compito.lp-caccia { border-color: var(--lp-rosso); background: rgba(70, 10, 14, .6); }
+.lp-compito.lp-morto { background: rgba(30, 30, 40, .7); color: #ddd; }
+.lp-compito.lp-dormi { text-align: center; font-size: 1.02rem; }
+.lp-zz { display: inline-block; animation: lp-galleggia 2.4s ease-in-out infinite; }
+@keyframes lp-galleggia { 50% { transform: translateY(-5px); } }
+.lp-piccolo { font-size: .84rem; opacity: .85; }
+.lp-conferma { min-height: 44px; font-size: 1rem; }
+.lp-riga { display: flex; gap: .5rem; flex-wrap: wrap; }
+.lp-riga > * { flex: 1 1 auto; min-height: 44px; }
+
+/* il villaggio */
+.lp-villaggio { display: flex; flex-wrap: wrap; gap: .5rem; width: 100%; }
+.lp-villaggio > * { flex: 1 1 6.4rem; max-width: 10rem; min-width: 0; }
+.lp-abitante { position: relative; display: grid; justify-items: center; gap: .15rem; padding: .55rem .3rem .45rem; border-radius: 12px; border: 2px solid transparent; background: rgba(10, 16, 40, .62); color: var(--lp-crema); font: inherit; text-align: center; min-height: 6rem; transition: transform .15s, border-color .2s, background .3s; }
+.lp-giorno .lp-abitante { background: rgba(255, 252, 240, .88); color: #2a2110; }
+.lp-abitante b { font-size: .92rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-abitante small { font-size: .74rem; opacity: .8; min-height: 1em; }
+.lp-abitante.io { border-color: rgba(232, 182, 76, .55); }
+.lp-abitante.tocca { cursor: pointer; border-color: rgba(232, 182, 76, .45); }
+.lp-abitante.tocca:hover { transform: translateY(-2px); }
+.lp-abitante.tocca:active { transform: scale(.97); }
+.lp-abitante.scelto { border-color: var(--lp-oro); box-shadow: 0 0 0 3px rgba(232, 182, 76, .35), 0 0 18px rgba(232, 182, 76, .4); }
+.lp-abitante.cand { border-color: #f08a3c; }
+.lp-abitante.morto { filter: grayscale(.9); opacity: .55; }
+.lp-abitante.condannato { animation: lp-rogo 1.4s ease-in-out infinite alternate; opacity: 1; filter: none; }
+@keyframes lp-rogo { from { box-shadow: 0 0 6px 2px rgba(255, 120, 40, .4); } to { box-shadow: 0 0 22px 8px rgba(255, 90, 30, .75); } }
+.lp-faccia { position: relative; width: 2.8rem; height: 2.8rem; border-radius: 50%; display: grid; place-items: center; font: 400 1.35rem var(--serif); background: linear-gradient(135deg, #8c6a3c, #5b4122); color: #fff6e0; }
+.lp-abitante.lp-lupo .lp-faccia { background: linear-gradient(135deg, #8a2a24, #4a1210); }
+.lp-segno { position: absolute; right: -.45rem; bottom: -.3rem; font-style: normal; font-size: 1.15rem; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.lp-voti { position: absolute; top: .3rem; right: .3rem; min-width: 1.6rem; height: 1.6rem; padding: 0 .3rem; border-radius: 999px; background: var(--lp-rosso); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: .9rem; }
+.lp-voti em { position: absolute; top: 1.8rem; right: 0; width: max-content; max-width: 9rem; font-style: normal; font-weight: 500; font-size: .68rem; background: rgba(0, 0, 0, .75); padding: .1rem .35rem; border-radius: 6px; white-space: normal; text-align: right; z-index: 2; }
+.lp-preda { position: absolute; top: .3rem; left: .3rem; font-size: .78rem; background: var(--lp-rosso); color: #fff; border-radius: 999px; padding: .05rem .35rem; }
+
+/* il taccuino */
+.lp-diario { padding: .55rem .8rem; border-radius: 12px; background: #f3e6c4; color: #3a2a12; box-shadow: inset 0 0 18px rgba(120, 80, 20, .25); }
+.lp-diario h4 { margin: 0 0 .3rem; font: 400 1rem var(--serif); }
+.lp-diario ul { margin: 0; padding-left: 1rem; display: grid; gap: .2rem; font-size: .9rem; }
+.lp-diario b { color: #8a2a10; }
+
+/* la fine */
+.lp-finale { text-align: center; padding: .9rem; border-radius: 14px; animation: lp-appare 1s both; animation-delay: var(--t, 0ms); }
+.lp-finale h3 { margin: .2rem 0; font: 400 1.6rem var(--serif); }
+.lp-finale p { margin: .15rem 0; }
+.lp-vince-villaggio { background: linear-gradient(135deg, rgba(255, 236, 170, .92), rgba(170, 214, 140, .92)); color: #213010; }
+.lp-vince-lupi { background: linear-gradient(135deg, rgba(90, 14, 18, .92), rgba(20, 10, 30, .92)); color: #ffe2d6; }
+
+/* telefono */
+@media (max-width: 760px) {
+  .lp { padding: .5rem .45rem .8rem; border-radius: 12px; }
+  /* sul telefono: prima il narratore e cosa devo fare, poi il villaggio, la carta e il taccuino */
+  .lp-corpo { display: flex; flex-direction: column; gap: .6rem; }
+  .lp-col { display: contents; }
+  .lp-narratore { order: 1; } .lp-compito, .lp-finale { order: 2; } .lp-villaggio { order: 3; } .lp-carta { order: 4; } .lp-diario { order: 5; }
+  .lp-f-ruoli .lp-carta { order: 2; }
+  .lp-frase:nth-last-child(n+3) { display: none; }
+  .lp-storia .lp-frase { display: list-item; }
+  .lp-astro { width: 2.4rem; height: 2.4rem; top: .7rem; right: .8rem; }
+  .lp-fase { padding-right: 3.2rem; }
+  .lp-narratore { padding-right: 3rem; }
+  .lp-voce span { display: none; }
+  .lp-villaggio { gap: .4rem; }
+  .lp-villaggio > * { flex-basis: 5.3rem; max-width: none; }
+  .lp-abitante { min-height: 5.4rem; padding: .45rem .2rem .35rem; }
+  .lp-faccia { width: 2.4rem; height: 2.4rem; font-size: 1.15rem; }
+  .lp-frase { font-size: .95rem; }
+  .lp-frase:last-child { font-size: 1rem; }
+  .lp-carta { min-height: 5.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-frase, .lp-finale, .lp-stelle, .lp-zz, .lp-abitante.condannato, .lp-orologio.lp-poco { animation: none; }
+  .lp-dorso, .lp-fronte { transition: none; }
+}
