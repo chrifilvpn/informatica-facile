@@ -26,7 +26,7 @@
     if (!P) return '';
     let titolo = '', base = '';
     if (P.k === 'frittata') { titolo = `${esc(chi(ctx, P.chi))} ${P.chi === ctx.mio ? 'gridi' : 'grida'} <b>FRITTATA!</b>`; base = '<div class="frt-urlo">🍳 FRITTATA!</div>'; }
-    else if (P.k === 'azione') { titolo = `${esc(chi(ctx, P.chi))} ${P.chi === ctx.mio ? 'giochi' : 'gioca'}${P.bers != null ? ` su <b>${esc(P.bers === ctx.mio ? 'di te' : ctx.nome(P.bers))}</b>` : ''}`; base = carta(P.carta, { grande: true }); }
+    else if (P.k === 'azione') { titolo = `${esc(chi(ctx, P.chi))} ${P.chi === ctx.mio ? 'giochi' : 'gioca'}${P.bers != null ? (P.bers === ctx.mio && !ctx.stato.spettatore ? ' contro di <b>te</b>' : ` su <b>${esc(ctx.nome(P.bers))}</b>`) : ''}`; base = carta(P.carta, { grande: true }); }
     else if (P.k === 'mira') { titolo = `Scatta la trappola di ${esc(chi(ctx, P.chi))} contro ${esc(C()[P.azione.carta].nome)}`; base = carta(P.carta, { grande: true, cls: 'frt-scattata' }); }
     else if (P.k === 'padella') { titolo = `${esc(chi(ctx, P.vittima))} ${P.vittima === ctx.mio ? 'gridi' : 'grida'} Frittata… ma scatta la trappola di ${esc(chi(ctx, P.chi))}!`; base = carta(P.carta, { grande: true, cls: 'frt-scattata' }); }
     else if (P.k === 'retino') { titolo = `${esc(chi(ctx, P.vittima))} ${P.vittima === ctx.mio ? 'peschi' : 'pesca'}… ma scatta il retino di ${esc(chi(ctx, P.chi))}!`; base = carta(P.carta, { grande: true, cls: 'frt-scattata' }); }
