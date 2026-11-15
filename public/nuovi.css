@@ -1189,6 +1189,16 @@ button.it-leva { cursor: pointer; }
 .pt-centro { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); background: rgba(8, 18, 14, .6); padding: .7rem 1.4rem; border-radius: 14px; text-align: center; font: 400 clamp(1.2rem, 2.6vw, 2.2rem)/1.25 "Young Serif", Georgia, serif; }
 .pt-centro small { font: 600 .95rem system-ui, sans-serif; opacity: .85; }
 .pt-centro.pt-piccolo { top: auto; bottom: 6.5rem; padding: .35rem .9rem; }
+.pt-centro.pt-classifica { top: 44%; padding: .8rem 1.2rem 1rem; min-width: min(30rem, 90%); background: rgba(8, 18, 14, .82); box-shadow: 0 10px 40px rgba(0,0,0,.35); animation: pt-entra .35s ease-out; }
+.pt-fb-tit { font: 400 1.5rem/1.2 "Young Serif", Georgia, serif; margin-bottom: .5rem; }
+.pt-fb { width: 100%; border-collapse: collapse; font: 600 .98rem system-ui, sans-serif; text-align: left; }
+.pt-fb td { padding: .3rem .5rem; border-top: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
+.pt-fb td:first-child { opacity: .7; width: 2.2rem; }
+.pt-fb td:nth-child(3) { font-size: 1.15rem; text-align: center; }
+.pt-fb td.tot { opacity: .7; text-align: right; }
+.pt-fb tr.mia td { background: rgba(255, 210, 63, .14); }
+.pt-fb i { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .45rem; vertical-align: -.05rem; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+@keyframes pt-entra { from { opacity: 0; transform: translate(-50%, -44%) scale(.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 .pt-forza { position: absolute; left: 50%; bottom: 5.6rem; transform: translateX(-50%); display: grid; justify-items: center; gap: .2rem; width: min(22rem, 60%); }
 .pt-forza-barra { width: 100%; height: 14px; border-radius: 7px; background: rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .5); overflow: hidden; }
 .pt-forza-barra i { display: block; height: 100%; width: 0; }
@@ -1201,6 +1211,8 @@ button.it-leva { cursor: pointer; }
 .pt-casella .pt-ic { font-size: 1.6rem; line-height: 1; }
 .pt-casella:disabled { border-color: rgba(255, 255, 255, .2); opacity: .6; cursor: default; }
 .pt-casella.pt-contro { border-color: rgba(255, 110, 110, .9); }
+.pt-casella.pt-piazza { border-color: rgba(157, 255, 122, .95); }
+.pt-casella.pt-attiva { box-shadow: 0 0 0 3px #9dff7a, 0 0 18px rgba(157,255,122,.6); }
 .pt-casella:not(:disabled):hover { background: rgba(40, 60, 40, .75); }
 .pt-casella.pt-premuta { animation: pt-premi .35s ease-out; }
 @keyframes pt-premi { 50% { transform: scale(.88); background: rgba(255, 210, 63, .5); } }
