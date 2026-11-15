@@ -370,7 +370,7 @@
     if (carica) {
       const f = carica.f;
       fz.querySelector('i').style.width = io.ci ? '0%' : `${Math.round(f * 100)}%`;
-      fz.querySelector('i').style.background = `hsl(${120 - f * 120} 85% 50%)`;
+      { const col = `hsl(${120 - f * 120} 85% 52%)`, el = fz.querySelector('i'); el.style.background = `linear-gradient(90deg, hsl(120 80% 45%), ${col})`; el.style.color = col; }
       fz.querySelector('span').textContent = io.ci ? '🙈 forza nascosta' : `${Math.round(f * 100 * (io.co ? 0.55 : 1))}%${(io.pt || []).includes('turbo') ? ' 🚀' : ''}`;
     }
     // superpoteri in tasca e pronti
