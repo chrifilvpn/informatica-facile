@@ -184,7 +184,7 @@ Ricorda che col piano gratuito il sito si addormenta dopo 15 minuti senza visite
 - **Termina**: in alto durante la partita. Propone di chiudere la partita: votano le persone al tavolo (i computer no) e con la maggioranza dei sì si torna in sala; la votazione scade dopo 30 secondi.
 - **!restart** in chat: propone di ricominciare la partita da capo (stesso gioco, stesse opzioni, stessi giocatori), sempre a maggioranza, per quando qualcosa è andato storto.
 - A fine partita **🏠 Torna alla lobby** c'è per tutti (non solo per chi ha aperto il tavolo), anche nella barra che resta dopo aver chiuso i risultati.
-- **🌍 Chat globale**: una chat per tutto il sito, che si apre dalla home (in basso a sinistra) e da ogni tavolo (in alto). Tiene gli ultimi 60 messaggi; ha la censura e un limite anti-spam.
+- **🌍 Chat globale**: una chat per tutto il sito, che si apre dalla home (in basso a sinistra) e da ogni tavolo (in alto). Il pulsante in basso si scansa da solo quando finirebbe sopra il campo «Hai un codice?» o quando sul telefono scrivi in un campo (con la tastiera aperta coprirebbe il testo); la firma in basso a destra fa lo stesso. Tiene gli ultimi 60 messaggi; ha la censura e un limite anti-spam.
 - Nei giochi da 40 carte (scopa, scopone, rubamazzo, Cirulla) il pulsante "Ordina per seme / per valore" cambia l'ordine della mano, e il browser se lo ricorda.
 - La home mette i giochi in file da 5-6 sugli schermi larghi e 2 per riga sul telefono.
 - Sul telefono la barra dei filtri della home si nasconde scorrendo in giù e torna appena si scorre in su; i campi e le tendine hanno almeno 16px, così l'iPhone non ingrandisce la pagina quando li tocchi.
