@@ -252,9 +252,15 @@ function decorazioni(gruppo, b, tema, livello, rnd) {
     punti.push([x, y, 0.7 + rnd() * 0.8, rnd() * Math.PI * 2]);
   }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), eul = new THREE.Euler();
-  const istanze = (geo, materiale, f) => {
+  const tinta = new THREE.Color();
+  const istanze = (geo, materiale, f, varia = 0) => {
     const im = new THREE.InstancedMesh(geo, materiale, punti.length);
-    punti.forEach((p, i) => { const [px, py, pz, s, ry] = f(p); pos.set(px, py, pz); eul.set(0, ry, 0); q.setFromEuler(eul); sc.set(s, s, s); m4.compose(pos, q, sc); im.setMatrixAt(i, m4); });
+    const rc = caso(punti.length * 13 + 5);
+    punti.forEach((p, i) => {
+      const [px, py, pz, s, ry] = f(p); pos.set(px, py, pz); eul.set(0, ry, 0); q.setFromEuler(eul); sc.set(s, s, s); m4.compose(pos, q, sc); im.setMatrixAt(i, m4);
+      // le chiome non tutte dello stesso verde
+      if (varia) { tinta.setRGB(1, 1, 1).offsetHSL((rc() - 0.5) * varia * 0.25, 0, (rc() - 0.5) * varia); im.setColorAt(i, tinta); }
+    });
     im.castShadow = true; im.receiveShadow = true; gruppo.add(im);
   };
   if (T.deco === 'spazio') {
@@ -269,12 +275,12 @@ function decorazioni(gruppo, b, tema, livello, rnd) {
   if (T.deco === 'palme') {
     istanze(new THREE.CylinderGeometry(4, 7, 90, 6).translate(0, 45, 0), mat(0x8a6236), ([x, y, s, r]) => [x, livello, y, s, r]);
     const foglie = new THREE.ConeGeometry(55, 30, 7).translate(0, 98, 0);
-    istanze(foglie, mat(0x2f9a3a, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r]);
+    istanze(foglie, mat(0x2f9a3a, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r], 0.35);
     return;
   }
   if (T.deco === 'abeti') {
     istanze(new THREE.CylinderGeometry(4, 5, 30, 6).translate(0, 15, 0), mat(0x5a3a1e), ([x, y, s, r]) => [x, livello, y, s, r]);
-    istanze(new THREE.ConeGeometry(34, 110, 8).translate(0, 80, 0), mat(0x2e5a3e, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r]);
+    istanze(new THREE.ConeGeometry(34, 110, 8).translate(0, 80, 0), mat(0x2e5a3e, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r], 0.3);
     istanze(new THREE.ConeGeometry(24, 50, 8).translate(0, 118, 0), mat(0xffffff, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r]);
     return;
   }
@@ -288,8 +294,99 @@ function decorazioni(gruppo, b, tema, livello, rnd) {
   }
   istanze(new THREE.CylinderGeometry(5, 8, 50, 6).translate(0, 25, 0), mat(0x6b4a2a), ([x, y, s, r]) => [x, livello, y, s, r]);
   const verde = T.deco === 'giungla' ? 0x2a6a2e : 0x3f9a45;
-  istanze(new THREE.IcosahedronGeometry(42, 1).translate(0, 78, 0), mat(verde, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r]);
+  istanze(new THREE.IcosahedronGeometry(42, 1).translate(0, 78, 0), mat(verde, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r], 0.4);
+  // un secondo piano di foglie più piccolo e più chiaro, spostato: le chiome sembrano più folte
+  istanze(new THREE.IcosahedronGeometry(28, 1).translate(-16, 104, 8), mat(new THREE.Color(verde).offsetHSL(0.02, 0.05, 0.07), { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r], 0.4);
   if (T.deco === 'giungla') istanze(new THREE.IcosahedronGeometry(30, 0).translate(18, 110, 10), mat(0x1f5a28, { flatShading: true }), ([x, y, s, r]) => [x, livello, y, s, r]);
+}
+
+// il contorno vicino al campo: fiori, cespugli, ciuffi d'erba e sassi (conchiglie in spiaggia, mucchi di neve sul
+// ghiaccio, felci e funghetti nella giungla). Tutto con InstancedMesh e colori diversi per ogni pezzo.
+function contorno(gruppo, b, tema, livello, rnd) {
+  if (tema === 'spazio') return;
+  const T = TEMI[tema] || TEMI.classica;
+  const xs = b.bordo.map((q) => q[0]), ys = b.bordo.map((q) => q[1]);
+  const vicino = T.deco === 'palme' ? 120 : 260;
+  const x0 = Math.min(...xs) - vicino, x1 = Math.max(...xs) + vicino, y0 = Math.min(...ys) - vicino, y1 = Math.max(...ys) + vicino;
+  const punti = (n, dMin, dMax) => {
+    const out = [];
+    for (let k = 0; k < n * 6 && out.length < n; k++) {
+      const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0);
+      if (dentroPoligono(x, y, b.bordo)) continue;
+      const d = vicinoBordo(x, y, b.bordo)[1];
+      if (d < dMin || d > dMax) continue;
+      out.push([x, y, rnd(), rnd() * Math.PI * 2]);
+    }
+    return out;
+  };
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), eul = new THREE.Euler(), col = new THREE.Color();
+  const metti = (geo, materiale, lista, scala, colore, inclina = 0, ombre = true) => {
+    if (!lista.length) return;
+    const im = new THREE.InstancedMesh(geo, materiale, lista.length);
+    lista.forEach(([x, y, u, r], i) => {
+      const s = scala[0] + u * (scala[1] - scala[0]);
+      pos.set(x, livello, y); eul.set((rnd() - 0.5) * inclina, r, (rnd() - 0.5) * inclina); q.setFromEuler(eul); sc.set(s, s * (0.8 + rnd() * 0.4), s); m4.compose(pos, q, sc); im.setMatrixAt(i, m4);
+      if (colore) { colore(col, u, i); im.setColorAt(i, col); }
+    });
+    im.castShadow = ombre; im.receiveShadow = true; gruppo.add(im);
+  };
+  const n = Math.min(1.6, (b.W * b.H) / 1600000);
+  // sassi (ovunque)
+  const sassi = punti(Math.round(40 * n), 20, 200);
+  metti(new THREE.DodecahedronGeometry(9, 0).translate(0, 3, 0), mat(0xffffff, { flatShading: true, roughness: 0.9 }), sassi, [0.5, 1.8],
+    (c, u) => c.set(T.deco === 'abeti' ? 0x8a97a6 : T.deco === 'palme' ? 0xc9b48a : 0x8f8a80).offsetHSL(0, 0, (u - 0.5) * 0.15), 0.6);
+  if (T.deco === 'palme') {
+    // conchiglie e stelle marine sulla spiaggia, ciuffi d'erba alta
+    metti(new THREE.ConeGeometry(4, 5, 7).rotateX(Math.PI / 2).translate(0, 2, 0), mat(0xffffff, { roughness: 0.4 }), punti(Math.round(60 * n), 15, 110), [0.7, 1.4],
+      (c, u) => c.setHSL(0.02 + u * 0.08, 0.55, 0.78), 0.5, false);
+    const stella = new THREE.Shape(); for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2, r = k % 2 ? 2.4 : 6; stella[k ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); }
+    metti(new THREE.ExtrudeGeometry(stella, { depth: 1.2, bevelEnabled: false }).rotateX(-Math.PI / 2).translate(0, 0.5, 0), mat(0xffffff, { roughness: 0.6 }), punti(Math.round(16 * n), 15, 110), [0.8, 1.3],
+      (c, u) => c.setHSL(0.02 + u * 0.05, 0.75, 0.55), 0, false);
+    metti(new THREE.ConeGeometry(3, 26, 4).translate(0, 13, 0), mat(0x7fb04a, { flatShading: true }), punti(Math.round(50 * n), 30, 110), [0.6, 1.3],
+      (c, u) => c.setRGB(1, 1, 1).offsetHSL(0, 0, (u - 0.5) * 0.2), 0.7);
+    return;
+  }
+  if (T.deco === 'abeti') {
+    // mucchi di neve e cristalli di ghiaccio
+    metti(new THREE.SphereGeometry(16, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xffffff, { roughness: 0.9 }), punti(Math.round(45 * n), 20, 240), [0.6, 2.2], (c, u) => c.setRGB(0.92 + u * 0.08, 0.95 + u * 0.05, 1));
+    metti(new THREE.OctahedronGeometry(6, 0).translate(0, 7, 0), new THREE.MeshStandardMaterial({ color: 0xbfe8ff, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85, emissive: 0x2a5a7a, emissiveIntensity: 0.4 }), punti(Math.round(25 * n), 20, 200), [0.7, 1.8], null, 0.8);
+    return;
+  }
+  // cespugli tondi
+  const verde = new THREE.Color(T.deco === 'giungla' ? 0x2f7a32 : 0x4aa64a);
+  metti(new THREE.IcosahedronGeometry(16, 1).translate(0, 9, 0), mat(0xffffff, { flatShading: true }), punti(Math.round(45 * n), 25, 240), [0.6, 1.6],
+    (c, u) => c.copy(verde).offsetHSL((u - 0.5) * 0.05, 0, (u - 0.5) * 0.12));
+  // ciuffi d'erba (tre lame per ciuffo)
+  const lama = new THREE.ConeGeometry(1.6, 16, 3).translate(0, 8, 0), ciuffo = [];
+  for (let k = 0; k < 3; k++) { const g = lama.clone().rotateZ((k - 1) * 0.35).translate((k - 1) * 2.2, 0, (k % 2) * 1.5); ciuffo.push(g); }
+  const gCiuffo = unisci(ciuffo);
+  metti(gCiuffo, mat(0xffffff, { flatShading: true }), punti(Math.round(140 * n), 12, 200), [0.7, 1.5],
+    (c, u) => c.copy(verde).offsetHSL(0.02, 0.05, 0.05 + (u - 0.5) * 0.15), 0.3, false);
+  // fiori: gambo + corolla colorata
+  const fiori = punti(Math.round((T.deco === 'giungla' ? 50 : 110) * n), 12, 170);
+  metti(new THREE.CylinderGeometry(0.5, 0.6, 12, 4).translate(0, 6, 0), mat(0x3f8f3a), fiori, [0.8, 1.3], null, 0.3, false);
+  const tavolozza = T.deco === 'giungla' ? [0.95, 0.0, 0.08, 0.8] : [0.0, 0.13, 0.6, 0.83, 0.95, 0.15];
+  metti(new THREE.IcosahedronGeometry(3.2, 0).translate(0, 13, 0), mat(0xffffff, { flatShading: true, roughness: 0.6 }), fiori, [0.8, 1.3],
+    (c, u, i) => c.setHSL(tavolozza[i % tavolozza.length], 0.8, 0.6 + (u - 0.5) * 0.15), 0.3, false);
+  if (T.deco === 'giungla') {
+    // felci e funghetti
+    const foglia = new THREE.ConeGeometry(5, 34, 3).scale(1, 1, 0.25).translate(0, 17, 0), felce = [];
+    for (let k = 0; k < 5; k++) felce.push(foglia.clone().rotateZ(0.55).rotateY((k / 5) * Math.PI * 2));
+    metti(unisci(felce), mat(0xffffff, { flatShading: true, side: THREE.DoubleSide }), punti(Math.round(55 * n), 15, 230), [0.7, 1.5], (c, u) => c.set(0x2f8a34).offsetHSL(0, 0, (u - 0.5) * 0.12));
+    metti(unisci([new THREE.CylinderGeometry(1.2, 1.5, 6, 6).translate(0, 3, 0), new THREE.SphereGeometry(4.5, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 5.5, 0)]), mat(0xffffff), punti(Math.round(25 * n), 12, 160), [0.8, 1.5],
+      (c, u) => c.setHSL(u < 0.5 ? 0.02 : 0.08, 0.7, 0.55), 0.2, false);
+  }
+}
+// unisce più geometrie in una sola (stessi attributi)
+function unisci(lista) {
+  const parti = lista.map((g) => (g.index ? g.toNonIndexed() : g));
+  const n = parti.reduce((s, g) => s + g.attributes.position.count, 0);
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
+  let o = 0;
+  for (const g of parti) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  return out;
 }
 
 // una striscia piatta che segue il terreno (la freccia della mira)
@@ -409,6 +506,62 @@ function dipingiPallina(colore) {
   return texture(c);
 }
 
+// ---------- effetti sullo schermo: bagliore delle luci (bloom), colori più vivi, bordi più scuri ----------
+// Fatti a mano (niente moduli esterni): la scena va in una texture, le parti più luminose si sfocano a un quarto
+// della grandezza e si sommano, poi un ultimo passaggio fa tone mapping, saturazione e vignetta.
+const VS_PIENO = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+function effetti(renderer) {
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+  quad.frustumCulled = false;
+  const sc = new THREE.Scene(); sc.add(quad);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const opz = { type: THREE.HalfFloatType, depthBuffer: true };
+  let scenaRT = null, a = null, c = null, w = 0, h = 0;
+  const luce = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, soglia: { value: 0.9 } }, vertexShader: VS_PIENO, depthTest: false, depthWrite: false, toneMapped: false,
+    fragmentShader: 'uniform sampler2D t; uniform float soglia; varying vec2 vUv; void main() { vec3 c = texture2D(t, vUv).rgb; float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor = vec4(c * smoothstep(soglia, soglia + 0.6, l), 1.0); }' });
+  const sfoca = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: VS_PIENO, depthTest: false, depthWrite: false, toneMapped: false,
+    fragmentShader: `uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
+      void main() { vec3 s = texture2D(t, vUv).rgb * 0.227;
+        s += (texture2D(t, vUv + dir * 1.385).rgb + texture2D(t, vUv - dir * 1.385).rgb) * 0.316;
+        s += (texture2D(t, vUv + dir * 3.231).rgb + texture2D(t, vUv - dir * 3.231).rgb) * 0.070;
+        gl_FragColor = vec4(s, 1.0); }` });
+  const finale = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, bagliore: { value: null }, forza: { value: 0.5 }, sat: { value: 1.06 }, vign: { value: 0.28 } }, vertexShader: VS_PIENO, depthTest: false, depthWrite: false,
+    fragmentShader: `uniform sampler2D t; uniform sampler2D bagliore; uniform float forza; uniform float sat; uniform float vign; varying vec2 vUv;
+      void main() {
+        vec3 c = texture2D(t, vUv).rgb + texture2D(bagliore, vUv).rgb * forza;
+        float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = mix(vec3(l), c, sat);
+        vec2 d = vUv - 0.5; c *= 1.0 - vign * smoothstep(0.25, 0.85, dot(d, d) * 2.2);
+        gl_FragColor = vec4(c, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }` });
+  function misura(W, H) {
+    if (W === w && H === h && scenaRT) return;
+    w = W; h = H;
+    [scenaRT, a, c].forEach((r) => r && r.dispose());
+    scenaRT = new THREE.WebGLRenderTarget(W, H, { ...opz, samples: renderer.capabilities.isWebGL2 ? 4 : 0 });
+    const qw = Math.max(1, Math.round(W / 4)), qh = Math.max(1, Math.round(H / 4));
+    a = new THREE.WebGLRenderTarget(qw, qh, { type: THREE.HalfFloatType, depthBuffer: false });
+    c = new THREE.WebGLRenderTarget(qw, qh, { type: THREE.HalfFloatType, depthBuffer: false });
+  }
+  const passa = (m, rt) => { quad.material = m; renderer.setRenderTarget(rt); renderer.render(sc, cam); };
+  return {
+    attivo: true,
+    disegna(scena, camera, forza, soglia = 1) {
+      const v = renderer.getDrawingBufferSize(new THREE.Vector2());
+      misura(v.x, v.y);
+      renderer.setRenderTarget(scenaRT); renderer.render(scena, camera);
+      luce.uniforms.t.value = scenaRT.texture; luce.uniforms.soglia.value = soglia; passa(luce, a);
+      for (let k = 0; k < 2; k++) {
+        sfoca.uniforms.t.value = a.texture; sfoca.uniforms.dir.value.set((1 + k) / a.width, 0); passa(sfoca, c);
+        sfoca.uniforms.t.value = c.texture; sfoca.uniforms.dir.value.set(0, (1 + k) / a.height); passa(sfoca, a);
+      }
+      finale.uniforms.t.value = scenaRT.texture; finale.uniforms.bagliore.value = a.texture; finale.uniforms.forza.value = forza;
+      passa(finale, null);
+    },
+  };
+}
+
 // ======================================================================================
 export function crea(tela) {
   const renderer = new THREE.WebGLRenderer({ canvas: tela, antialias: true, powerPreference: 'high-performance' });
@@ -423,6 +576,8 @@ export function crea(tela) {
   Object.assign(sole.shadow.camera, { left: -700, right: 700, top: 700, bottom: -700, near: 10, far: 3000 });
   sole.shadow.bias = -0.0006; sole.shadow.normalBias = 0.6;
   scena.add(sole, sole.target);
+  let fx = null;
+  try { fx = effetti(renderer); } catch (e) { console.warn('[putt3d] effetti spenti', e); }
 
   let mondo = null, chiave = null, b = null, tema = 'classica';
   let palle = [], vecchiePalle = [], etichette = [];
@@ -488,6 +643,7 @@ export function crea(tela) {
     emi.color.set(tema === 'spazio' ? 0x8090ff : 0xffffff); emi.groundColor.set(tema === 'spazio' ? 0x221133 : 0x445533); emi.intensity = tema === 'spazio' ? 0.75 : 1.1;
     sole.color.set(T.sole); sole.intensity = tema === 'spazio' ? 1.6 : tema === 'ghiaccio' ? 1.45 : 2.3;
     if (tema === 'ghiaccio') emi.intensity = 0.75;
+    renderer.toneMappingExposure = tema === 'ghiaccio' ? 0.8 : 1.0; // (il ghiaccio è tutto chiaro: un po' meno luce, più contrasto)
     emi.intensity *= 0.85; // (la mappa d'ambiente dà già un po' di luce)
 
     const xs = b.bordo.map((q) => q[0]), ys = b.bordo.map((q) => q[1]);
@@ -563,6 +719,7 @@ export function crea(tela) {
       mondo.add(new THREE.Points(st, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false })));
     }
     decorazioni(mondo, b, tema, T.mare ? livello + 8 : livello, rnd);
+    contorno(mondo, b, tema, T.mare ? livello + 6 : livello, rnd);
     if (tema !== 'spazio') {
       const cielo = new THREE.Group();
       for (let k = 0; k < 16; k++) { const n = nuvola(rnd), a = rnd() * Math.PI * 2, r = 3200 + rnd() * 1800; n.position.set(cx + Math.cos(a) * r, 700 + rnd() * 900, cy + Math.sin(a) * r); n.rotation.y = rnd() * 6; n.scale.setScalar(1 + rnd()); cielo.add(n); }
@@ -963,7 +1120,10 @@ export function crea(tela) {
     if (s.nebbia) { scena.fog.color.set(0xd6dae2); scena.fog.near = 30; scena.fog.far = Math.max(140, C.dist + 120); }
     else { scena.fog.color.set(T.nebbia); scena.fog.near = 3000; scena.fog.far = 9000; }
     if (anim.neve) { anim.neve.position.set(cam.tx, 0, cam.tz); const p = anim.neve.geometry.attributes.position; for (let i = 0; i < p.count; i++) { let y = p.getY(i) - 40 * dt; if (y < -100) y += 700; p.setY(i, y); } p.needsUpdate = true; }
-    renderer.render(scena, camera);
+    if (fx && fx.attivo) {
+      // se gli effetti danno problemi su questo computer si torna al disegno semplice (e non si riprova)
+      try { fx.disegna(scena, camera, tema === 'spazio' ? 0.6 : tema === 'ghiaccio' ? 0.2 : 0.4, tema === 'spazio' ? 0.6 : tema === 'ghiaccio' ? 1.5 : 1.0); } catch (e) { fx.attivo = false; renderer.setRenderTarget(null); console.warn('[putt3d] effetti spenti', e); renderer.render(scena, camera); }
+    } else renderer.render(scena, camera);
     ultimoT = t;
   }
 
