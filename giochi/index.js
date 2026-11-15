@@ -93,7 +93,7 @@ const GIOCHI = { briscola, scopa, scopone, rubamazzo, scala40, tris, forza4, bat
 
 // CATEGORIE della home (un gioco nuovo che non è in elenco finisce in "Altri")
 const CATEGORIE = {
-  carte: ['briscola', 'scopa', 'scopone', 'rubamazzo', 'scala40', 'peppa', 'fastwest', 'dubito', 'flip7', 'cirulla', 'solitario', 'uno', 'tressette', 'cucu', 'burraco', 'memory', 'machiavelli', 'assopiglia', 'uomonero', 'chiamata', 'piramide', 'freecell'],
+  carte: ['briscola', 'scopa', 'scopone', 'rubamazzo', 'scala40', 'peppa', 'fastwest', 'dubito', 'flip7', 'cirulla', 'solitario', 'uno', 'tressette', 'cucu', 'burraco', 'memory', 'machiavelli', 'assopiglia', 'uomonero', 'chiamata', 'piramide', 'freecell', 'frittata'],
   casino: ['blackjack', 'baccarat', 'higherlower', 'texas', 'poker5', 'roulette', 'settemezzo', 'videopoker', 'omaha'],
   strategia: ['tris', 'forza4', 'forza3d', 'battaglia', 'dama', 'damaint', 'scacchi', 'xiangqi', 'casellebombe', 'tesoro', 'coperti', 'interruttori', 'mappa', 'nascondino', 'shutbox', 'otello', 'ludo', 'oca', 'backgammon', 'yahtzee', 'bugiardi', 'conquista', 'mulino', 'quoridor', 'go', 'damacinese', 'affari', 'hex', 'navale', 'draghi'],
   parole: ['impiccato', 'wordle', 'bandiere', 'capitali', 'sagome', 'monumenti', 'differenze', 'angolo', 'numero', 'impostore', 'coccodrillo', 'disegna', 'mensola', 'connessioni', 'codenames', 'morra', 'paroliere', 'nomicose', 'quiz', 'anagrammi', 'catena', 'cruciverba', 'anno', 'wavelength', 'lupus'],
