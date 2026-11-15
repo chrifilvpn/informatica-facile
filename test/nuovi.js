@@ -2066,7 +2066,7 @@ fissa('PUTT PARTY 2D');
   const po = buca('spazio', 3); Object.assign(po.palle[0], { x: 740, y: 300 }); po.input(0, { t: 'tiro', a: 0, f: 0.12 }); avanti(po, 1500);
   assert.ok(po.palle[0].x > 1000, 'il portale porta dall\'altra parte del muro');
   // power-up: scatole (una volta a testa), al massimo 3, effetti
-  assert.ok(POTERI.length === 9 && MAX_POTERI === 3);
+  assert.ok(POTERI.length === 15 && MAX_POTERI === 3);
   const pw = buca('classica', 2, 3), [s1] = pw.buca.pu;
   Object.assign(pw.palle[0], { x: s1[0], y: s1[1] }); avanti(pw, 66);
   assert.strictEqual(pw.poteri[0].length, 1, 'passando sulla scatola si prende un power-up');
@@ -2169,7 +2169,41 @@ fissa('PUTT PARTY 2D');
   // dal telefono: il posto resta fermo e gli altri non lo aspettano
   const tf = buca('classica', 0, 2); tf.input(1, { t: 'telefono' });
   assert.ok(tf.usciti[1] && tf.telefono[1] && !tf.finita && tf.vista().telefono[1], 'telefono: il posto esce e lo si vede nel tabellone');
-  console.log(`✓ Minigolf Party 3D: 7 course (${nBuche} buche, tutte raggiungibili), 6 buche a caso per course, 1/3/5/7 course di fila, Open Course in ordine, pallina sempre nel campo, attrito realistico, dossi/conche/pendii, buca precisa anche col passo lungo e di labbro, respingenti forti, acqua +1, rampa, portale, 9 superpoteri usabili quando si vuole (anche in corsa e da in buca, col perché se no), aggiornamento non perso, tempo scaduto +3, meno colpi vince, pausa, telefono`);
+  // ---- i poteri "party": Specchio, Gelata, Gomma, Furto, Fungo e Vortice da piazzare ----
+  {
+    const sp = buca('classica', 0, 2); sp.poteri[0] = ['specchio'];
+    assert.strictEqual(sp.usa(0, 0), null); assert.ok(sp.palle[1].specchio && !sp.palle[0].specchio, 'specchio sugli altri');
+    sp.input(1, { t: 'tiro', a: 0, f: 0.3 });
+    assert.ok(sp.palle[1].vx < 0 && !sp.palle[1].specchio, 'specchio: il tiro va al contrario, poi passa');
+    const ge = buca('classica', 0, 2); ge.poteri[0] = ['gelo']; ge.usa(0, 0);
+    assert.ok(ge.vistaTick().palle[1].gh > 0 && !ge.vistaTick().palle[0].gh, 'gelata sugli altri');
+    const pista2 = { ...COURSE.classica.buche[0], bordo: [[0, 0], [9000, 0], [9000, 600], [0, 600]], buca: [8900, 300] };
+    const corsa = (gelo) => { const q = { x: 100, y: 300, vx: 500, vy: 0, aria: 0, gelo }; for (let k = 0; k < 300 && Math.hypot(q.vx, q.vy) > 5; k++) M._test.passo(pista2, q, 0.033, 1, [], [], []); return q.x; };
+    assert.ok(corsa(20) > corsa(0) * 2, 'gelata: si scivola molto di più');
+    const go = buca('classica', 0, 2); go.poteri[0] = ['gomma']; go.usa(0, 0);
+    const pg = go.palle[1]; Object.assign(pg, { x: 500, y: 480 }); go.input(1, { t: 'tiro', a: -Math.PI / 2, f: 0.8 });
+    avanti(go, 1500); assert.ok(!pg.vx && !pg.vy && pg.y < 380 && pg.x === 500, `gomma: si ferma al primo muro (${Math.round(pg.y)})`);
+    const fu = buca('classica', 0, 3); fu.poteri = [['furto'], ['turbo'], ['nebbia', 'colla']];
+    assert.strictEqual(fu.usa(0, 0), null);
+    assert.ok(fu.poteri[2].length === 1 && fu.poteri[1].length === 1 && fu.poteri[0].length === 1, 'furto: ruba a chi ne ha di più, uno solo');
+    const fv = buca('classica', 0, 2); fv.poteri = [['furto'], []];
+    assert.ok(/nessun avversario/.test(fv.usa(0, 0)) && fv.poteri[0].length === 1, 'furto senza niente da rubare: rifiutato');
+    const fg = buca('classica', 0, 1); fg.poteri[0] = ['fungo', 'vortice', 'fungo'];
+    assert.ok(/clicca/.test(fg.usa(0, 0)), 'fungo senza punto: chiede dove');
+    assert.ok(/buca/.test(fg.usa(0, 0, fg.buca.buca[0] - 20, fg.buca.buca[1])), 'non sulla buca');
+    assert.ok(/prato/.test(fg.usa(0, 0, -500, -500)), 'non fuori dal campo');
+    assert.strictEqual(fg.usa(0, 0, 800, 480), null, 'fungo piazzato');
+    assert.ok(fg.piazzati.length === 1 && fg.vistaTick().ex[0][1] === 800, 'il fungo si vede');
+    // la pallina che ci va contro rimbalza forte
+    Object.assign(fg.palle[0], { x: 720, y: 480 }); fg.input(0, { t: 'tiro', a: 0, f: 0.15 });
+    avanti(fg, 400); assert.ok(fg.palle[0].vx < 0, 'il fungo rilancia la pallina');
+    Object.assign(fg.palle[0], { vx: 0, vy: 0, x: 400, y: 480 });
+    assert.strictEqual(fg.usa(0, 0, 1000, 480), null, 'vortice piazzato');
+    const vq = { x: 1000, y: 560, vx: 0, vy: 1, aria: 0 }; M._test.passo(fg.campo(), vq, 0.05, 1, [], [], []);
+    assert.ok(vq.vy < 0, 'il vortice attira la pallina vicina');
+    fg.prossimaBuca(Date.now()); assert.ok(!fg.piazzati.length && fg.campo() === fg.buca, 'alla buca dopo i pezzi spariscono');
+  }
+  console.log(`✓ Minigolf Party 3D: 7 course (${nBuche} buche, tutte raggiungibili), 6 buche a caso per course, 1/3/5/7 course di fila, Open Course in ordine, pallina sempre nel campo, attrito realistico, dossi/conche/pendii, buca precisa anche col passo lungo e di labbro, respingenti forti, acqua +1, rampa, portale, 15 superpoteri (Specchio, Gelata, Gomma, Furto, Fungo e Vortice piazzabili) usabili quando si vuole (anche in corsa e da in buca, col perché se no), aggiornamento non perso, tempo scaduto +3, meno colpi vince, pausa, telefono`);
 }
 
 // ======================= ELENCO DEI FILE (per il controllo all'avvio su Render) =======================

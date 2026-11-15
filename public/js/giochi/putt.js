@@ -12,15 +12,22 @@
   let ultimo = null, prima = null, arrivo = 0, primaArrivo = 0;
   const attiva = () => ctxA && ctxA.stato && ctxA.partita && ctxA.partita.gioco === 'putt';
   const bucaDi = (rif) => (rif ? PB.COURSE[rif[0]].buche[rif[1]] : null);
-  const ICONE = { turbo: '🚀', calamita: '🧲', rifai: '⏪', molla: '🦘', fantasma: '👻', nebbia: '🌫️', mira: '🙈', terremoto: '🌋', colla: '🍯' };
+  const ICONE = { turbo: '🚀', calamita: '🧲', rifai: '⏪', molla: '🦘', fantasma: '👻', nebbia: '🌫️', mira: '🙈', terremoto: '🌋', colla: '🍯',
+    specchio: '🪞', gelo: '🧊', gomma: '🫧', furto: '🦝', fungo: '🍄', vortice: '🌀' };
   const SPIEGA = {
     turbo: 'il prossimo tiro è più forte del 60%', calamita: 'nel prossimo tiro la buca attira la pallina', rifai: 'annulla l\'ultimo tiro (anche mentre corre)',
     molla: 'il prossimo tiro parte con un salto', fantasma: 'nel prossimo tiro passi attraverso gli ostacoli (non i muri)',
     nebbia: 'gli altri vedono poco per 10 secondi', mira: 'gli altri non vedono freccia e forza', terremoto: 'spinge a caso le palline degli altri', colla: 'il prossimo tiro degli altri è debole',
+    specchio: 'il prossimo tiro degli altri va al contrario', gelo: 'per 12 secondi gli altri scivolano come sul ghiaccio', gomma: 'al prossimo tiro degli altri la pallina si ferma alla prima cosa che tocca',
+    furto: 'rubi un potere a chi ne ha di più', fungo: 'piazzi un respingente dove vuoi (clicca sul campo)', vortice: 'piazzi un fungo che attira le palline (clicca sul campo)',
   };
+  const PIAZZA = ['fungo', 'vortice'];
   // telecamera e mira
-  const cam = { yaw: 0, pitch: 0.42, dist: 230, alto: false, segui: null, k: null, guarda: -1 };
-  let carica = null; // { f, da: 'mouse' | 'spazio', t0 }
+  // (vista dall'alto e un po' inclinata, come nei minigolf "party": si vede bene la pallina e la strada davanti)
+  const cam = { yaw: 0, pitch: 0.92, dist: 330, alto: false, segui: null, k: null, guarda: -1 };
+  // il tiro a fionda: { f, a, da: 'mouse' | 'spazio', x0, y0 (dove si è cliccato), t0 }
+  let carica = null;
+  let piazza = null; // un Fungo o un Vortice da mettere sul campo: { i, tipo, pt: [x, y] | null }
   let gira = null; // trascinamento col tasto destro (o sinistro quando non si può tirare)
   const tasti = new Set();
   let aiuto = false, scossa = 0, ultimaScossa = 0, fattiVisti = new Set(), ultimoFrame = performance.now();
@@ -64,13 +71,13 @@
         <div class="pt-pronti"></div>
         <div class="pt-caselle">${[0, 1, 2].map((i) => `<button type="button" class="pt-casella" data-casella="${i}" disabled><b>${i + 1}</b><span class="pt-ic"></span><small></small></button>`).join('')}</div>
       </div>
-      <div class="pt-suggerisci">Tasto destro: gira · Clic e trascina giù: tira · H: comandi</div>
+      <div class="pt-suggerisci">Clic e tira indietro: fionda · Tasto destro: gira · Tab: tutta la buca · H: comandi</div>
       <div class="pt-aiuto" hidden>
         <h3>Comandi</h3>
-        <p><b>Girare la mira</b>: tieni premuto il tasto destro e muovi il mouse (oppure A/D o ← →; con Maiusc piano piano).</p>
-        <p><b>Tirare</b>: tieni premuto il tasto sinistro e trascina il mouse verso di te; lascia per tirare. Tasto destro o Esc annulla. Oppure tieni premuta la <b>barra spaziatrice</b>: la forza sale e scende, lascia quando è giusta.</p>
+        <p><b>Girare la telecamera</b>: tieni premuto il tasto destro e muovi il mouse (oppure A/D o ← →; con Maiusc piano piano).</p>
+        <p><b>Tirare (a fionda)</b>: clicca col tasto sinistro dove vuoi, tira il mouse <b>indietro</b> (la pallina parte dalla parte opposta) e lascia. Più tiri, più è forte; i puntini mostrano la strada e il primo rimbalzo. Tasto destro o Esc annulla. Oppure tieni premuta la <b>barra spaziatrice</b>: la forza sale e scende, lascia quando è giusta (tira dove guarda la telecamera).</p>
         <p><b>Telecamera</b>: W/S o ↑ ↓ la alzano e abbassano, la rotella avvicina e allontana, <b>Tab</b> mostra tutta la buca, <b>V</b> (quando sei in buca) segue gli altri, <b>F</b> schermo intero.</p>
-        <p><b>Superpoteri</b>: tasti <b>1 2 3</b> o clic sulla casella, quando vuoi (anche mentre la pallina corre). Se non si può usare, te lo dice in alto a destra.</p>
+        <p><b>Superpoteri</b>: tasti <b>1 2 3</b> o clic sulla casella, quando vuoi (anche mentre la pallina corre). 🍄 Fungo e 🌀 Vortice: premi il tasto e poi clicca sul campo dove metterli. Se un potere non si può usare, te lo dice in alto a destra.</p>
         <p class="piccolo">Premi H per chiudere</p>
       </div>`;
     mini = hud.querySelector('.pt-mini');
@@ -100,7 +107,8 @@
     const c = carica; carica = null;
     if (c && c.da === 'spazio') c.f = forzaSpazio(c);
     if (!c || c.f < 0.03 || !puoTirare()) return;
-    ctxA.emetti('input', { t: 'tiro', a: cam.yaw, f: Math.round(c.f * 1000) / 1000 });
+    const a = c.da === 'mouse' && c.a != null ? c.a : cam.yaw;
+    ctxA.emetti('input', { t: 'tiro', a: Math.round(a * 10000) / 10000, f: Math.round(c.f * 1000) / 1000 });
     suono([[200 + c.f * 260, 0.05], [140, 0.04]], { tipo: 'triangle', volume: 0.1 });
   }
   // (niente puntatore bloccato: si usano gli spostamenti del mouse tra un evento e l'altro)
@@ -113,25 +121,47 @@
     e.preventDefault();
     ultimoMouse = [e.clientX, e.clientY];
     try { tela.focus({ preventScroll: true }); } catch (_) { /* niente */ }
-    if (e.button === 2) { if (carica) { carica = null; sblocca(); return; } gira = { b: 2 }; blocca(); return; }
+    if (e.button === 2) { if (piazza) { piazza = null; cam.alto = false; return; } if (carica) { carica = null; sblocca(); return; } gira = { b: 2 }; blocca(); return; }
     if (e.button !== 0) return;
-    if (puoTirare() && !cam.alto) { carica = { f: 0, da: 'mouse', acc: 0 }; blocca(); } else { gira = { b: 0 }; blocca(); }
+    if (piazza) { mettiPezzo(e); return; }
+    if (puoTirare()) { cam.alto = false; carica = { f: 0, a: null, da: 'mouse', x0: e.clientX, y0: e.clientY }; blocca(); } else { gira = { b: 0 }; blocca(); }
   });
+  // il punto del campo sotto il mouse (per piazzare Fungo e Vortice)
+  function puntoMouse(e) {
+    if (!S || !tela) return null;
+    const q = tela.getBoundingClientRect();
+    return S.puntoCampo(((e.clientX - q.left) / q.width) * 2 - 1, -(((e.clientY - q.top) / q.height) * 2 - 1));
+  }
+  function mettiPezzo(e) {
+    const pt = puntoMouse(e) || (piazza && piazza.pt);
+    if (!pt) { aggiungiFatto('⚠️ Clicca sul prato per piazzarlo'); return; }
+    ctxA.emetti('input', { t: 'usa', i: piazza.i, x: Math.round(pt[0]), y: Math.round(pt[1]) });
+    suono([[380, 0.05], [560, 0.08]], { volume: 0.08 });
+    piazza = null; cam.alto = false;
+  }
+  // fionda: la pallina parte dalla parte opposta a dove si tira il mouse; più si tira, più è forte
+  function fionda(c, x, y) {
+    const dx = x - c.x0, dy = y - c.y0, l = Math.hypot(dx, dy);
+    if (l < 10) { c.f = 0; c.a = null; return; }
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+    // sullo schermo "su" è dove guarda la telecamera (cam.yaw), "destra" è cam.yaw + 90°
+    c.a = Math.atan2(sy * dy - cy * dx, cy * dy + sy * dx);
+    c.f = Math.min(1, (l - 10) / 230);
+  }
   document.addEventListener('mousemove', (e) => {
+    if (attiva() && piazza) { const pt = puntoMouse(e); if (pt) piazza.pt = pt; }
     if (!attiva() || (!carica && !gira)) { ultimoMouse = null; return; }
     const mx = ultimoMouse ? e.clientX - ultimoMouse[0] : 0, my = ultimoMouse ? e.clientY - ultimoMouse[1] : 0;
     ultimoMouse = [e.clientX, e.clientY];
     if (carica && carica.da === 'mouse') {
-      carica.acc = Math.max(0, carica.acc + my);
-      carica.f = Math.min(1, carica.acc / 280);
-      cam.yaw += mx * 0.0012; // un ritocco fine della mira mentre si carica
+      fionda(carica, e.clientX, e.clientY);
     } else if (gira) {
       cam.yaw += mx * 0.0045;
       cam.pitch = Math.max(0.08, Math.min(1.35, cam.pitch + my * 0.003));
     }
   });
   document.addEventListener('mouseup', (e) => {
-    if (e.button === 0 && carica && carica.da === 'mouse') { sblocca(); tira(); return; }
+    if (e.button === 0 && carica && carica.da === 'mouse') { sblocca(); if (carica.a == null) { carica = null; return; } tira(); return; }
     if (gira && e.button === gira.b) { gira = null; sblocca(); }
   });
   document.addEventListener('contextmenu', (e) => { if (attiva() && suTela(e)) e.preventDefault(); });
@@ -146,7 +176,7 @@
     if (['1', '2', '3'].includes(k)) { e.preventDefault(); if (!e.repeat) usaPotere(Number(k) - 1); return; }
     if (k === ' ') { e.preventDefault(); if (!e.repeat && !carica && puoTirare()) carica = { f: 0, da: 'spazio', t0: performance.now() }; return; }
     if (k === 'tab') { e.preventDefault(); if (!e.repeat) cam.alto = !cam.alto; return; }
-    if (k === 'escape') { carica = null; aiuto = false; return; }
+    if (k === 'escape') { carica = null; aiuto = false; if (piazza) cam.alto = false; piazza = null; return; }
     if (k === 'h') { aiuto = !aiuto; return; }
     if (k === 'f') { schermoIntero(); return; }
     if (k === 'v') { cam.guarda = altroDaSeguire(1); return; }
@@ -157,12 +187,20 @@
     tasti.delete(k);
     if (k === ' ' && carica && carica.da === 'spazio') tira();
   });
-  window.addEventListener('blur', () => { tasti.clear(); carica = null; gira = null; });
+  window.addEventListener('blur', () => { tasti.clear(); carica = null; gira = null; piazza = null; });
 
   function usaPotere(i) {
     if (!attiva() || !ultimo || ultimo.fase !== 'buca' || ultimo.pausa || ctxA.stato.spettatore) return;
     const tasca = (ultimo.poteri || [])[ctxA.mio] || [];
     if (i >= tasca.length) { aggiungiFatto(`⚠️ La casella ${i + 1} è vuota: passa sulle scatole 🎁 per prendere i superpoteri`); return; }
+    // Fungo e Vortice: prima si sceglie dove metterli (clic sul campo); ripremere il tasto annulla
+    if (PIAZZA.includes(tasca[i])) {
+      if (piazza && piazza.i === i) { piazza = null; cam.alto = false; return; }
+      carica = null; cam.alto = true;
+      piazza = { i, tipo: tasca[i], pt: null };
+      aggiungiFatto(`${ICONE[tasca[i]]} Clicca sul campo dove mettere il ${tasca[i] === 'fungo' ? 'Fungo' : 'Vortice'} (tasto destro o Esc: annulla)`);
+      return;
+    }
     ctxA.emetti('input', { t: 'usa', i });
     const c = hud && hud.querySelector(`[data-casella="${i}"]`);
     if (c) { c.classList.remove('pt-premuta'); void c.offsetWidth; c.classList.add('pt-premuta'); }
@@ -213,7 +251,7 @@
     const nome = (i) => (i === ctxA.mio ? 'Tu' : ctxA.nome(i));
     const lista = (d.fatti || []).map((f) => ({ id: f.id, testo: f.chi != null ? f.testo.replace('@', nome(f.chi)) : f.testo }))
       .concat(locali.filter((f) => ora - f.ora < 5000)).slice(-5);
-    for (const f of d.fatti || []) if (!fattiVisti.has(f.id)) { fattiVisti.add(f.id); if (f.chi != null && f.chi !== ctxA.mio && /scatena|Nebbia|nasconde|Colla/.test(f.testo)) suono([[300, 0.06], [220, 0.08]], { volume: 0.06 }); }
+    for (const f of d.fatti || []) if (!fattiVisti.has(f.id)) { fattiVisti.add(f.id); if (f.chi != null && f.chi !== ctxA.mio && /scatena|Nebbia|nasconde|Colla|Specchio|Gelata|Gomma|rubato/.test(f.testo)) suono([[300, 0.06], [220, 0.08]], { volume: 0.06 }); }
     const html = lista.map((f) => `<div class="pt-fatto">${esc(f.testo)}</div>`).join('');
     if (box.dataset.h !== html) { box.innerHTML = html; box.dataset.h = html; }
     while (locali.length && ora - locali[0].ora > 6000) locali.shift();
@@ -286,6 +324,7 @@
       if (tasti.has('s') || tasti.has('arrowdown')) cam.pitch = Math.max(0.08, cam.pitch - 0.9 * dt);
       if (carica && carica.da === 'spazio') carica.f = forzaSpazio(carica);
       if (carica && !puoTirare()) carica = null;
+      if (piazza && (((ultimo.poteri || [])[ctxA.mio] || [])[piazza.i] !== piazza.tipo || ultimo.fase !== 'buca')) { piazza = null; cam.alto = false; }
       // chi segue la telecamera
       const inBuca = !mia || mia.d || (p.usciti || [])[ctxA.mio];
       let segui = null;
@@ -298,9 +337,10 @@
       const t = ultimo.pausa ? ultimo.t : ultimo.t + (ora - arrivo) / 1000;
       S.disegna({
         t, dt, palle, mio: ctxA.mio, colori: p.colori, usciti: p.usciti, prese: io.pr || [], botti: true,
-        mira: !inBuca && puoTirare() ? { a: cam.yaw, f: carica ? carica.f : 0, carica: !!carica, nascosta: !!io.ci } : null,
+        mira: !inBuca && puoTirare() && !piazza ? { a: carica && carica.a != null ? carica.a : cam.yaw, f: carica ? carica.f : 0, carica: !!carica && (carica.da !== 'mouse' || carica.a != null), nascosta: !!io.ci } : null,
         camera: { yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, alto: cam.alto || (inBuca && !segui), segui },
-        nebbia: io.nb > 0, scossa,
+        nebbia: io.nb > 0, gelo: io.gh > 0, scossa, pezzi: ultimo.ex || [],
+        piazza: piazza && piazza.pt ? { x: piazza.pt[0], y: piazza.pt[1], tipo: piazza.tipo, r: ((p.raggi || {})[piazza.tipo]) || 20 } : null,
       });
       if (Math.floor(ora / 120) !== Math.floor((ora - dt * 1000) / 120)) disegnaMini(b, palle);
       aggiornaHud(p, b, io);
@@ -314,15 +354,16 @@
     const set = (sel, html) => { const el = hud.querySelector(sel); if (el && el._h !== html) { el.innerHTML = html; el._h = html; } };
     const nc = p.course.indexOf(p.buca[0]), nb = p.ordine.slice(0, p.k + 1).filter((r) => r[0] === p.buca[0]).length;
     set('.pt-buca', `${esc(PB.COURSE[p.buca[0]].nome)}${p.course.length > 1 ? ` <small>(${nc + 1}/${p.course.length})</small>` : ''} · buca ${nb} · <b>${esc(b.nome)}</b> · par ${b.par}`);
-    set('.pt-righe', u.fase === 'buca' ? `Colpi: <b>${io.c || 0}</b> · ⏱ ${Math.floor(u.resta / 60000)}:${String(Math.floor(u.resta / 1000) % 60).padStart(2, '0')}${io.nb ? ` · 🌫️ nebbia ${io.nb} s` : ''}${io.ci ? ' · 🙈 mira nascosta' : ''}${io.co ? ' · 🍯 colla: tiro debole' : ''}` : '');
+    set('.pt-righe', u.fase === 'buca' ? `Colpi: <b>${io.c || 0}</b> · ⏱ ${Math.floor(u.resta / 60000)}:${String(Math.floor(u.resta / 1000) % 60).padStart(2, '0')}${io.nb ? ` · 🌫️ nebbia ${io.nb} s` : ''}${io.ci ? ' · 🙈 mira nascosta' : ''}${io.co ? ' · 🍯 colla: tiro debole' : ''}${io.sp ? ' · 🪞 specchio: il tiro va al contrario!' : ''}${io.go ? ' · 🫧 gomma: ti fermi alla prima cosa che tocchi' : ''}${io.gh ? ` · 🧊 gelata ${io.gh} s` : ''}` : '');
     // scritta al centro
     let centro = '';
     if (u.pausa) centro = '⏸ In pausa';
     else if (u.fase === 'via') centro = `<small>${esc(PB.COURSE[p.buca[0]].nome)}</small><br>${esc(b.nome)} · par ${b.par}<br><small>si parte tra ${Math.ceil(u.via / 1000)}…</small>`;
-    else if (u.fase === 'fineBuca') centro = 'Buca finita!';
+    else if (u.fase === 'fineBuca') centro = fineBucaHtml(p, b);
+    else if (piazza) centro = `<small>${ICONE[piazza.tipo]} Clicca sul campo dove metterlo · tasto destro o Esc: annulla</small>`;
     else if (io.d) centro = `<small>⛳ In buca! Aspetta gli altri${altroDaSeguire(0) >= 0 ? ' · V: guarda gli altri' : ''}</small>`;
     const c = hud.querySelector('.pt-centro');
-    if (!errore) { c.hidden = !centro; set('.pt-centro', centro); c.classList.toggle('pt-piccolo', !!io.d && u.fase === 'buca'); }
+    if (!errore) { c.hidden = !centro; set('.pt-centro', centro); c.classList.toggle('pt-piccolo', (!!io.d || !!piazza) && u.fase === 'buca'); c.classList.toggle('pt-classifica', u.fase === 'fineBuca'); }
     // barra della forza
     const fz = hud.querySelector('.pt-forza');
     fz.hidden = !carica;
@@ -342,11 +383,31 @@
         el.querySelector('small').textContent = t ? (p.nomiPoteri || {})[t] || t : 'vuota';
         el.title = t ? `${(p.nomiPoteri || {})[t]}: ${SPIEGA[t]} (tasto ${i + 1})` : 'Casella vuota: passa sulle scatole 🎁';
         el.classList.toggle('pt-contro', !!t && (p.contro || []).includes(t));
+        el.classList.toggle('pt-piazza', !!t && PIAZZA.includes(t));
       }
+      el.classList.toggle('pt-attiva', !!piazza && piazza.i === i);
     });
     set('.pt-pronti', (io.pt || []).length ? `Pronti per il prossimo tiro: ${(io.pt || []).map((t) => `${ICONE[t]} ${esc((p.nomiPoteri || {})[t] || t)}`).join(' · ')}` : '');
     hud.querySelector('.pt-aiuto').hidden = !aiuto;
     hud.querySelector('.pt-mini').hidden = !!io.nb;
+  }
+
+  // a fine buca: la classifica della buca (chi ha fatto meno colpi in cima) e il totale
+  function nomeColpi(c, par) {
+    if (c == null) return '—';
+    if (c === 1) return 'Buca in uno! ⛳';
+    const d = c - par;
+    return d <= -3 ? 'Albatross 🕊️' : d === -2 ? 'Eagle 🦅' : d === -1 ? 'Birdie 🐦' : d === 0 ? 'Par' : d === 1 ? 'Bogey' : d === 2 ? 'Doppio bogey' : `+${d}`;
+  }
+  function fineBucaHtml(p, b) {
+    const k = p.k, righe = [];
+    for (let i = 0; i < p.n; i++) {
+      if ((p.usciti || [])[i] && p.colpi[i][k] == null) continue;
+      righe.push({ i, c: p.colpi[i][k], tot: p.totali[i] });
+    }
+    righe.sort((x, y) => (x.c == null) - (y.c == null) || x.c - y.c || x.tot - y.tot);
+    const nome = (i) => esc(i === ctxA.mio ? 'Tu' : ctxA.nome(i));
+    return `<div class="pt-fb-tit">Buca finita · par ${b.par}</div><table class="pt-fb">${righe.map((r, pos) => `<tr class="${r.i === ctxA.mio ? 'mia' : ''}"><td>${pos + 1}°</td><td><i style="background:${p.colori[r.i % p.colori.length]}"></i>${nome(r.i)}</td><td><b>${r.c == null ? '—' : r.c}</b></td><td>${nomeColpi(r.c, b.par)}</td><td class="tot">tot ${r.tot}</td></tr>`).join('')}</table>`;
   }
 
   function tabellino(ctx) {

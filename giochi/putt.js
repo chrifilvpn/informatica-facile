@@ -21,12 +21,18 @@ const COLORI = ['#ffffff', '#ffd23f', '#ff6b6b', '#5fd3ff', '#9dff7a', '#ff9ff3'
 const GRAVITA = 1400; // px/s² per unità di pendenza: sui dossi e sui pendii la pallina accelera o rallenta
 const SALTO_PX = 120; // quanto sale (al massimo) un salto lungo un secondo
 // i superpoteri: i primi cinque sono per sé (gli "armati" valgono per il prossimo tiro), gli altri contro gli avversari
-const POTERI = ['turbo', 'calamita', 'rifai', 'molla', 'fantasma', 'nebbia', 'mira', 'terremoto', 'colla'];
+// (come nei minigolf "party": i poteri contro gli altri colpiscono tutti gli avversari, tranne il Furto che ne colpisce
+// uno solo; Fungo e Vortice si piazzano dove si vuole sul campo e restano fino alla fine della buca)
+const POTERI = ['turbo', 'calamita', 'rifai', 'molla', 'fantasma', 'nebbia', 'mira', 'terremoto', 'colla', 'specchio', 'gelo', 'gomma', 'furto', 'fungo', 'vortice'];
 const ARMATI = ['turbo', 'calamita', 'molla', 'fantasma'];
-const CONTRO = ['nebbia', 'mira', 'terremoto', 'colla'];
-const MAX_POTERI = 3, NEBBIA_S = 10, COLLA = 0.55;
-const NOMI_POTERI = { turbo: 'Turbo', calamita: 'Calamita', rifai: 'Rifai', molla: 'Molla', fantasma: 'Fantasma', nebbia: 'Nebbia', mira: 'Mira nascosta', terremoto: 'Terremoto', colla: 'Colla' };
-const ICONE_POTERI = { turbo: '🚀', calamita: '🧲', rifai: '⏪', molla: '🦘', fantasma: '👻', nebbia: '🌫️', mira: '🙈', terremoto: '🌋', colla: '🍯' };
+const CONTRO = ['nebbia', 'mira', 'terremoto', 'colla', 'specchio', 'gelo', 'gomma', 'furto'];
+const PIAZZA = ['fungo', 'vortice']; // si piazzano sul campo: { t: 'usa', i, x, y }
+const MAX_POTERI = 3, NEBBIA_S = 10, COLLA = 0.55, GELO_S = 12, MAX_PIAZZATI = 8;
+const R_FUNGO = 20, R_VORTICE = 170, F_VORTICE = 950;
+const NOMI_POTERI = { turbo: 'Turbo', calamita: 'Calamita', rifai: 'Rifai', molla: 'Molla', fantasma: 'Fantasma', nebbia: 'Nebbia', mira: 'Mira nascosta', terremoto: 'Terremoto', colla: 'Colla',
+  specchio: 'Specchio', gelo: 'Gelata', gomma: 'Gomma', furto: 'Furto', fungo: 'Fungo', vortice: 'Vortice' };
+const ICONE_POTERI = { turbo: '🚀', calamita: '🧲', rifai: '⏪', molla: '🦘', fantasma: '👻', nebbia: '🌫️', mira: '🙈', terremoto: '🌋', colla: '🍯',
+  specchio: '🪞', gelo: '🧊', gomma: '🫧', furto: '🦝', fungo: '🍄', vortice: '🌀' };
 
 const tema = (g) => COURSE[g.ordine[g.k][0]].tema;
 function mescola(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -53,11 +59,17 @@ function passo(b, p, dt, t, segs, bassi, cerchiMobili) {
   if (v <= 0) return null;
   // attrito: costante + proporzionale alla velocità (in aria quasi niente)
   const ter = inAria ? null : terreno(b, p.x, p.y);
-  const k = inAria ? 0.1 : ter ? TERRENO[ter] : 1;
+  let k = inAria ? 0.1 : ter ? TERRENO[ter] : 1;
+  if (!inAria && p.gelo && p.gelo > t) k = Math.min(k, 0.3); // Gelata: per qualche secondo il campo è una pista di ghiaccio
   const nv = Math.max(0, v - (ATTRITO_C + ATTRITO_K * v) * k * dt);
   p.vx *= nv / v; p.vy *= nv / v; v = nv;
   // buchi neri: attirano verso il centro
   if (!inAria) for (const h of b.buchiNeri || []) {
+    const dx = h.x - p.x, dy = h.y - p.y, d = Math.hypot(dx, dy);
+    if (d < h.r && d > 1) { const a = h.f * (1 - d / h.r) * dt; p.vx += (dx / d) * a; p.vy += (dy / d) * a; }
+  }
+  // vortici piazzati: attirano verso il fungo che hanno in mezzo (fuori dal raggio niente)
+  if (!inAria && !p.fantasma) for (const h of b.vortici || []) {
     const dx = h.x - p.x, dy = h.y - p.y, d = Math.hypot(dx, dy);
     if (d < h.r && d > 1) { const a = h.f * (1 - d / h.r) * dt; p.vx += (dx / d) * a; p.vy += (dy / d) * a; }
   }
@@ -77,10 +89,12 @@ function passo(b, p, dt, t, segs, bassi, cerchiMobili) {
     const px = p.x, py = p.y;
     if (!p.fantasma) {
       for (const [cx, cy, r] of b.respingenti || []) urtoCerchio(p, cx, cy, r, true);
+      for (const h of b.vortici || []) urtoCerchio(p, h.x, h.y, R_FUNGO, true);
       for (const [cx, cy, r] of b.rocce || []) urtoCerchio(p, cx, cy, r, false);
       for (const [cx, cy, r] of cerchiMobili) urtoCerchio(p, cx, cy, r, false);
     }
     if ((p.x !== px || p.y !== py) && segs.some((sg) => siTaglia(px, py, p.x, p.y, sg))) { p.x = px; p.y = py; }
+    if (p.appiccica && p.urto) { p.vx = 0; p.vy = 0; return null; } // Gomma: si attacca alla prima cosa che tocca
     if (p.aria > 0) continue;
     // rampa: se ci passa abbastanza veloce nella sua direzione, salta
     for (const r of b.rampe || []) {
@@ -229,12 +243,23 @@ class Putt {
   }
 
   get buca() { const [c, i] = this.ordine[this.k]; return COURSE[c].buche[i]; }
+  // la buca con i funghi e i vortici piazzati dai giocatori (per la fisica)
+  campo() {
+    const b = this.buca;
+    if (!this.piazzati.length) return b;
+    if (this._campo && this._campo.b === b && this._campo.n === this.nPiazzati) return this._campo.c;
+    const c = { ...b, respingenti: (b.respingenti || []).concat(this.piazzati.filter((q) => q.tipo === 'fungo').map((q) => [q.x, q.y, R_FUNGO])),
+      vortici: this.piazzati.filter((q) => q.tipo === 'vortice').map((q) => ({ x: q.x, y: q.y, r: R_VORTICE, f: F_VORTICE })) };
+    this._campo = { b, n: this.nPiazzati, c };
+    return c;
+  }
 
   prossimaBuca(ora) {
     this.k++;
     if (this.k >= this.ordine.length) return this.chiudi();
     const b = this.buca;
     this.fissi = segmentiFissi(b); this.bassi = segmentiBassi(b);
+    this.piazzati = []; this.nPiazzati = 0; this._campo = null; // funghi e vortici: valgono solo per questa buca
     this.fase = 'via';
     this.inizio = ora + VIA_MS; // il tempo degli ostacoli e della buca parte da qui
     this.fineFase = this.inizio + TEMPO_BUCA;
@@ -245,7 +270,7 @@ class Putt {
       const v = prima[i] || {};
       return { x: b.partenza[0], y: b.partenza[1], vx: 0, vy: 0, dentro: false, colpi: 0, da: [...b.partenza], tempo: null,
         aria: 0, aria0: 0, tubo: 0, prese: [], pronti: (v.pronti || []).filter((t) => ARMATI.includes(t)), calamita: false, fantasma: false,
-        cieco: false, colla: false, nebbia: 0, rifai: null, colpoBuono: !!v.colpoBuono };
+        cieco: false, colla: false, nebbia: 0, rifai: null, colpoBuono: !!v.colpoBuono, specchio: false, gomma: false, appiccica: false, gelo: 0 };
     });
     this.usciti.forEach((u, i) => { if (u) this.palle[i].dentro = true; });
   }
@@ -265,10 +290,12 @@ class Putt {
     if (!x) return;
     if (d.t === 'telefono') { if (!this.usciti[p] && !this.telefono[p]) { this.telefono[p] = true; this.scrivi(`📱 @ gioca dal telefono: Minigolf Party 3D si gioca solo al computer`, null, p); this.esce(p); this.cambiato = true; } return; }
     if (this.fase !== 'buca') return;
-    if (d.t === 'usa') return this.usa(p, Number(d.i));
+    if (d.t === 'usa') return this.usa(p, Number(d.i), d.x, d.y);
     if (x.dentro || d.t !== 'tiro' || x.vx || x.vy) return;
-    const a = Number(d.a);
+    let a = Number(d.a);
     if (!Number.isFinite(a)) return;
+    if (x.specchio) { a += Math.PI; x.specchio = false; } // Specchio: il tiro va al contrario di dove mira
+    x.appiccica = x.gomma; x.gomma = false; // Gomma: in questo tiro la pallina si ferma alla prima cosa che tocca
     const pronti = x.pronti, ha = (t) => pronti.includes(t);
     const f = Math.max(0.02, Math.min(1, Number(d.f) || 0)) * (x.colla ? COLLA : 1);
     x.da = [x.x, x.y]; x.rifai = { x: x.x, y: x.y }; // da qui si torna con l'acqua (e con Rifai)
@@ -282,7 +309,8 @@ class Putt {
     if (x.colpoBuono) {
       x.colpoBuono = false; x.aria = 0;
       // prima per terra; se non si può (acqua o muretti da saltare) si passa anche sopra, come con una rampa
-      x.guida = percorsoGuidato(this.buca, x.x, x.y, this.fissi.concat(this.bassi)) || percorsoGuidato(this.buca, x.x, x.y, this.fissi, true);
+      x.appiccica = false;
+      x.guida = percorsoGuidato(this.campo(), x.x, x.y, this.fissi.concat(this.bassi)) || percorsoGuidato(this.campo(), x.x, x.y, this.fissi, true);
       if (x.guida) x.guida.v = Math.max(650, v);
       else x.calamita = true;
     }
@@ -312,7 +340,7 @@ class Putt {
   }
 
   // usare un superpotere. Restituisce il motivo se non si può (e lo scrive solo a chi ha provato).
-  usa(p, i) {
+  usa(p, i, px, py) {
     const tasca = this.poteri[p], x = this.palle[p];
     const no = (perche) => { this.scrivi(`⚠️ ${perche}`, p); this.cambiato = true; return perche; };
     if (!Number.isInteger(i) || i < 0 || i >= tasca.length) return no('Non hai un potere in quel posto');
@@ -325,10 +353,41 @@ class Putt {
     if (tipo === 'rifai' && x.guida) return no(`${nome}: questo tiro non si può annullare`);
     const bersagli = [];
     for (let q = 0; q < this.n; q++) if (q !== p && !this.usciti[q] && !this.palle[q].dentro) bersagli.push(q);
-    if (CONTRO.includes(tipo) && !bersagli.length) return no(`${nome}: non c'è nessun avversario ancora in gioco`);
+    if (CONTRO.includes(tipo) && tipo !== 'furto' && !bersagli.length) return no(`${nome}: non c'è nessun avversario ancora in gioco`);
+    // Furto: si ruba un potere a caso a chi ne ha di più (anche se è già in buca)
+    let vittima = -1;
+    if (tipo === 'furto') {
+      const ricchi = [];
+      for (let q = 0; q < this.n; q++) if (q !== p && !this.usciti[q] && this.poteri[q].length) ricchi.push(q);
+      if (!ricchi.length) return no(`${nome}: nessun avversario ha superpoteri da rubare`);
+      const max = Math.max(...ricchi.map((q) => this.poteri[q].length)), primi = ricchi.filter((q) => this.poteri[q].length === max);
+      vittima = primi[Math.floor(Math.random() * primi.length)];
+    }
+    // Fungo e Vortice: si piazzano in un punto del campo (non sulla buca, sulla partenza, sui muri o sulle palline)
+    let punto = null;
+    if (PIAZZA.includes(tipo)) {
+      const xx = Number(px), yy = Number(py), b = this.buca;
+      if (!Number.isFinite(xx) || !Number.isFinite(yy)) return no(`${nome}: clicca sul campo dove metterlo`);
+      if (!dentroPoligono(xx, yy, b.bordo)) return no(`${nome}: va messo sul prato`);
+      if (Math.hypot(xx - b.buca[0], yy - b.buca[1]) < 70) return no(`${nome}: troppo vicino alla buca`);
+      if (Math.hypot(xx - b.partenza[0], yy - b.partenza[1]) < 45) return no(`${nome}: troppo vicino alla partenza`);
+      const dSeg = ([x1, y1, x2, y2]) => { const dx = x2 - x1, dy = y2 - y1, l = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((xx - x1) * dx + (yy - y1) * dy) / l)); return Math.hypot(xx - x1 - u * dx, yy - y1 - u * dy); };
+      if (this.fissi.concat(this.bassi).some((sg) => dSeg(sg) < R_FUNGO + 4)) return no(`${nome}: troppo vicino a un muro`);
+      if (this.palle.some((y, q) => !y.dentro && !this.usciti[q] && Math.hypot(y.x - xx, y.y - yy) < R_FUNGO + R_PALLA + 6)) return no(`${nome}: c'è una pallina lì`);
+      if (this.piazzati.some((q) => Math.hypot(q.x - xx, q.y - yy) < R_FUNGO * 2 + 4)) return no(`${nome}: c'è già un fungo lì`);
+      if (this.piazzati.length >= MAX_PIAZZATI) return no(`${nome}: sul campo ce ne sono già ${MAX_PIAZZATI}`);
+      punto = { x: Math.round(xx), y: Math.round(yy) };
+    }
     tasca.splice(i, 1);
     const t = (Date.now() - this.inizio) / 1000;
     if (ARMATI.includes(tipo)) x.pronti.push(tipo);
+    else if (punto) { this.piazzati.push({ tipo, ...punto, chi: p }); this.nPiazzati++; }
+    else if (tipo === 'furto') {
+      const tv = this.poteri[vittima], k = Math.floor(Math.random() * tv.length), [preso] = tv.splice(k, 1);
+      tasca.push(preso);
+      this.scrivi(`🦝 @ ti ha rubato: ${ICONE_POTERI[preso]} ${NOMI_POTERI[preso]}`, vittima, p);
+      this.scrivi(`🦝 Hai rubato: ${ICONE_POTERI[preso]} ${NOMI_POTERI[preso]} (tasto ${tasca.length})`, p);
+    }
     else if (tipo === 'rifai') {
       // anche mentre la pallina corre: si ferma e torna dov'era prima del tiro, e il colpo non conta
       Object.assign(x, { x: x.rifai.x, y: x.rifai.y, vx: 0, vy: 0, aria: 0, calamita: false, fantasma: false });
@@ -338,6 +397,9 @@ class Putt {
       if (tipo === 'nebbia') y.nebbia = t + NEBBIA_S;
       else if (tipo === 'mira') y.cieco = true;
       else if (tipo === 'colla') y.colla = true;
+      else if (tipo === 'specchio') y.specchio = true;
+      else if (tipo === 'gomma') y.gomma = true;
+      else if (tipo === 'gelo') y.gelo = t + GELO_S;
       else if (tipo === 'terremoto' && !y.guida) {
         // ferme o in corsa: una spinta a caso
         const a = Math.random() * Math.PI * 2, v = 260 + Math.random() * 140;
@@ -355,6 +417,12 @@ class Putt {
       mira: ['nasconde la mira a tutti 🙈', 'hai nascosto la mira agli altri 🙈'],
       terremoto: ['scatena un Terremoto 🌋', 'hai fatto tremare le palline degli altri 🌋'],
       colla: ['spalma la Colla 🍯 sulle palline di tutti', 'Colla sugli altri: il loro prossimo tiro sarà più debole 🍯'],
+      specchio: ['gira lo Specchio 🪞: il prossimo tiro di tutti andrà al contrario', 'Specchio sugli altri: il loro prossimo tiro va al contrario 🪞'],
+      gelo: ['fa una Gelata 🧊: per 12 secondi il campo scivola', 'Gelata sugli altri: per 12 secondi scivolano come sul ghiaccio 🧊'],
+      gomma: ['attacca la Gomma 🫧 alle palline di tutti', 'Gomma sugli altri: al prossimo tiro si fermano alla prima cosa che toccano 🫧'],
+      furto: ['fa un Furto 🦝', 'Furto riuscito 🦝'],
+      fungo: ['piazza un Fungo 🍄 sul campo', 'Fungo piazzato: rimbalza forte fino alla fine della buca 🍄'],
+      vortice: ['piazza un Vortice 🌀 sul campo', 'Vortice piazzato: attira le palline che gli passano vicino 🌀'],
     }[tipo];
     this.scrivi(`@ ${frasi[0]}`, null, p, frasi[1]);
     this.cambiato = true;
@@ -374,7 +442,7 @@ class Putt {
     if (this.fase === 'fineBuca') { if (ora >= this.fineFase) { this.prossimaBuca(ora); return true; } return false; }
     const dt = Math.min(0.08, (ora - (this.ultimoTick || ora)) / 1000);
     this.ultimoTick = ora;
-    const b = this.buca, t = (ora - this.inizio) / 1000;
+    const b = this.campo(), t = (ora - this.inizio) / 1000;
     const mobiliSeg = segmentiMobili(b, t), segs = this.fissi.concat(mobiliSeg), cerchi = mobiliAl(b, t);
     this.palle.forEach((x, p) => {
       if (x.dentro) return;
@@ -388,10 +456,13 @@ class Putt {
         this.scrivi(`🎁 Hai preso: ${ICONE_POTERI[tipo]} ${NOMI_POTERI[tipo]} (tasto ${this.poteri[p].length})`, p);
       });
       if (x.vx || x.vy || x.guida) {
-        const r = x.guida ? this.guidata(x, dt) : passo(b, x, dt, t, x.fantasma ? this.fissi : segs, this.bassi, cerchi);
+        x.urto = false;
+        let r = x.guida ? this.guidata(x, dt) : passo(b, x, dt, t, x.fantasma ? this.fissi : segs, this.bassi, cerchi);
+        // Gomma: alla prima cosa che tocca la pallina si attacca e si ferma
+        if (!r && x.appiccica && x.urto) { Object.assign(x, { vx: 0, vy: 0, appiccica: false, calamita: false, fantasma: false }); this.cambiato = true; return; }
         if (r === 'acqua') {
           // acqua (o buco nero): la pallina torna dove era stata tirata, con un colpo di penalità
-          Object.assign(x, { x: x.da[0], y: x.da[1], vx: 0, vy: 0, aria: 0, calamita: false, fantasma: false });
+          Object.assign(x, { x: x.da[0], y: x.da[1], vx: 0, vy: 0, aria: 0, calamita: false, fantasma: false, appiccica: false });
           x.colpi++;
           const vuoto = (b.buchiNeri || []).length || tema(this) === 'spazio';
           this.scrivi(vuoto ? '🌀 @ finisce nel vuoto: +1' : '💦 @ finisce in acqua: +1', null, p, vuoto ? '🌀 Nel vuoto! Un colpo di penalità: torni dove avevi tirato' : '💦 In acqua! Un colpo di penalità: torni dove avevi tirato');
@@ -407,7 +478,7 @@ class Putt {
           this.scrivi(`⛳ @ in buca: ${nome}`, null, p, `⛳ In buca: ${nome}`);
           this.cambiato = true;
         } else if (!x.guida && Math.hypot(x.vx, x.vy) < V_STOP && !(x.aria > 0) && puoFermarsi(b, x)) {
-          Object.assign(x, { vx: 0, vy: 0, calamita: false, fantasma: false }); this.cambiato = true;
+          Object.assign(x, { vx: 0, vy: 0, calamita: false, fantasma: false, appiccica: false }); this.cambiato = true;
         }
       } else {
         // un ostacolo che si muove può spingere una pallina ferma
@@ -460,7 +531,9 @@ class Putt {
       resta: this.fase === 'buca' ? Math.max(0, this.fineFase - rif) : 0,
       palle: (this.palle || []).map((x) => ({ x: Math.round(x.x * 10) / 10, y: Math.round(x.y * 10) / 10, m: !!(x.vx || x.vy || x.guida), d: x.dentro, c: x.colpi,
         z: Putt.zSalto(x), pr: x.prese, pt: x.pronti, ci: x.cieco ? 1 : 0, co: x.colla ? 1 : 0, fa: x.fantasma ? 1 : 0, sc: x.scossa || 0,
-        nb: x.nebbia > t ? Math.ceil(x.nebbia - t) : 0, rf: x.rifai && x.colpi > 0 ? 1 : 0 })),
+        nb: x.nebbia && x.nebbia > t ? Math.ceil(x.nebbia - t) : 0, rf: x.rifai && x.colpi > 0 ? 1 : 0,
+        sp: x.specchio ? 1 : 0, go: x.gomma || x.appiccica ? 1 : 0, gh: x.gelo && x.gelo > t ? Math.ceil(x.gelo - t) : 0 })),
+      ex: (this.piazzati || []).map((q) => [q.tipo === 'vortice' ? 1 : 0, q.x, q.y, q.chi]),
       poteri: this.poteri,
       // i fatti degli ultimi 8 secondi che riguardano chi guarda (quelli per tutti e i suoi)
       fatti: this.fatti.filter((f) => ora - f.ora < 8000 && (f.per == null || f.per === posto)).map((f) => ({ id: f.id, testo: f.chi === posto && f.testoIo ? f.testoIo : f.testo, chi: f.chi })),
@@ -473,7 +546,8 @@ class Putt {
       gioco: this.id, n: this.n, turno: null, inAttesa: false, finita: this.finita, risultato: this.risultato, evento: this.evento,
       ordine: this.ordine, k: Math.min(this.k, this.ordine.length - 1), buca: cur, course: this.course,
       colpi: this.colpi, totali: Array.from({ length: this.n }, (_, i) => this.totale(i)), usciti: this.usciti,
-      colori: COLORI, stato: this.vistaTick(), tempoBuca: TEMPO_BUCA, nomiPoteri: NOMI_POTERI, icone: ICONE_POTERI, contro: CONTRO, telefono: this.telefono,
+      colori: COLORI, stato: this.vistaTick(), tempoBuca: TEMPO_BUCA, nomiPoteri: NOMI_POTERI, icone: ICONE_POTERI, contro: CONTRO, piazza: PIAZZA, telefono: this.telefono,
+      raggi: { fungo: R_FUNGO, vortice: R_VORTICE },
     };
   }
 }
@@ -488,7 +562,7 @@ module.exports = {
     tempoReale: true,
     pausaBoss: true,
     giocatori: [1, 2, 3, 4, 5, 6, 7, 8],
-    descrizione: 'Minigolf in 3D (solo al computer) con sette course: Classica, Pirati, Ghiaccio, Giungla, Spazio, Colline e l\'Open Course. Tutti tirano insieme, con nove superpoteri. Vince chi fa meno colpi.',
+    descrizione: 'Minigolf in 3D (solo al computer) con sette course: Classica, Pirati, Ghiaccio, Giungla, Spazio, Colline e l\'Open Course. Tutti tirano insieme, con quindici superpoteri. Vince chi fa meno colpi.',
     alias: ['putt party', 'putt party 3d', 'minigolf', 'minigolf 3d', 'golf', 'mini golf', 'putt', 'golf 3d'],
     opzioni: [
       { id: 'course', nome: 'Course da giocare', valori: [1, 3, 5, 7], etichette: ['1 course (6 buche)', '3 course (18 buche)', '5 course (30 buche)', 'Tutte e 7 (42 buche)'], predefinito: 1 },
@@ -500,12 +574,13 @@ module.exports = {
       'Nella lobby si sceglie quante course giocare di fila (1, 3, 5 o tutte e 7) e, se si vuole, con quale cominciare. Ogni course ha più di 6 buche disegnate: a ogni partita se ne giocano 6 estratte a caso.',
       'Open Course: una mappa unica e grande, una corsia a serpentina con 6 buche in fila (si parte dove era la buca prima). Ci sono rampe per saltare l\'acqua e i muretti, tubi che passano sotto le altre corsie e ti portano alla fila dopo (attenzione: lontano dalla buca giusta), respingenti, mulini e ostacoli che si muovono.',
       'Si gioca tutti insieme: ognuno ha la sua pallina e tira quando vuole, senza aspettare gli altri. Le palline non si toccano tra loro.',
-      'Comandi: la telecamera sta dietro la tua pallina e guarda dove tirerai. Gira la mira con il mouse tenendo premuto il tasto destro (o con A/D o le frecce ← →; con Maiusc piano piano). Per tirare tieni premuto il tasto sinistro e trascina il mouse verso di te: più trascini, più è forte; lascia per tirare (tasto destro o Esc per annullare). Si può anche tenere premuta la barra spaziatrice: la forza sale e scende, lascia quando è giusta. W/S o ↑ ↓ alzano e abbassano la telecamera, la rotella avvicina e allontana, Tab mostra tutta la buca dall\'alto, F mette a schermo intero, H mostra i comandi.',
+      'Comandi: la telecamera guarda la tua pallina dall\'alto. Per tirare fai come con una fionda: clicca col tasto sinistro (dove vuoi), tira il mouse indietro e lascia. La pallina parte dalla parte opposta a dove tiri, e più tiri più è forte; la linea a puntini mostra dove va e il primo rimbalzo (tasto destro o Esc per annullare). Gira la telecamera tenendo premuto il tasto destro (o con A/D o le frecce ← →; con Maiusc piano piano). Si può anche tenere premuta la barra spaziatrice: la forza sale e scende, lascia quando è giusta (tira dritto dove guarda la telecamera). W/S o ↑ ↓ alzano e abbassano la telecamera, la rotella avvicina e allontana, Tab mostra tutta la buca dall\'alto, F mette a schermo intero, H mostra i comandi.',
       'La pallina rimbalza sui bordi e sui muri; i respingenti la rilanciano con una spinta decisa. Sui dossi e sulle salite rallenta, in discesa accelera, e nelle conche tende a fermarsi in fondo. Sabbia, neve e fango la frenano, il ghiaccio la fa scivolare. Se finisce in acqua (o nel centro di un buco nero) torna dove l\'avevi tirata, con un colpo di penalità. Sulle rampe, se ci passa abbastanza veloce, salta sopra acqua, sabbia e muretti.',
       'La pallina entra se passa sulla buca non troppo veloce (anche sfiorandola piano); se è troppo forte ci passa sopra. Vicino alla buca, se è lenta, la conchetta la aiuta a entrare.',
-      'Superpoteri: sul percorso ci sono delle scatole 🎁; passandoci sopra prendi un superpotere (ogni scatola una volta a testa). Se ne tengono al massimo 3 e si usano con i tasti 1, 2, 3 o cliccando sulla casella in basso, quando vuoi durante la buca, anche mentre la pallina corre. Se un potere non si può usare ti viene detto perché.',
+      'Superpoteri: sul percorso ci sono delle scatole 🎁; passandoci sopra prendi un superpotere a caso (ogni scatola una volta a testa). Se ne tengono al massimo 3 (quelli in più si perdono), passano da una buca all\'altra e si usano con i tasti 1, 2, 3 o cliccando sulla casella in basso, quando vuoi durante la buca, anche mentre la pallina corre. Se un potere non si può usare ti viene detto perché.',
       'Per il prossimo tiro (restano pronti finché non tiri, anche nella buca dopo): 🚀 Turbo (tiro più forte del 60%), 🧲 Calamita (la buca attira la pallina quando le passa vicino), 🦘 Molla (il tiro parte con un salto sopra acqua, sabbia e muretti), 👻 Fantasma (la pallina passa attraverso ostacoli, mulini, respingenti e porte mobili, ma non i muri). Subito: ⏪ Rifai (annulla l\'ultimo tiro, anche mentre la pallina corre: torna dov\'era e il colpo non conta).',
-      'Contro gli altri (si possono usare anche quando sei già in buca): 🌫️ Nebbia (per 10 secondi vedono solo vicino alla loro pallina), 🙈 Mira nascosta (al prossimo tiro non vedono la freccia né la forza), 🌋 Terremoto (le loro palline, ferme o in corsa, ricevono una spinta a caso), 🍯 Colla (il loro prossimo tiro ha poco più di metà della forza).',
+      'Contro gli altri (si possono usare anche quando sei già in buca, e colpiscono tutti gli avversari): 🌫️ Nebbia (per 10 secondi vedono solo vicino alla loro pallina), 🙈 Mira nascosta (al prossimo tiro non vedono la freccia né la forza), 🌋 Terremoto (le loro palline, ferme o in corsa, ricevono una spinta a caso), 🍯 Colla (il loro prossimo tiro ha poco più di metà della forza), 🪞 Specchio (il loro prossimo tiro va al contrario di dove mirano), 🧊 Gelata (per 12 secondi scivolano come sul ghiaccio), 🫧 Gomma (al loro prossimo tiro la pallina si ferma alla prima cosa che tocca). 🦝 Furto invece colpisce uno solo: ruba un superpotere a caso a chi ne ha di più.',
+      'Da piazzare (anche quando sei già in buca): premi il tasto del potere e clicca sul campo dove metterlo. 🍄 Fungo (un respingente che rilancia forte) e 🌀 Vortice (un fungo che attira le palline che gli passano vicino). Restano fino alla fine della buca e valgono per tutti, anche per te.',
       'Non c\'è limite di colpi. Ogni buca dura al massimo 3 minuti: chi allo scadere non è in buca prende i colpi fatti più 3 di penalità. Quando sono tutti in buca si passa alla prossima.',
       'Alla fine vince chi ha fatto meno colpi in totale; a parità è pareggio. Accanto a ogni buca c\'è il par (i colpi che servono a un buon giocatore): un colpo in meno è un birdie, due un eagle.',
       'Il gioco è in tempo reale e si ferma per tutti quando qualcuno apre le dispense.',
@@ -513,5 +588,5 @@ module.exports = {
   },
   crea: (o) => new Putt(o),
   bot: () => ({}),
-  _test: { Putt, passo, puoFermarsi, collisioneSegmento, urtoCerchio, B, V_MAX, V_BUCA, GRAVITA, POTERI, ARMATI, CONTRO, MAX_POTERI, COLLA },
+  _test: { Putt, passo, puoFermarsi, collisioneSegmento, urtoCerchio, B, V_MAX, V_BUCA, GRAVITA, POTERI, ARMATI, CONTRO, PIAZZA, MAX_POTERI, COLLA, R_FUNGO },
 };

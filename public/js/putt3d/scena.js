@@ -11,6 +11,7 @@ import * as THREE from '/js/three.module.min.js';
 
 const PB = window.PuttBuche;
 const R = PB.R_PALLA;
+const GHIACCIATO = new THREE.Color(0xa8dcff);
 
 // ---------- i temi: colori del prato, dei muri, del mondo intorno, del cielo ----------
 const TEMI = {
@@ -315,6 +316,30 @@ class Striscia {
   }
 }
 
+// i pezzi che i giocatori piazzano coi superpoteri: il Fungo (un respingente) e il Vortice (un fungo che attira)
+function fungo(r, colore = 0xe0453f) {
+  const g = new THREE.Group();
+  const gambo = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r * 0.55, 14, 16), mat(0xf4ead2, { roughness: 0.8 })); gambo.position.y = 7; g.add(gambo);
+  const cappello = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat(colore, { roughness: 0.4, emissive: 0x220000 }));
+  cappello.scale.y = 0.7; cappello.position.y = 12; g.add(cappello);
+  for (let k = 0; k < 7; k++) {
+    const a = (k / 7) * Math.PI * 2, u = k ? 0.62 : 0, p = new THREE.Mesh(new THREE.SphereGeometry(r * 0.16, 8, 6), mat(0xffffff));
+    const al = k ? 0.55 : 1; p.position.set(Math.cos(a) * r * u, 12 + r * 0.7 * al, Math.sin(a) * r * u); p.scale.y = 0.5; g.add(p);
+  }
+  return conOmbre(g);
+}
+function vortice(r, raggio) {
+  const g = fungo(r, 0x8a4dff);
+  const [c, x] = tela2d(256, 256);
+  const gr = x.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, 'rgba(120,60,255,.55)'); gr.addColorStop(1, 'rgba(120,60,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 256, 256);
+  x.strokeStyle = 'rgba(210,190,255,.55)'; x.lineWidth = 5;
+  for (let k = 0; k < 4; k++) { x.beginPath(); for (let u = 0; u < 1; u += 0.01) { const a = k * Math.PI / 2 + u * 5, rr = 20 + u * 105; x.lineTo(128 + Math.cos(a) * rr, 128 + Math.sin(a) * rr); } x.stroke(); }
+  const disco = new THREE.Mesh(new THREE.CircleGeometry(raggio, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: texture(c), transparent: true, depthWrite: false }));
+  disco.position.y = 1.2; disco.renderOrder = 2; g.add(disco); g.userData.disco = disco;
+  return g;
+}
+
 function etichetta(testo, colore) {
   const [c, g] = tela2d(256, 64);
   g.font = '700 30px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -353,13 +378,23 @@ export function crea(tela) {
   let mondo = null, chiave = null, b = null, tema = 'classica';
   let palle = [], vecchiePalle = [], etichette = [];
   let anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], mare: null, bandiera: null, neve: null };
-  const mira = new Striscia(40, 0xffffff, 0.95), guida = new Striscia(30, 0xffffff, 0.35);
-  scena.add(mira.mesh, guida.mesh);
+  const mira = new Striscia(24, 0xffffff, 0.95);
+  scena.add(mira.mesh);
+  // la linea a puntini della mira (fino al primo rimbalzo e un pezzo dopo)
+  const N_PUNTI = 46;
+  const puntini = new THREE.InstancedMesh(new THREE.CircleGeometry(2.4, 12).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95, depthWrite: false }), N_PUNTI);
+  puntini.renderOrder = 6; puntini.frustumCulled = false; puntini.count = 0;
+  puntini.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N_PUNTI * 3), 3);
+  scena.add(puntini);
+  const mtx = new THREE.Matrix4();
+  // i pezzi piazzati (funghi e vortici) e il "fantasma" di quello che si sta piazzando
+  let pezziG = null, pezziK = '', anteprima = null, anteprimaTipo = '';
   const coriandoli = [];
   const cam = { x: 0, y: 0, z: 0, tx: 0, ty: 0, tz: 0, pronta: false };
   const tmp = new THREE.Color();
 
   function svuota() {
+    pezziG = null; pezziK = '';
     if (!mondo) return;
     scena.remove(mondo);
     mondo.traverse((o) => {
@@ -408,7 +443,7 @@ export function crea(tela) {
     const gp = new THREE.BufferGeometry();
     gp.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gp.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); gp.setIndex(idx); gp.computeVertexNormals();
     const prato = new THREE.Mesh(gp, new THREE.MeshStandardMaterial({ map: dipingiPrato(b, tema), roughness: tema === 'ghiaccio' ? 0.35 : 0.92, metalness: tema === 'spazio' ? 0.3 : 0 }));
-    prato.receiveShadow = true; mondo.add(prato);
+    prato.receiveShadow = true; mondo.add(prato); pratoM = prato.material; pratoC = pratoM.color.clone();
     // ---- l'isola: i fianchi dal bordo fino al mondo di sotto ----
     const livello = Math.min(qMin, 0) - (tema === 'spazio' ? 260 : 46);
     {
@@ -614,7 +649,48 @@ export function crea(tela) {
   }
 
   // quanto si va dritti da (x, y) nella direzione a prima di toccare un muro (al massimo max)
-  let segFissi = [], pezziMuro = [], vetro = null;
+  let segFissi = [], pezziMuro = [], vetro = null, pratoM = null, pratoC = null;
+  // la strada della mira: dritta fino al primo muro, poi il rimbalzo (come la vede il server: muri fissi)
+  function stradaMira(x0, y0, a, l) {
+    const punti = [[x0, y0]];
+    let x = x0, y = y0, dx = Math.cos(a), dy = Math.sin(a), resto = l;
+    for (let k = 0; k < 2 && resto > 0; k++) {
+      let best = resto, n = null;
+      for (const [x1, y1, x2, y2] of segFissi) {
+        const ex = x2 - x1, ey = y2 - y1, den = dx * ey - dy * ex;
+        if (Math.abs(den) < 1e-9) continue;
+        const t = ((x1 - x) * ey - (y1 - y) * ex) / den, u = ((x1 - x) * dy - (y1 - y) * dx) / den;
+        if (u < 0 || u > 1) continue;
+        // il centro della pallina si ferma a R dal muro
+        const ll = Math.hypot(ex, ey), nx = -ey / ll, ny = ex / ll, cos = Math.abs(dx * nx + dy * ny);
+        const tt = t - R / Math.max(0.2, cos);
+        if (tt > 0.5 && tt < best) { best = tt; n = [nx, ny]; }
+      }
+      x += dx * best; y += dy * best; resto -= best; punti.push([x, y]);
+      if (!n) break;
+      const vn = dx * n[0] + dy * n[1]; dx -= 2 * vn * n[0]; dy -= 2 * vn * n[1];
+      resto *= 0.55; // dopo il rimbalzo la pallina va meno lontano: se ne mostra un pezzo
+    }
+    return punti;
+  }
+  function mettiPuntini(punti, f) {
+    let k = 0, avanzo = 0;
+    const passo = 13;
+    for (let i = 0; i < punti.length - 1 && k < N_PUNTI; i++) {
+      const [ax, ay] = punti[i], [bx, by] = punti[i + 1], l = Math.hypot(bx - ax, by - ay);
+      for (let d = avanzo; d < l && k < N_PUNTI; d += passo) {
+        const x = ax + ((bx - ax) * d) / l, y = ay + ((by - ay) * d) / l, sc = 1 - (k / N_PUNTI) * 0.55;
+        mtx.makeScale(sc, 1, sc); mtx.setPosition(x, quotaVista(b, x, y) + 1.3, y);
+        puntini.setMatrixAt(k, mtx);
+        tmp.setHSL((120 - f * 120) / 360, 0.95, 0.62); if (i > 0) tmp.lerp(new THREE.Color(0xffffff), 0.45);
+        puntini.setColorAt(k, tmp); k++;
+        avanzo = d + passo - l;
+      }
+    }
+    puntini.count = k; puntini.instanceMatrix.needsUpdate = true; if (puntini.instanceColor) puntini.instanceColor.needsUpdate = true;
+  }
+  // quanto lontano va un tiro di forza f su prato piano (decelerazione 40 + 0,45·v)
+  function lunghezzaTiro(f) { const v = Math.max(1, f * 1500), K = 0.45, C0 = 40; return v / K - (C0 / (K * K)) * Math.log(1 + (K * v) / C0); }
   // i pezzi di muro tra la telecamera e la pallina diventano trasparenti (così non coprono mezza scena)
   function muriTrasparenti(cx, cy, bx, by) {
     const vx = bx - cx, vy = by - cy, l = Math.hypot(vx, vy) || 1;
@@ -671,6 +747,8 @@ export function crea(tela) {
     }
     // ---- palline ----
     let mia = null;
+    // (le palline dei posti che non ci sono restano nascoste)
+    for (let i = s.palle.length; i < palle.length; i++) { palle[i].g.visible = false; palle[i].et.visible = false; palle[i].scia.visible = false; }
     s.palle.forEach((q, i) => {
       const P = palle[i]; if (!P) return;
       const via = !q || q.d || (s.usciti && s.usciti[i]);
@@ -715,13 +793,44 @@ export function crea(tela) {
       if (c.t > 1.8) { scena.remove(c.pt); c.pt.geometry.dispose(); c.pt.material.dispose(); coriandoli.splice(k, 1); }
     }
     // ---- la mira ----
-    mira.mesh.visible = false; guida.mesh.visible = false;
+    mira.mesh.visible = false; puntini.count = 0;
     if (s.mira && mia) {
       const { a, f, carica, nascosta } = s.mira;
       if (!nascosta) {
-        guida.mesh.visible = true; guida.metti(b, mia.x, mia.y, a, 260, 1.2, null, false);
-        if (carica && f > 0) { mira.mesh.visible = true; mira.metti(b, mia.x, mia.y, a, 25 + f * 240, 4.5, (u) => tmp.setHSL((120 - f * u * 120) / 360, 0.9, 0.55), true); }
+        if (carica && f > 0) {
+          // la freccia di forza vicino alla pallina e i puntini: la strada fino al primo rimbalzo (e un pezzo dopo)
+          mira.mesh.visible = true; mira.metti(b, mia.x + Math.cos(a) * (R + 3), mia.y + Math.sin(a) * (R + 3), a, 14 + f * 46, 4.2, (u) => tmp.setHSL((120 - f * u * 120) / 360, 0.95, 0.55), true);
+          mettiPuntini(stradaMira(mia.x, mia.y, a, Math.min(900, 60 + lunghezzaTiro(f) * 0.55)), f);
+        } else mettiPuntini(stradaMira(mia.x, mia.y, a, 110), 0);
       }
+    }
+    // ---- funghi e vortici piazzati ----
+    const pk = (s.pezzi || []).map((q) => q.join(',')).join(';');
+    if (pk !== pezziK) {
+      if (pezziG) { mondo.remove(pezziG); pezziG.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+      pezziG = new THREE.Group(); pezziK = pk; mondo.add(pezziG);
+      for (const [v, x, y] of s.pezzi || []) {
+        const o = v ? vortice(PB.R_FUNGO || 20, 170) : fungo(PB.R_FUNGO || 20);
+        o.position.set(x, quotaVista(b, x, y) - 1, y); pezziG.add(o); o.userData.nato = t;
+        anim.respingenti.push({ g: o, x, y, r: PB.R_FUNGO || 20, colpo: 1, pezzo: true });
+      }
+      anim.respingenti = anim.respingenti.filter((r) => !r.pezzo || r.g.parent === pezziG);
+    }
+    if (pezziG) for (const o of pezziG.children) { if (o.userData.disco) o.userData.disco.rotation.y = -t * 2.2; const u = Math.min(1, (t - (o.userData.nato || 0)) * 4); if (u < 1) o.scale.setScalar(Math.max(0.05, u)); }
+    // il pezzo che si sta piazzando: un'ombra che segue il mouse
+    if (s.piazza) {
+      if (!anteprima || anteprimaTipo !== s.piazza.tipo) {
+        if (anteprima) scena.remove(anteprima);
+        anteprima = s.piazza.tipo === 'vortice' ? vortice(20, s.piazza.r) : fungo(20, 0xffffff);
+        anteprima.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.5; o.castShadow = false; } });
+        anteprimaTipo = s.piazza.tipo; scena.add(anteprima);
+      }
+      anteprima.visible = true; anteprima.position.set(s.piazza.x, quotaVista(b, s.piazza.x, s.piazza.y), s.piazza.y);
+    } else if (anteprima) anteprima.visible = false;
+    // Gelata: il prato diventa azzurro e lucido
+    if (pratoM) {
+      pratoM.color.copy(pratoC); pratoM.emissive.set(0x000000);
+      if (s.gelo) { pratoM.color.lerp(GHIACCIATO, 0.75); pratoM.emissive.set(0x1d3f5a); }
     }
     // ---- telecamera ----
     const C = s.camera;
@@ -729,11 +838,18 @@ export function crea(tela) {
     if (C.alto || !C.segui) {
       const xs = b.bordo.map((q) => q[0]), ys = b.bordo.map((q) => q[1]);
       tx = (Math.min(...xs) + Math.max(...xs)) / 2; tz = (Math.min(...ys) + Math.max(...ys)) / 2; ty = 0;
-      const dist = Math.max(Math.max(...xs) - Math.min(...xs), (Math.max(...ys) - Math.min(...ys)) * camera.aspect) * 0.95 / camera.aspect + 300;
+      // tutta la buca nell'inquadratura: le misure lungo la direzione della telecamera e di traverso
+      const cy0 = Math.cos(C.yaw), sy0 = Math.sin(C.yaw);
+      const lungo = b.bordo.map(([x, y]) => x * cy0 + y * sy0), trav = b.bordo.map(([x, y]) => -x * sy0 + y * cy0);
+      const L = Math.max(...lungo) - Math.min(...lungo), Wt = Math.max(...trav) - Math.min(...trav);
+      const fov = (camera.fov * Math.PI) / 180, hv = Math.tan(fov / 2);
+      const dist = Math.max((L * 0.62) / hv, (Wt * 0.56) / (hv * camera.aspect)) + 120;
+      tx = (Math.min(...lungo) + Math.max(...lungo)) / 2 * cy0 - (Math.min(...trav) + Math.max(...trav)) / 2 * sy0;
+      tz = (Math.min(...lungo) + Math.max(...lungo)) / 2 * sy0 + (Math.min(...trav) + Math.max(...trav)) / 2 * cy0;
       pos = [tx - Math.cos(C.yaw) * Math.cos(1.15) * dist, ty + Math.sin(1.15) * dist, tz - Math.sin(C.yaw) * Math.cos(1.15) * dist];
     } else {
       tx = C.segui.x; tz = C.segui.y; ty = quotaVista(b, tx, tz) + R;
-      const avanti = 40; tx += Math.cos(C.yaw) * avanti; tz += Math.sin(C.yaw) * avanti;
+      const avanti = 90; tx += Math.cos(C.yaw) * avanti; tz += Math.sin(C.yaw) * avanti;
       // se dietro la pallina c'è un muro che la coprirebbe, la telecamera si avvicina
       let oriz = Math.cos(C.pitch) * C.dist, su = Math.sin(C.pitch) * C.dist;
       const muro = raggioMuri(C.segui.x, C.segui.y, C.yaw + Math.PI, oriz + 20);
