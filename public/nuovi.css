@@ -1177,7 +1177,6 @@ button.it-leva { cursor: pointer; }
 .pt-box:fullscreen { border-radius: 0; height: 100vh !important; }
 .pt-tela { display: block; width: 100%; outline: none; cursor: crosshair; touch-action: none; }
 .pt-hud { position: absolute; inset: 0; pointer-events: none; color: #fff; font: 600 .9rem/1.3 system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
-.pt-hud::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 10, 5, .32) 100%); pointer-events: none; }
 .pt-in-alto { position: absolute; top: .6rem; left: .7rem; background: linear-gradient(180deg, rgba(14, 30, 24, .72), rgba(8, 18, 14, .6)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, .14); box-shadow: 0 6px 18px rgba(0, 0, 0, .25); padding: .45rem .8rem; border-radius: 12px; max-width: 60%; }
 .pt-in-alto small { opacity: .75; font-weight: 400; }
 .pt-righe { font-weight: 400; margin-top: .15rem; }
