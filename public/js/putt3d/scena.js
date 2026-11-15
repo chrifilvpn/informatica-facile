@@ -581,7 +581,7 @@ export function crea(tela) {
 
   let mondo = null, chiave = null, b = null, tema = 'classica';
   let palle = [], vecchiePalle = [], etichette = [];
-  let anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], mare: null, bandiera: null, neve: null };
+  let anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], frecce: [], mare: null, bandiera: null, neve: null };
   const pmrem = new THREE.PMREMGenerator(renderer);
   let ambiente = null;
   const mira = new Striscia(24, 0xffffff, 0.95);
@@ -602,7 +602,7 @@ export function crea(tela) {
   function svuota() {
     pezziG = null; pezziK = '';
     // (gli oggetti animati sono della buca: a ogni buca si ricomincia, prima restavano quelli delle buche passate)
-    anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], mare: null, bandiera: null, neve: null, nuvole: null, faro: null };
+    anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], frecce: [], mare: null, bandiera: null, neve: null, nuvole: null, faro: null };
     if (!mondo) return;
     scena.remove(mondo);
     mondo.traverse((o) => {
@@ -773,6 +773,22 @@ export function crea(tela) {
       const anello = new THREE.Mesh(new THREE.TorusGeometry(r * 0.72, 2.4, 8, 32), mat(0xffffff, { roughness: 0.3 })); anello.rotation.x = Math.PI / 2; anello.position.y = 18.5; g.add(anello);
       const cappello = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.4, r * 0.5, 6, 20), mat(0xffd23f, { metalness: 0.4, roughness: 0.3 })); cappello.position.y = 21; g.add(cappello);
       g.position.set(x, q - 2, y); conOmbre(g); mondo.add(g); anim.respingenti.push({ g, x, y, r, colpo: 0 });
+    }
+    // ---- acceleratori: una piastra con le frecce che scorrono ----
+    for (const q of b.acceleratori || []) {
+      const [x, y, w, h] = q.r, cx = x + w / 2, cy = y + h / 2;
+      // la piastra è allineata alla freccia: lunga quanto il rettangolo nella sua direzione
+      const c = Math.abs(Math.cos(q.a)), sn = Math.abs(Math.sin(q.a)), lungo = c > sn ? w : h, largo = c > sn ? h : w;
+      const [ct, gt] = tela2d(128, 128);
+      gt.fillStyle = tema === 'spazio' ? '#0a2a4a' : '#1d3b5a'; gt.fillRect(0, 0, 128, 128);
+      gt.strokeStyle = tema === 'spazio' ? '#5ff0ff' : '#ffd23f'; gt.lineWidth = 16; gt.lineCap = 'round'; gt.lineJoin = 'round';
+      for (const ox of [10, 74]) { gt.beginPath(); gt.moveTo(ox, 22); gt.lineTo(ox + 34, 64); gt.lineTo(ox, 106); gt.stroke(); }
+      const tx = texture(ct, true); tx.repeat.set(lungo / 60, 1);
+      const piastra = new THREE.Mesh(new THREE.PlaneGeometry(lungo, largo).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tx, emissive: tema === 'spazio' ? 0x1a6a8a : 0x5a4400, emissiveMap: tx, emissiveIntensity: tema === 'spazio' ? 0.9 : 0.3, roughness: 0.5 }));
+      piastra.rotation.y = -q.a; piastra.position.set(cx, quotaVista(b, cx, cy) + 1.3, cy); piastra.receiveShadow = true; mondo.add(piastra);
+      const cornice = new THREE.Mesh(new THREE.BoxGeometry(lungo + 6, 1.6, largo + 6), mat(0xdddddd, { metalness: 0.6, roughness: 0.3 }));
+      cornice.rotation.y = -q.a; cornice.position.set(cx, quotaVista(b, cx, cy) - 0.3, cy); mondo.add(cornice);
+      anim.frecce.push(tx);
     }
     for (const [x, y, r] of b.rocce || []) { const o = roccia(tema, r, rnd); o.position.set(x, quotaVista(b, x, y) - 1, y); o.rotation.y = rnd() * 6; mondo.add(o); }
     for (const mb of b.mobili || []) { const o = mobile(tema, mb.r, rnd); mondo.add(o); anim.mobili.push({ o, m: mb, px: null, py: null }); }
@@ -980,6 +996,7 @@ export function crea(tela) {
     if (anim.mare) { const p = anim.mare.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, Math.sin(x / 90 + t * 1.3) * 3 + Math.cos(z / 120 + t) * 3); } p.needsUpdate = true; anim.mare.geometry.computeVertexNormals(); }
     if (anim.bandiera) { const bp = anim.bandiera.m.geometry.attributes.position, base = anim.bandiera.base; for (let i = 0; i < bp.count; i++) { const x = base[i * 3]; bp.setZ(i, Math.sin(x / 7 - t * 6) * (x / 30) * 4); } bp.needsUpdate = true; }
     if (anim.nuvole) anim.nuvole.g.rotation.y = t * 0.004;
+    for (const tx of anim.frecce) tx.offset.x = -t * 1.6;
     if (anim.faro) anim.faro.material.opacity = 0.08 + Math.sin(t * 2) * 0.04;
     anim.scatole.forEach((sc, k) => {
       const presa = (s.prese || []).includes(k);

@@ -13,6 +13,7 @@
 //   acqua (si torna indietro con un colpo di penalità), buchiNeri [{ x, y, r, f }] (attirano; nel centro = come l'acqua),
 //   mulini, scorrevoli (asse y oppure x), rampe [{ r: [x, y, w, h], a: angolo }] (si salta sopra muretti, acqua e sabbia),
 //   tubi [{ a: [x, y], b: [x, y] }] (entri da a ed esci da b, con la stessa velocità), pu [[x, y]] (scatole dei power-up),
+//   acceleratori [{ r: [x, y, w, h], a: angolo, v }] (frecce per terra: spingono la pallina nella loro direzione),
 //   partenza, buca, par, nome.
 (function (radice, fabbrica) {
   if (typeof module === 'object' && module.exports) module.exports = fabbrica();
@@ -70,7 +71,19 @@
       mulini: (b.mulini || []).map((m) => ({ ...m, x: m.x * k, y: m.y * k, l: m.l * k })),
       scorrevoli: (b.scorrevoli || []).map((s) => ({ ...s, x: s.x * k, y0: s.y0 * k, y1: s.y1 * k, w: s.w * k, h: s.h * k })) };
   }
-  const CLASSICA = VECCHIE.map((b) => ingrandisci(b, 1.6));
+  const CLASSICA = VECCHIE.map((b) => ingrandisci(b, 1.6)).concat([
+    { id: 'castello', nome: 'Il castello', par: 3, W: 1900, H: 1100, bordo: rett(120, 120, 1660, 860), partenza: [230, 260], buca: [1620, 820],
+      muri: [[1100, 120, 1100, 460], [1100, 640, 1100, 980]], rocce: [[1100, 470, 22], [1100, 630, 22]],
+      scorrevoli: [{ x: 1090, y0: 420, y1: 680, w: 20, h: 90, periodo: 2.4, fase: 0 }], acceleratori: [{ r: [650, 500, 160, 100], a: 0, v: 950 }],
+      respingenti: [[1450, 330, 32], [1450, 770, 32]], pu: [[500, 300], [500, 800], [1380, 550]] },
+    { id: 'zeta', nome: 'La zeta', par: 4, W: 1900, H: 1150, bordo: corsia([[200, 250], [1600, 250], [350, 900], [1700, 900]], 230), partenza: [260, 250], buca: [1640, 900],
+      acceleratori: [{ r: [905, 535, 140, 80], a: 2.662, v: 900 }], rocce: [[1000, 250, 24], [1000, 900, 24]], pu: [[800, 250], [1250, 900]] },
+    { id: 'piramide', nome: 'La piramide', par: 3, W: 2000, H: 1100, bordo: rett(120, 150, 1760, 800), partenza: [230, 550], buca: [1450, 550],
+      dossi: [{ x: 1450, y: 550, r: 320, h: 55 }], respingenti: [[800, 350, 34], [800, 750, 34]], rocce: [[1050, 550, 26]], pu: [[600, 550]] },
+    { id: 'galleria', nome: 'La galleria', par: 3, W: 2200, H: 1000, bordo: rett(120, 150, 1960, 700), partenza: [230, 500], buca: [1950, 500],
+      muri: [[500, 500, 1700, 500]], mulini: [{ x: 1100, y: 325, l: 110, w: 1.4, pale: 2 }], sabbia: [[900, 600, 300, 200]],
+      tubi: [{ a: [650, 700], b: [1550, 700] }], pu: [[1100, 700], [800, 300]] },
+  ]);
 
   // ---------------- SPIAGGIA DEI PIRATI ----------------
   const PIRATI = [
@@ -90,6 +103,17 @@
       mobili: [{ x: 750, y: 470, ax: 110, ay: 0, per: 2.4, fase: 0, r: 22 }, { x: 1100, y: 820, ax: 0, ay: 90, per: 2, fase: 1, r: 22 }], rocce: [[1350, 900, 24]], pu: [[850, 220], [900, 790]] },
     { id: 'squalo', nome: 'Il salto dello squalo', par: 2, W: 2000, H: 800, bordo: rett(120, 200, 1760, 400), partenza: [200, 400], buca: [1760, 400],
       acqua: [[800, 200, 380, 400]], rampe: [{ r: [620, 330, 110, 140], a: 0 }], rocce: [[1400, 290, 24], [1400, 510, 24]], pu: [[400, 300]] },
+    { id: 'porto', nome: 'Il porto', par: 4, W: 1900, H: 1200, bordo: corsia([[200, 300], [1300, 300], [1300, 950], [1700, 950]], 260), partenza: [260, 300], buca: [1640, 950],
+      mobili: [{ x: 800, y: 300, ax: 0, ay: 90, per: 2.6, fase: 0, r: 30 }, { x: 1300, y: 620, ax: 90, ay: 0, per: 2.2, fase: 1, r: 30 }],
+      acceleratori: [{ r: [1250, 720, 100, 120], a: PI / 2, v: 850 }], pu: [[600, 360], [1300, 470]] },
+    { id: 'veliero', nome: 'Il ponte del veliero', par: 3, W: 2200, H: 1000, bordo: rett(120, 200, 1960, 600), partenza: [230, 500], buca: [1950, 500],
+      acqua: [[500, 200, 1000, 230], [500, 570, 1000, 230]], mobili: [{ x: 1000, y: 500, ax: 0, ay: 45, per: 1.8, fase: 0, r: 22 }],
+      rocce: [[1750, 350, 24], [1750, 650, 24]], pu: [[300, 300], [1650, 500]] },
+    { id: 'faro', nome: 'Il faro', par: 3, W: 1700, H: 1300, bordo: ottagono(850, 650, 560), partenza: [380, 650], buca: [850, 650],
+      respingenti: [[640, 650, 34], [998, 798, 34], [850, 860, 34], [702, 798, 34], [702, 502, 34], [850, 440, 34], [998, 502, 34]],
+      acqua: [[1180, 400, 120, 500]], pu: [[850, 250], [850, 1050]] },
+    { id: 'scogliera', nome: 'La scogliera', par: 4, W: 2000, H: 1200, bordo: corsia([[200, 950], [800, 950], [800, 300], [1750, 300]], 240), partenza: [260, 950], buca: [1690, 300],
+      acqua: [[680, 560, 160, 120]], rampe: [{ r: [700, 720, 120, 90], a: -PI / 2 }], rocce: [[1300, 300, 26]], pu: [[500, 950], [1200, 300]] },
   ];
 
   // ---------------- GHIACCIO ----------------
@@ -112,6 +136,16 @@
       neve: [[300, 150, 150, 700]], ghiaccio: [[1550, 150, 120, 700]], pu: [[1000, 180]] },
     { id: 'spirale', nome: 'La spirale gelata', par: 5, W: 1800, H: 1400, bordo: corsia([[200, 200], [1600, 200], [1600, 1200], [300, 1200], [300, 500], [1250, 500], [1250, 900], [700, 900]], 220), partenza: [260, 200], buca: [760, 900],
       ghiaccio: [[500, 90, 800, 220], [1490, 400, 220, 600], [500, 1090, 800, 220]], rocce: [[900, 470, 22]], pu: [[1600, 1150], [300, 800]] },
+    { id: 'bob', nome: 'La pista da bob', par: 4, W: 2200, H: 1300, bordo: corsia([[200, 300], [1900, 300], [1900, 1000], [300, 1000]], 220), partenza: [260, 300], buca: [360, 1000],
+      ghiaccio: [[600, 190, 1000, 220], [1790, 450, 220, 400], [600, 890, 1000, 220]], neve: [[420, 890, 180, 220]], acceleratori: [{ r: [1000, 250, 140, 100], a: 0, v: 1000 }],
+      mobili: [{ x: 1900, y: 650, ax: 80, ay: 0, per: 2.4, fase: 0, r: 24 }], pu: [[1500, 300], [1100, 1000]] },
+    { id: 'pattinatori', nome: 'I pattinatori', par: 3, W: 1900, H: 1200, bordo: rett(120, 120, 1660, 960), partenza: [220, 600], buca: [1640, 600],
+      ghiaccio: [[300, 120, 1250, 960]], neve: [[1550, 450, 230, 300]],
+      mobili: [{ x: 600, y: 600, ax: 0, ay: 300, per: 3, fase: 0, r: 26 }, { x: 900, y: 600, ax: 250, ay: 0, per: 2.6, fase: 1, r: 26 }, { x: 1200, y: 600, ax: 0, ay: -300, per: 3.4, fase: 2, r: 26 }, { x: 900, y: 350, ax: 200, ay: 100, per: 4, fase: 0.5, r: 24 }],
+      pu: [[900, 900], [450, 250]] },
+    { id: 'grotta', nome: 'La grotta di ghiaccio', par: 4, W: 1900, H: 1100, bordo: rett(120, 150, 1660, 800), partenza: [250, 850], buca: [1600, 300],
+      muri: [[600, 150, 600, 700], [1000, 400, 1000, 950], [1400, 150, 1400, 700]], ghiaccio: [[610, 700, 380, 250]], tubi: [{ a: [450, 250], b: [1200, 850] }],
+      rocce: [[800, 800, 24], [1200, 300, 24]], pu: [[800, 300], [1200, 550]] },
   ];
 
   // ---------------- TEMPIO NELLA GIUNGLA ----------------
@@ -132,6 +166,15 @@
       acqua: [[800, 560, 200, 180]], scorrevoli: [{ asse: 'x', y: 610, x0: 750, x1: 1050, w: 90, h: 80, periodo: 3, fase: 0 }], fango: [[1000, 960, 150, 180]], pu: [[1600, 450], [300, 850]] },
     { id: 'serpente', nome: 'Il serpente', par: 4, W: 2200, H: 1100, bordo: corsia([[150, 300], [550, 800], [950, 300], [1350, 800], [1750, 300], [2050, 550]], 210), partenza: [210, 360], buca: [2000, 520],
       fango: [[900, 230, 120, 120]], rocce: [[550, 700, 22], [1350, 700, 22]], pu: [[1150, 550]] },
+    { id: 'liane', nome: 'Il ponte di liane', par: 3, W: 2200, H: 1000, bordo: rett(120, 150, 1960, 700), partenza: [230, 500], buca: [1950, 500],
+      acqua: [[700, 150, 500, 280], [700, 570, 500, 280]], scorrevoli: [{ x: 930, y0: 420, y1: 580, w: 30, h: 60, periodo: 2, fase: 0 }],
+      fango: [[1400, 350, 200, 300]], rocce: [[500, 300, 26], [500, 700, 26]], pu: [[1300, 500]] },
+    { id: 'idolo', nome: 'L\'idolo d\'oro', par: 3, W: 1800, H: 1300, bordo: rett(120, 120, 1560, 1060), partenza: [300, 650], buca: [900, 650],
+      muri: [[650, 400, 840, 400], [960, 400, 1150, 400], [650, 900, 840, 900], [960, 900, 1150, 900], [650, 400, 650, 590], [650, 710, 650, 900], [1150, 400, 1150, 590], [1150, 710, 1150, 900]],
+      scorrevoli: [{ x: 640, y0: 560, y1: 740, w: 20, h: 70, periodo: 2.2, fase: 0 }, { x: 1140, y0: 560, y1: 740, w: 20, h: 70, periodo: 2.8, fase: 1 }],
+      rocce: [[900, 250, 30], [900, 1050, 30]], pu: [[300, 300], [1500, 1000]] },
+    { id: 'rapide', nome: 'Le rapide', par: 3, W: 2200, H: 1100, bordo: corsia([[200, 850], [900, 850], [1300, 300], [2000, 300]], 240), partenza: [260, 850], buca: [1940, 300],
+      acceleratori: [{ r: [1040, 535, 120, 80], a: -0.942, v: 950 }], fango: [[600, 750, 150, 200]], mulini: [{ x: 1650, y: 300, l: 100, w: 1.6, pale: 2 }], pu: [[500, 850], [1450, 300]] },
   ];
 
   // ---------------- SPAZIO ----------------
@@ -152,6 +195,16 @@
       buchiNeri: [{ x: 700, y: 350, r: 200, f: 650 }, { x: 1250, y: 750, r: 200, f: 650 }], rocce: [[1000, 550, 30]], pu: [[700, 800], [1250, 300]] },
     { id: 'vuoto', nome: 'Il salto nel vuoto', par: 3, W: 2200, H: 900, bordo: rett(120, 200, 1960, 500), partenza: [200, 450], buca: [1990, 450],
       acqua: [[650, 200, 250, 500], [1350, 200, 250, 500]], rampe: [{ r: [500, 380, 110, 140], a: 0 }, { r: [1200, 380, 110, 140], a: 0 }], mobili: [{ x: 1080, y: 450, ax: 0, ay: 140, per: 2.4, fase: 0, r: 24 }], pu: [[1050, 280]] },
+    { id: 'teletrasporto', nome: 'Il teletrasporto', par: 3, W: 2000, H: 1100, bordo: rett(120, 120, 1760, 860), partenza: [250, 550], buca: [1650, 550],
+      muri: [[700, 120, 700, 980], [1300, 120, 1300, 980]],
+      tubi: [{ a: [550, 300], b: [850, 800] }, { a: [550, 800], b: [850, 300] }, { a: [1150, 300], b: [1450, 800] }, { a: [1150, 800], b: [250, 300] }], pu: [[400, 850], [1000, 550]] },
+    { id: 'cometa', nome: 'La cometa', par: 3, W: 2200, H: 1000, bordo: rett(120, 150, 1960, 700), partenza: [230, 500], buca: [1950, 500],
+      acceleratori: [{ r: [500, 450, 120, 100], a: 0, v: 1000 }, { r: [1100, 250, 120, 100], a: 0, v: 1000 }, { r: [1100, 650, 120, 100], a: 0, v: 1000 }],
+      mobili: [{ x: 800, y: 500, ax: 0, ay: 250, per: 2.2, fase: 0, r: 30 }, { x: 1500, y: 500, ax: 0, ay: 250, per: 2.8, fase: 1.5, r: 34 }],
+      respingenti: [[1800, 300, 30], [1800, 700, 30]], pu: [[1000, 500]] },
+    { id: 'luna', nome: 'La luna', par: 3, W: 1800, H: 1300, bordo: ottagono(900, 650, 580), partenza: [420, 650], buca: [1350, 380],
+      dossi: [{ x: 700, y: 450, r: 180, h: -40 }, { x: 1100, y: 850, r: 200, h: -45 }, { x: 1150, y: 420, r: 150, h: 35 }],
+      buchiNeri: [{ x: 650, y: 900, r: 180, f: 600 }], pu: [[900, 300], [900, 1000]] },
   ];
 
   // ---------------- LE COLLINE: dossi, conche e pendii (la pallina sale, scende e si ferma nelle conche) ----------------
@@ -173,6 +226,15 @@
       pendii: [{ x: 450, y: 0, a: 0, l: 300, h: 55 }, { x: 1250, y: 0, a: 0, l: 300, h: -55 }], mulini: [{ x: 1000, y: 450, l: 130, w: 1.3, pale: 2 }], pu: [[1000, 270]] },
     { id: 'gobbe', nome: 'Le gobbe del cammello', par: 4, W: 1900, H: 1300, bordo: corsia([[200, 250], [1600, 250], [1600, 1050], [250, 1050]], 250), partenza: [260, 250], buca: [320, 1050],
       dossi: [{ x: 800, y: 250, r: 150, h: 35 }, { x: 1600, y: 650, r: 170, h: -40 }, { x: 900, y: 1050, r: 150, h: 35 }], mobili: [{ x: 1250, y: 1050, ax: 0, ay: 80, per: 3, fase: 1, r: 24 }], pu: [[1600, 450], [600, 1050]] },
+    { id: 'valle', nome: 'La valle', par: 3, W: 2200, H: 1000, bordo: rett(120, 150, 1960, 700), partenza: [230, 500], buca: [1950, 500],
+      pendii: [{ x: 0, y: 150, a: PI / 2, l: 350, h: -50 }, { x: 0, y: 500, a: PI / 2, l: 350, h: 50 }], dossi: [{ x: 1100, y: 500, r: 150, h: 40 }],
+      rocce: [[700, 300, 26], [1500, 700, 26]], pu: [[1100, 300]] },
+    { id: 'trampolino', nome: 'Il trampolino', par: 3, W: 2200, H: 1000, bordo: rett(120, 150, 1960, 700), partenza: [230, 500], buca: [1800, 500],
+      pendii: [{ x: 300, y: 0, a: 0, l: 500, h: -40 }], acqua: [[1000, 150, 350, 700]], rampe: [{ r: [820, 420, 120, 160], a: 0 }],
+      respingenti: [[1600, 300, 30], [1600, 700, 30]], pu: [[600, 300], [600, 700]] },
+    { id: 'pascolo', nome: 'Il pascolo', par: 3, W: 1900, H: 1200, bordo: rett(120, 120, 1660, 960), partenza: [250, 900], buca: [1600, 300],
+      mobili: [{ x: 600, y: 400, ax: 120, ay: 60, per: 5, fase: 0, r: 26 }, { x: 900, y: 800, ax: -140, ay: 40, per: 6, fase: 1, r: 26 }, { x: 1200, y: 500, ax: 100, ay: -120, per: 5.5, fase: 2, r: 26 }, { x: 1400, y: 850, ax: 80, ay: 0, per: 4, fase: 3, r: 26 }],
+      dossi: [{ x: 900, y: 550, r: 250, h: 40 }], rocce: [[700, 700, 30], [1150, 300, 30]], pu: [[900, 300], [450, 600]] },
   ];
 
   // ---------------- OPEN COURSE: una mappa sola, 6 buche in fila su un percorso a serpentina ----------------
