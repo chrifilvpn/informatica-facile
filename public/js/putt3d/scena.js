@@ -76,6 +76,11 @@ function dipingiPrato(b, tema) {
     for (let k = 0; k < b.W * b.H / 900; k++) { g.fillStyle = rnd() < 0.5 ? 'rgba(0,60,0,.10)' : 'rgba(255,255,200,.07)'; g.fillRect(rnd() * b.W, rnd() * b.H, 2, 4); }
     if (tema === 'giungla') for (let k = 0; k < 60; k++) { g.fillStyle = 'rgba(30,70,20,.18)'; g.beginPath(); g.ellipse(rnd() * b.W, rnd() * b.H, 30 + rnd() * 60, 18 + rnd() * 30, rnd() * 3, 0, Math.PI * 2); g.fill(); }
   }
+  // ombra morbida ai piedi dei muri e lungo il bordo (dà profondità, come l'occlusione ambientale)
+  g.save(); g.filter = 'blur(9px)'; g.strokeStyle = tema === 'spazio' ? 'rgba(0,0,10,.35)' : 'rgba(0,30,0,.24)'; g.lineWidth = 26; g.lineJoin = 'round';
+  g.beginPath(); b.bordo.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+  for (const [x1, y1, x2, y2] of (b.muri || []).concat(b.muretti || [])) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+  g.restore();
   // il green intorno alla buca e la piazzola di partenza
   const [bx, by] = b.buca;
   const gr = g.createRadialGradient(bx, by, 10, bx, by, 150); gr.addColorStop(0, 'rgba(255,255,255,.13)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
@@ -352,6 +357,50 @@ function etichetta(testo, colore) {
   return s;
 }
 
+// le fossette della pallina (una bump map sola per tutte)
+let fossette = null;
+function texFossette() {
+  if (fossette) return fossette;
+  const [c, g] = tela2d(256, 128);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 128);
+  for (let j = 0; j < 9; j++) for (let i = 0; i < 22; i++) {
+    const x = (i + (j % 2) * 0.5) * (256 / 22), y = 7 + j * 14;
+    const gr = g.createRadialGradient(x, y, 0, x, y, 5.5); gr.addColorStop(0, '#8a8a8a'); gr.addColorStop(1, '#fff');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, 5.5, 0, Math.PI * 2); g.fill();
+  }
+  fossette = new THREE.CanvasTexture(c);
+  return fossette;
+}
+// un'ombra morbida sotto la pallina (si legge bene dove sta anche quando salta)
+let texOmbra = null;
+function ombraMorbida() {
+  if (!texOmbra) {
+    const [c, g] = tela2d(64, 64), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(0.55, 'rgba(0,0,0,.25)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64); texOmbra = new THREE.CanvasTexture(c);
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(R * 3.2, R * 3.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: texOmbra, transparent: true, depthWrite: false }));
+  m.renderOrder = 3; return m;
+}
+// la buca vista dall'alto: un buco profondo (scuro al centro, la parete illuminata da un lato)
+function texBuca() {
+  const [c, g] = tela2d(128, 128);
+  const gr = g.createRadialGradient(54, 54, 4, 64, 64, 64);
+  gr.addColorStop(0, '#000'); gr.addColorStop(0.62, '#0b0b0b'); gr.addColorStop(0.86, '#3a3a3a'); gr.addColorStop(1, '#7a7a7a');
+  g.fillStyle = gr; g.beginPath(); g.arc(64, 64, 64, 0, Math.PI * 2); g.fill();
+  return texture(c);
+}
+// nuvole basse e morbide (a palle schiacciate), lontane intorno al campo
+function nuvola(rnd) {
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true, fog: false, emissive: 0x9aa6b8, emissiveIntensity: 0.35 });
+  const n = 4 + Math.floor(rnd() * 4);
+  for (let k = 0; k < n; k++) {
+    const r = 70 + rnd() * 90, p = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), m);
+    p.position.set((k - n / 2) * 95 + rnd() * 40, rnd() * 40, (rnd() - 0.5) * 90); p.scale.y = 0.6; g.add(p);
+  }
+  return g;
+}
+
 function dipingiPallina(colore) {
   const [c, g] = tela2d(128, 64);
   g.fillStyle = colore; g.fillRect(0, 0, 128, 64);
@@ -364,7 +413,7 @@ function dipingiPallina(colore) {
 export function crea(tela) {
   const renderer = new THREE.WebGLRenderer({ canvas: tela, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scena = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(55, 16 / 9, 2, 20000);
@@ -378,6 +427,8 @@ export function crea(tela) {
   let mondo = null, chiave = null, b = null, tema = 'classica';
   let palle = [], vecchiePalle = [], etichette = [];
   let anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], mare: null, bandiera: null, neve: null };
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  let ambiente = null;
   const mira = new Striscia(24, 0xffffff, 0.95);
   scena.add(mira.mesh);
   // la linea a puntini della mira (fino al primo rimbalzo e un pezzo dopo)
@@ -395,6 +446,8 @@ export function crea(tela) {
 
   function svuota() {
     pezziG = null; pezziK = '';
+    // (gli oggetti animati sono della buca: a ogni buca si ricomincia, prima restavano quelli delle buche passate)
+    anim = { mulini: [], scorrevoli: [], mobili: [], respingenti: [], scatole: [], neri: [], acqua: [], mare: null, bandiera: null, neve: null, nuvole: null, faro: null };
     if (!mondo) return;
     scena.remove(mondo);
     mondo.traverse((o) => {
@@ -418,9 +471,24 @@ export function crea(tela) {
     const [cc, gg] = tela2d(4, 256); const gr = gg.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, T.cielo[0]); gr.addColorStop(1, T.cielo[1]); gg.fillStyle = gr; gg.fillRect(0, 0, 4, 256);
     scena.background = texture(cc);
     scena.fog = new THREE.Fog(T.nebbia, 3000, 9000);
+    // riflessi: una mappa d'ambiente fatta col cielo del tema (le palline, i muri e l'acqua luccicano)
+    {
+      const amb = new THREE.Scene();
+      const [ca, ga] = tela2d(8, 256), gra = ga.createLinearGradient(0, 0, 0, 256);
+      gra.addColorStop(0, T.cielo[0]); gra.addColorStop(0.5, T.cielo[1]); gra.addColorStop(0.55, `#${new THREE.Color(T.fuori !== null ? T.fuori : 0x050510).getHexString()}`); gra.addColorStop(1, '#202020');
+      ga.fillStyle = gra; ga.fillRect(0, 0, 8, 256);
+      amb.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.MeshBasicMaterial({ map: texture(ca), side: THREE.BackSide })));
+      const disco = new THREE.Mesh(new THREE.SphereGeometry(9, 16, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(T.sole).multiplyScalar(6) }));
+      disco.position.set(45, 70, 25); amb.add(disco);
+      if (ambiente) ambiente.dispose();
+      ambiente = pmrem.fromScene(amb, 0.03);
+      scena.environment = ambiente.texture; scena.environmentIntensity = tema === 'spazio' ? 0.6 : 0.45;
+      amb.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    }
     emi.color.set(tema === 'spazio' ? 0x8090ff : 0xffffff); emi.groundColor.set(tema === 'spazio' ? 0x221133 : 0x445533); emi.intensity = tema === 'spazio' ? 0.75 : 1.1;
     sole.color.set(T.sole); sole.intensity = tema === 'spazio' ? 1.6 : tema === 'ghiaccio' ? 1.45 : 2.3;
     if (tema === 'ghiaccio') emi.intensity = 0.75;
+    emi.intensity *= 0.85; // (la mappa d'ambiente dà già un po' di luce)
 
     const xs = b.bordo.map((q) => q[0]), ys = b.bordo.map((q) => q[1]);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -443,7 +511,7 @@ export function crea(tela) {
     const gp = new THREE.BufferGeometry();
     gp.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gp.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); gp.setIndex(idx); gp.computeVertexNormals();
     const prato = new THREE.Mesh(gp, new THREE.MeshStandardMaterial({ map: dipingiPrato(b, tema), roughness: tema === 'ghiaccio' ? 0.35 : 0.92, metalness: tema === 'spazio' ? 0.3 : 0 }));
-    prato.receiveShadow = true; mondo.add(prato); pratoM = prato.material; pratoC = pratoM.color.clone();
+    prato.material.envMapIntensity = 0.25; prato.receiveShadow = true; mondo.add(prato); pratoM = prato.material; pratoC = pratoM.color.clone();
     // ---- l'isola: i fianchi dal bordo fino al mondo di sotto ----
     const livello = Math.min(qMin, 0) - (tema === 'spazio' ? 260 : 46);
     {
@@ -474,7 +542,18 @@ export function crea(tela) {
       const bordoSabbia = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX + 260, maxY - minY + 260).rotateX(-Math.PI / 2), mat(0xe9d39a));
       bordoSabbia.position.set(cx, livello + 6, cy); bordoSabbia.receiveShadow = true; mondo.add(bordoSabbia);
     } else if (T.fuori !== null) {
-      const terra = new THREE.Mesh(new THREE.PlaneGeometry(grande, grande).rotateX(-Math.PI / 2), mat(T.fuori, { roughness: 1 }));
+      // il terreno intorno: macchie più chiare e più scure ripetute (non più un colore piatto)
+      const [ct, gt] = tela2d(256, 256), base = new THREE.Color(T.fuori);
+      gt.fillStyle = `#${base.getHexString()}`; gt.fillRect(0, 0, 256, 256);
+      const rt = caso(11);
+      for (let k = 0; k < 160; k++) {
+        const x = rt() * 256, y = rt() * 256, r = 6 + rt() * 26, c2 = base.clone().offsetHSL((rt() - 0.5) * 0.02, 0, (rt() - 0.5) * 0.05);
+        for (const [ox, oy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) { gt.fillStyle = `#${c2.getHexString()}`; gt.globalAlpha = 0.4; gt.beginPath(); gt.ellipse(x + ox, y + oy, r, r * 0.7, rt() * 3, 0, Math.PI * 2); gt.fill(); }
+      }
+      gt.globalAlpha = 1;
+      for (let k = 0; k < 1400; k++) { gt.fillStyle = rt() < 0.5 ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)'; gt.fillRect(rt() * 256, rt() * 256, 1.5, 3); }
+      const tt = texture(ct, true); tt.repeat.set(grande / 420, grande / 420); tt.anisotropy = 8;
+      const terra = new THREE.Mesh(new THREE.PlaneGeometry(grande, grande).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tt, roughness: 1, envMapIntensity: 0.2 }));
       terra.position.set(cx, livello, cy); terra.receiveShadow = true; mondo.add(terra);
     } else {
       // spazio: stelle tutto intorno
@@ -484,6 +563,11 @@ export function crea(tela) {
       mondo.add(new THREE.Points(st, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false })));
     }
     decorazioni(mondo, b, tema, T.mare ? livello + 8 : livello, rnd);
+    if (tema !== 'spazio') {
+      const cielo = new THREE.Group();
+      for (let k = 0; k < 16; k++) { const n = nuvola(rnd), a = rnd() * Math.PI * 2, r = 3200 + rnd() * 1800; n.position.set(cx + Math.cos(a) * r, 700 + rnd() * 900, cy + Math.sin(a) * r); n.rotation.y = rnd() * 6; n.scale.setScalar(1 + rnd()); cielo.add(n); }
+      cielo.position.set(0, 0, 0); mondo.add(cielo); anim.nuvole = { g: cielo, cx, cy };
+    }
     if (T.neve) {
       const gn = new THREE.BufferGeometry(), pn = new Float32Array(1500 * 3);
       for (let k = 0; k < 1500; k++) { pn[k * 3] = (rnd() - 0.5) * 1600; pn[k * 3 + 1] = rnd() * 600; pn[k * 3 + 2] = (rnd() - 0.5) * 1600; }
@@ -603,9 +687,12 @@ export function crea(tela) {
     // ---- la buca e la bandierina ----
     {
       const [bx, by] = b.buca, q = quotaVista(b, bx, by);
-      const buco = new THREE.Mesh(new THREE.CircleGeometry(PB.R_BUCA, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x050505 })); buco.position.set(bx, q + 0.35, by); mondo.add(buco);
-      const labbro = new THREE.Mesh(new THREE.RingGeometry(PB.R_BUCA, PB.R_BUCA + 2.2, 32).rotateX(-Math.PI / 2), mat(0xffffff)); labbro.position.set(bx, q + 0.4, by); mondo.add(labbro);
-      const asta = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 70, 8), mat(0xf2f2f2, { metalness: 0.3 })); asta.position.set(bx, q + 35, by); asta.castShadow = true; mondo.add(asta);
+      const buco = new THREE.Mesh(new THREE.CircleGeometry(PB.R_BUCA, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: texBuca() })); buco.position.set(bx, q + 0.35, by); mondo.add(buco);
+      const labbro = new THREE.Mesh(new THREE.TorusGeometry(PB.R_BUCA + 0.6, 1.1, 8, 40).rotateX(-Math.PI / 2), mat(0xffffff, { roughness: 0.25 })); labbro.position.set(bx, q + 0.5, by); mondo.add(labbro);
+      // un anello di prato più corto e chiaro intorno alla buca (il "green")
+      const green = new THREE.Mesh(new THREE.RingGeometry(PB.R_BUCA + 2, PB.R_BUCA + 26, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, depthWrite: false })); green.position.set(bx, q + 0.3, by); mondo.add(green);
+      const asta = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 70, 12), mat(0xf2f2f2, { metalness: 0.6, roughness: 0.25 })); asta.position.set(bx, q + 35, by); asta.castShadow = true; mondo.add(asta);
+      const pomo = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 12), mat(0xffd23f, { metalness: 0.8, roughness: 0.2 })); pomo.position.set(bx, q + 71, by); mondo.add(pomo);
       const gb = new THREE.PlaneGeometry(30, 19, 10, 2); gb.translate(15, 0, 0);
       const bandiera = new THREE.Mesh(gb, mat(0xe0473c, { side: THREE.DoubleSide, roughness: 0.8 })); bandiera.position.set(bx, q + 60, by); bandiera.castShadow = true; mondo.add(bandiera);
       anim.bandiera = { m: bandiera, base: gb.attributes.position.array.slice(), asta };
@@ -622,7 +709,7 @@ export function crea(tela) {
 
   function preparaPalle(colori, nomi) {
     for (let i = palle.length; i < colori.length; i++) {
-      const sfera = new THREE.Mesh(new THREE.SphereGeometry(R, 24, 18), new THREE.MeshStandardMaterial({ map: dipingiPallina(colori[i]), roughness: 0.3, metalness: 0.05, transparent: true }));
+      const sfera = new THREE.Mesh(new THREE.SphereGeometry(R, 32, 24), new THREE.MeshPhysicalMaterial({ map: dipingiPallina(colori[i]), bumpMap: texFossette(), bumpScale: 0.6, roughness: 0.38, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12, transparent: true }));
       sfera.castShadow = true;
       const aura = new THREE.Mesh(new THREE.TorusGeometry(R + 5, 1.6, 8, 32), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.85 }));
       aura.rotation.x = Math.PI / 2; aura.visible = false;
@@ -630,8 +717,9 @@ export function crea(tela) {
       scia.frustumCulled = false; scia.userData.punti = [];
       const et = etichetta(nomi[i] || `G${i + 1}`, colori[i]);
       const g = new THREE.Group(); g.add(sfera, aura);
-      scena.add(g, scia, et); vecchiePalle.push(g, scia, et);
-      palle.push({ g, sfera, aura, scia, et, nome: nomi[i], x: null, y: null, dentro: false });
+      const ombra = ombraMorbida();
+      scena.add(g, scia, et, ombra); vecchiePalle.push(g, scia, et, ombra);
+      palle.push({ g, sfera, aura, scia, et, ombra, nome: nomi[i], x: null, y: null, dentro: false });
     }
     palle.forEach((p, i) => { if (p.nome !== nomi[i]) { scena.remove(p.et); const et = etichetta(nomi[i] || `G${i + 1}`, colori[i]); scena.add(et); vecchiePalle.push(et); p.et = et; p.nome = nomi[i]; } });
   }
@@ -734,6 +822,7 @@ export function crea(tela) {
     for (const a of anim.acqua) { a.material.color.offsetHSL(0, 0, 0); a.position.y += Math.sin(t * 2) * 0.01; }
     if (anim.mare) { const p = anim.mare.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, Math.sin(x / 90 + t * 1.3) * 3 + Math.cos(z / 120 + t) * 3); } p.needsUpdate = true; anim.mare.geometry.computeVertexNormals(); }
     if (anim.bandiera) { const bp = anim.bandiera.m.geometry.attributes.position, base = anim.bandiera.base; for (let i = 0; i < bp.count; i++) { const x = base[i * 3]; bp.setZ(i, Math.sin(x / 7 - t * 6) * (x / 30) * 4); } bp.needsUpdate = true; }
+    if (anim.nuvole) anim.nuvole.g.rotation.y = t * 0.004;
     if (anim.faro) anim.faro.material.opacity = 0.08 + Math.sin(t * 2) * 0.04;
     anim.scatole.forEach((sc, k) => {
       const presa = (s.prese || []).includes(k);
@@ -748,13 +837,13 @@ export function crea(tela) {
     // ---- palline ----
     let mia = null;
     // (le palline dei posti che non ci sono restano nascoste)
-    for (let i = s.palle.length; i < palle.length; i++) { palle[i].g.visible = false; palle[i].et.visible = false; palle[i].scia.visible = false; }
+    for (let i = s.palle.length; i < palle.length; i++) { palle[i].g.visible = false; palle[i].et.visible = false; palle[i].scia.visible = false; palle[i].ombra.visible = false; }
     s.palle.forEach((q, i) => {
       const P = palle[i]; if (!P) return;
       const via = !q || q.d || (s.usciti && s.usciti[i]);
       if (via) {
         if (q && q.d && !P.dentro && P.x !== null && s.botti) botto(b.buca[0], b.buca[1], quotaVista(b, b.buca[0], b.buca[1]) + 5, s.colori[i]);
-        P.g.visible = false; P.et.visible = false; P.scia.visible = false; P.dentro = !!(q && q.d); return;
+        P.g.visible = false; P.et.visible = false; P.scia.visible = false; P.ombra.visible = false; P.dentro = !!(q && q.d); return;
       }
       P.dentro = false;
       const h = quotaVista(b, q.x, q.y) + R + (q.z || 0);
@@ -765,6 +854,7 @@ export function crea(tela) {
       }
       P.x = q.x; P.y = q.y;
       P.g.position.set(q.x, h, q.y); P.g.visible = true;
+      { const z = q.z || 0, k = 1 + z / 60; P.ombra.visible = true; P.ombra.position.set(q.x, h - R - z + 0.7, q.y); P.ombra.scale.setScalar(k); P.ombra.material.opacity = Math.max(0.25, 1 - z / 90); }
       const io = i === s.mio;
       P.sfera.material.opacity = io ? 1 : 0.78;
       P.sfera.material.emissive && P.sfera.material.emissive.set(q.fa ? 0x6688aa : 0x000000);
