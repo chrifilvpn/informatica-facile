@@ -213,7 +213,6 @@ giochi3/escape-dati.js
 giochi3/escape.js
 giochi3/forza3d.js
 giochi3/freecell.js
-giochi3/frittata.js
 giochi3/frutta.js
 giochi3/hex.js
 giochi3/hockey.js
@@ -471,9 +470,6 @@ public/js/giochi3/forza3d.css
 public/js/giochi3/forza3d.js
 public/js/giochi3/freecell.css
 public/js/giochi3/freecell.js
-public/js/giochi3/frittata-carte.js
-public/js/giochi3/frittata.css
-public/js/giochi3/frittata.js
 public/js/giochi3/frutta.css
 public/js/giochi3/frutta.js
 public/js/giochi3/hex.css
@@ -597,7 +593,6 @@ test/giochi3/draghi.js
 test/giochi3/escape.js
 test/giochi3/forza3d.js
 test/giochi3/freecell.js
-test/giochi3/frittata.js
 test/giochi3/frutta.js
 test/giochi3/hex.js
 test/giochi3/hockey.js
