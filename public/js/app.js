@@ -804,6 +804,29 @@
     $('#testo-globale').focus();
   });
   $('#chiudi-globale').addEventListener('click', () => { $('#globale').hidden = true; });
+  // il pulsante fisso della chat globale (e la firma) si scansano quando finirebbero sopra il campo del codice
+  // del tavolo o quando scrivi in un campo sul telefono (con la tastiera aperta coprirebbero quello che scrivi)
+  const daScansare = ['#codice', '#entra'];
+  const tocco = window.matchMedia('(pointer: coarse), (max-width: 700px)');
+  function sopra(a, b) { return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }
+  function scansaGlobale() {
+    const campo = document.activeElement;
+    const scrive = tocco.matches && campo && campo.matches && campo.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, [contenteditable="true"]') && !campo.closest('#globale');
+    for (const sel of ['#apri-globale', '.firma']) {
+      const el = $(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      const copre = !!r.width && daScansare.some((q) => { const t = $(q); if (!t || !t.offsetParent) return false; const b = t.getBoundingClientRect(); return sopra(r, { left: b.left - 6, right: b.right + 6, top: b.top - 6, bottom: b.bottom + 6 }); });
+      el.classList.toggle('scansato', !!(scrive || copre));
+    }
+  }
+  let scansaFrame = 0;
+  const scansaPresto = () => { if (!scansaFrame) scansaFrame = requestAnimationFrame(() => { scansaFrame = 0; scansaGlobale(); }); };
+  for (const ev of ['scroll', 'resize']) window.addEventListener(ev, scansaPresto, { passive: true });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scansaPresto);
+  document.addEventListener('focusin', scansaPresto);
+  document.addEventListener('focusout', () => setTimeout(scansaPresto, 50));
+  scansaPresto();
   $('#form-globale').addEventListener('submit', (e) => {
     e.preventDefault();
     const t = $('#testo-globale').value.trim();

@@ -1235,6 +1235,9 @@ button.bc-zona { cursor: pointer; } button.bc-zona:hover:not(:disabled) { backgr
 .apri-globale .pallino { position: absolute; top: -3px; right: -3px; }
 .chat.chat-globale { left: 0; right: auto; z-index: 21; box-shadow: 8px 0 30px rgba(0, 0, 0, .4); }
 .chat.chat-globale .piccolo { margin: 0; color: var(--tenue); }
+/* si scansa (sparisce in dissolvenza) quando coprirebbe il campo del codice tavolo o quello in cui scrivi */
+.apri-globale, .firma { transition: opacity .18s ease, transform .18s ease; }
+.apri-globale.scansato, .firma.scansato { opacity: 0; pointer-events: none; transform: translateY(8px); }
 @media (max-width: 620px) { .apri-globale { bottom: auto; top: auto; left: .4rem; bottom: .4rem; font-size: .78rem; padding: .3rem .55rem; } }
 /* benvenuto e nome */
 .benvenuto { z-index: 40; }
