@@ -270,6 +270,7 @@
     g.beginPath(); b.bordo.forEach(([x, y], i) => { const [a, c] = P(x, y); if (i) g.lineTo(a, c); else g.moveTo(a, c); }); g.closePath();
     g.fillStyle = { spazio: '#2e3266', ghiaccio: '#d8ecf7', giungla: '#4e9a3c' }[PB.COURSE[ctxA.partita.buca[0]].tema] || '#3f9e52'; g.fill(); g.strokeStyle = '#d9b27a'; g.lineWidth = 2; g.stroke();
     const zone = (lista, c) => { g.fillStyle = c; for (const [x, y, ww, hh] of lista || []) { const [a, cc] = P(x, y); g.fillRect(a, cc, ww * k, hh * k); } };
+    for (const q of b.acceleratori || []) { const [a, c] = P(q.r[0], q.r[1]); g.fillStyle = '#ffd23f'; g.fillRect(a, c, q.r[2] * k, q.r[3] * k); }
     zone(b.sabbia, '#e8d08f'); zone(b.neve, '#fff'); zone(b.fango, '#7a5a32'); zone(b.ghiaccio, '#a9dcf5'); zone(b.acqua, '#2f7fd8');
     g.strokeStyle = '#d9b27a'; g.lineWidth = 2;
     for (const [x1, y1, x2, y2] of b.muri || []) { const [a, c] = P(x1, y1), [d, e] = P(x2, y2); g.beginPath(); g.moveTo(a, c); g.lineTo(d, e); g.stroke(); }

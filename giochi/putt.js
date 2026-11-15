@@ -18,6 +18,7 @@ const V_STOP = 5, V_BUCA = 420; // sotto V_BUCA la pallina sulla buca ci cade
 const RIMBALZO = 0.72, SPINTA_RESP = 1.3, V_MIN_RESP = 720; // i respingenti rilanciano almeno a 720 px/s
 const TEMPO_BUCA = 180000, PENALITA_TEMPO = 3, PAUSA_FINE_BUCA = 4500, VIA_MS = 2500;
 const COLORI = ['#ffffff', '#ffd23f', '#ff6b6b', '#5fd3ff', '#9dff7a', '#ff9ff3', '#c49bff', '#ffa94d'];
+const ACCEL = 3200; // px/s² degli acceleratori a frecce
 const GRAVITA = 1400; // px/s² per unità di pendenza: sui dossi e sui pendii la pallina accelera o rallenta
 const SALTO_PX = 120; // quanto sale (al massimo) un salto lungo un secondo
 // i superpoteri: i primi cinque sono per sé (gli "armati" valgono per il prossimo tiro), gli altri contro gli avversari
@@ -44,6 +45,7 @@ function terreno(b, x, y) {
 }
 // la pallina può fermarsi qui? Su un pendio troppo ripido continua a scendere (l'attrito non basta a tenerla)
 function puoFermarsi(b, p) {
+  if ((b.acceleratori || []).some((q) => dentro(p.x, p.y, q.r))) return false; // sulle frecce non ci si ferma
   const [gx, gy] = pendenza(b, p.x, p.y), ter = terreno(b, p.x, p.y);
   return GRAVITA * Math.hypot(gx, gy) <= ATTRITO_C * (ter ? Math.max(1, TERRENO[ter]) : 1) * 1.1;
 }
@@ -72,6 +74,12 @@ function passo(b, p, dt, t, segs, bassi, cerchiMobili) {
   if (!inAria && !p.fantasma) for (const h of b.vortici || []) {
     const dx = h.x - p.x, dy = h.y - p.y, d = Math.hypot(dx, dy);
     if (d < h.r && d > 1) { const a = h.f * (1 - d / h.r) * dt; p.vx += (dx / d) * a; p.vy += (dy / d) * a; }
+  }
+  // acceleratori (frecce per terra): spingono nella loro direzione fino alla loro velocità
+  if (!inAria) for (const q of b.acceleratori || []) {
+    if (!dentro(p.x, p.y, q.r)) continue;
+    const c = Math.cos(q.a), s = Math.sin(q.a), lungo = p.vx * c + p.vy * s;
+    if (lungo < q.v) { const dv = Math.min(q.v - lungo, ACCEL * dt); p.vx += c * dv; p.vy += s * dv; p.spinta = true; }
   }
   // calamita: la buca attira la pallina quando ci passa vicino
   if (p.calamita && !inAria) {
@@ -571,11 +579,11 @@ module.exports = {
     regole: [
       'Minigolf in 3D da soli o tra amici (niente computer). Si gioca solo al computer, con mouse e tastiera: dal telefono il gioco non parte (come Alien: Isolation 3D) e il tuo posto resta fermo.',
       'Sette course, ognuna col suo mondo: Classica (le buche di sempre), Spiaggia dei pirati (mare, palme, casse, relitti, passerelle per saltare), Ghiaccio (piste che scivolano, neve che frena, pinguini che camminano), Tempio nella giungla (sabbie mobili, statue, tronchi che girano, il fiume da saltare), Spazio (asteroidi, buchi neri che attirano la pallina, portali), Le colline (dossi, conche e salite, pecore che pascolano, balle di fieno) e l\'Open Course (vedi sotto).',
-      'Nella lobby si sceglie quante course giocare di fila (1, 3, 5 o tutte e 7) e, se si vuole, con quale cominciare. Ogni course ha più di 6 buche disegnate: a ogni partita se ne giocano 6 estratte a caso.',
+      'Nella lobby si sceglie quante course giocare di fila (1, 3, 5 o tutte e 7) e, se si vuole, con quale cominciare. Ogni course ha da 11 a 13 buche disegnate: a ogni partita se ne giocano 6 estratte a caso.',
       'Open Course: una mappa unica e grande, una corsia a serpentina con 6 buche in fila (si parte dove era la buca prima). Ci sono rampe per saltare l\'acqua e i muretti, tubi che passano sotto le altre corsie e ti portano alla fila dopo (attenzione: lontano dalla buca giusta), respingenti, mulini e ostacoli che si muovono.',
       'Si gioca tutti insieme: ognuno ha la sua pallina e tira quando vuole, senza aspettare gli altri. Le palline non si toccano tra loro.',
       'Comandi: la telecamera guarda la tua pallina dall\'alto. Per tirare fai come con una fionda: clicca col tasto sinistro (dove vuoi), tira il mouse indietro e lascia. La pallina parte dalla parte opposta a dove tiri, e più tiri più è forte; la linea a puntini mostra dove va e il primo rimbalzo (tasto destro o Esc per annullare). Gira la telecamera tenendo premuto il tasto destro (o con A/D o le frecce ← →; con Maiusc piano piano). Si può anche tenere premuta la barra spaziatrice: la forza sale e scende, lascia quando è giusta (tira dritto dove guarda la telecamera). W/S o ↑ ↓ alzano e abbassano la telecamera, la rotella avvicina e allontana, Tab mostra tutta la buca dall\'alto, F mette a schermo intero, H mostra i comandi.',
-      'La pallina rimbalza sui bordi e sui muri; i respingenti la rilanciano con una spinta decisa. Sui dossi e sulle salite rallenta, in discesa accelera, e nelle conche tende a fermarsi in fondo. Sabbia, neve e fango la frenano, il ghiaccio la fa scivolare. Se finisce in acqua (o nel centro di un buco nero) torna dove l\'avevi tirata, con un colpo di penalità. Sulle rampe, se ci passa abbastanza veloce, salta sopra acqua, sabbia e muretti.',
+      'La pallina rimbalza sui bordi e sui muri; i respingenti la rilanciano con una spinta decisa. Sui dossi e sulle salite rallenta, in discesa accelera, e nelle conche tende a fermarsi in fondo. Sabbia, neve e fango la frenano, il ghiaccio la fa scivolare. Se finisce in acqua (o nel centro di un buco nero) torna dove l\'avevi tirata, con un colpo di penalità. Sulle rampe, se ci passa abbastanza veloce, salta sopra acqua, sabbia e muretti. Le frecce per terra (acceleratori) la spingono forte nella loro direzione.',
       'La pallina entra se passa sulla buca non troppo veloce (anche sfiorandola piano); se è troppo forte ci passa sopra. Vicino alla buca, se è lenta, la conchetta la aiuta a entrare.',
       'Superpoteri: sul percorso ci sono delle scatole 🎁; passandoci sopra prendi un superpotere a caso (ogni scatola una volta a testa). Se ne tengono al massimo 3 (quelli in più si perdono), passano da una buca all\'altra e si usano con i tasti 1, 2, 3 o cliccando sulla casella in basso, quando vuoi durante la buca, anche mentre la pallina corre. Se un potere non si può usare ti viene detto perché.',
       'Per il prossimo tiro (restano pronti finché non tiri, anche nella buca dopo): 🚀 Turbo (tiro più forte del 60%), 🧲 Calamita (la buca attira la pallina quando le passa vicino), 🦘 Molla (il tiro parte con un salto sopra acqua, sabbia e muretti), 👻 Fantasma (la pallina passa attraverso ostacoli, mulini, respingenti e porte mobili, ma non i muri). Subito: ⏪ Rifai (annulla l\'ultimo tiro, anche mentre la pallina corre: torna dov\'era e il colpo non conta).',

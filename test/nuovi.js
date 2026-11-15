@@ -2169,6 +2169,14 @@ fissa('PUTT PARTY 2D');
   // dal telefono: il posto resta fermo e gli altri non lo aspettano
   const tf = buca('classica', 0, 2); tf.input(1, { t: 'telefono' });
   assert.ok(tf.usciti[1] && tf.telefono[1] && !tf.finita && tf.vista().telefono[1], 'telefono: il posto esce e lo si vede nel tabellone');
+  // acceleratori: le frecce spingono la pallina nella loro direzione (e lì non si ferma)
+  {
+    const ac = COURSE.classica.buche.find((b) => b.id === 'castello'), q = ac.acceleratori[0];
+    const pa = { x: q.r[0] + 10, y: q.r[1] + q.r[3] / 2, vx: 50, vy: 0, aria: 0 };
+    M._test.passo(ac, pa, 0.05, 0, [], [], []);
+    assert.ok(pa.vx > 150 && !M._test.puoFermarsi(ac, pa), 'l\'acceleratore spinge la pallina');
+    assert.ok(Object.values(COURSE).filter((c) => !c.fisse).every((c) => c.buche.length >= 11), 'almeno 11 buche per course');
+  }
   // ---- i poteri "party": Specchio, Gelata, Gomma, Furto, Fungo e Vortice da piazzare ----
   {
     const sp = buca('classica', 0, 2); sp.poteri[0] = ['specchio'];
